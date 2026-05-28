@@ -1,0 +1,420 @@
+================================================================================
+KAPTAN LOJISTIK PORTAL
+LOKANTALAR & YEME-ICME MODULU
+
+TEMEL AMAC
+================================================================================
+
+KAPTAN LOJISTIK PORTAL icin:
+
+enterprise-grade,
+production-ready,
+harita-merkezli,
+mobil oncelikli,
+offline-first,
+realtime destekli,
+olceklenebilir,
+dusuk internet kosullarina uyumlu,
+premium UX standartlarinda
+
+bir LOKANTALAR VE YEME-ICME MODULU tasarla.
+
+Bu modul:
+- uzun yol soforlerinin,
+- nakliyecilerin,
+- yuk sahiplerinin,
+- filo yoneticilerinin
+
+rota uzerindeki yemek ve mola noktalarini:
+
+- kesfetmesini,
+- karsilastirmasini,
+- rezerve etmesini,
+- favorilemesini,
+- yorumlamasini
+
+saglayacak sekilde tasarlanmalidir.
+
+Sistem:
+- Google Maps Places
+- Waze Places
+- Yelp
+- TripAdvisor
+- TruckMap
+- Michelin travel UX
+
+seviyesinde bir deneyim sunmalidir.
+
+================================================================================
+SISTEM GENEL TASARIM PRENSIPLERI
+================================================================================
+
+- Mobile-first tasarim
+- Tek elle kullanim (thumb-friendly UX)
+- Minimum cognitive load
+- 2 tik kuralina uygun aksiyonlar
+- Harita + liste senkron calisma
+- Offline durumda bile temel veri gosterimi
+- Realtime guncelleme destekli
+- Yumusak animasyonlar ve premium hissiyat
+- Clear information hierarchy
+- Low-bandwidth optimizasyon
+
+================================================================================
+MODUL 2.1 — LOKANTA KAYIT SISTEMI
+================================================================================
+
+LOKANTA KAYIT FORMU:
+
+ZORUNLU ALANLAR:
+- isletme_adi
+- il
+- ilce
+- tam_adres
+- koordinat (lat/lng - PostGIS uyumlu)
+- telefon
+- calisma_saatleri
+
+OPSİYONEL ALANLAR:
+- email
+- website
+- aciklama (serbest metin)
+- TIR_otoparki_var_mi (boolean)
+- otopark_kapasitesi (integer)
+
+================================================================================
+MENU & YEMEK SISTEMI
+================================================================================
+
+DINAMIK MENU YAPISI:
+
+Her lokanta su alanlari iceren menu olusturabilmelidir:
+
+- yemek_adi
+- fiyat
+- gorsel
+- porsiyon_aciklamasi
+- kategori (corba, ana yemek, izgara, tatli, icecek vb.)
+- stok_durumu (aktif/pasif)
+
+OZEL MENU OZELLIKLERI:
+- gunun_menusu flag’i
+- TIR_soforune_ozel_indirim
+- kampanya_alani
+- popüler_yemek etiketi
+
+EK FONKSIYONLAR:
+- menu siralama (drag & drop)
+- dinamik fiyat guncelleme
+- stok takibi
+- anlik menu degisikligi
+
+================================================================================
+FOTOĞRAF SISTEMİ
+================================================================================
+
+- maksimum 5 fotograf
+- WebP compression zorunlu
+- lazy loading
+- CDN destekli
+- blur placeholder
+
+FOTOGRAF KATEGORILERI:
+- dis mekan
+- ic mekan
+- yemekler
+- otopark
+- dinlenme alanlari
+
+================================================================================
+CALISMA SAATLERI SISTEMI
+================================================================================
+
+- 7/24 calisma modu
+- custom weekly schedule
+- timezone aware sistem
+- tatil / ozel gun override
+- gece servis durumu
+
+================================================================================
+MODUL 2.2 — KULLANICI GORUNUMU
+================================================================================
+
+KULLANICI ROLLERI:
+- tasiyici
+- sofor
+- yuk_sahibi
+- filo_yoneticisi
+
+ANA OZELLIKLER:
+
+1. HARITA GORUNUMU
+- OpenStreetMap + MapLibre
+- Leaflet support
+- marker clustering
+- rota uzerinde lokanta tespiti (±10 km buffer zone)
+- catal-bicak ikon sistemi
+
+2. LISTE GORUNUMU
+- infinite scroll
+- filtrelenebilir kart yapisi
+- lazy loading
+
+3. LOKANTA KART TASARIMI:
+
+Her kart icermeli:
+- isletme adi
+- ortalama puan (1-5)
+- yorum sayisi
+- ilk 3 yemek (isim + fiyat)
+- TIR otoparki durumu
+- mesafe (km)
+- OSRM ETA
+- acik/kapali durumu
+
+BUTONLAR:
+- Detay goruntule
+- Yol tarifi baslat
+- Favoriye ekle
+- Yorum yap
+
+================================================================================
+ROTA BAZLI ARAMA SISTEMI
+================================================================================
+
+- baslangic + varis noktasi girisi
+- OSRM route calculation
+- rota uzerinde lokanta analizi
+
+AKILLI FILTRELER:
+- maksimum rota sapmasi
+- minimum puan
+- fiyat araligi
+- TIR otoparki zorunlulugu
+- acik lokanta filtreleme
+
+AKILLI ONERILER:
+- en iyi puanli mola noktasi
+- en uygun fiyatli yemek noktasi
+- en hizli erisilebilir lokanta
+- TIR dostu mola alanlari
+
+================================================================================
+REZERVASYON / ON SIPARIS SISTEMI
+================================================================================
+
+YENI OZELLIK:
+
+Kullanicilar su sekilde siparis verebilir:
+
+- "18:00’de orada olacagim"
+- "onceden yemek hazirla"
+- "su yemekler hazir olsun"
+
+SISTEM:
+- zaman bazli rezervasyon
+- menu secerek on siparis
+- lokanta onay sistemi
+- durum takibi (beklemede / onaylandi / hazir)
+
+================================================================================
+YORUM & PUANLAMA SISTEMI
+================================================================================
+
+PUANLAMA:
+- 1-5 yildiz sistemi
+- lokanta bazli
+- yemek bazli yorum
+
+YORUM ICERIGI:
+- yildiz puani
+- metin (max 500 karakter)
+- tarih
+- rumuz
+- opsiyonel yemek referansi
+
+ISLETME CEVAPLARI:
+- lokanta sahibi cevap verebilir
+- cevaplar yorum altinda thread yapisi
+
+EK SISTEMLER:
+- "yararli bul" butonu
+- spam kontrolu
+- duplicate yorum engeli
+
+SIRALAMA:
+- en yeni
+- en yuksek puan
+- en yararli yorum
+
+================================================================================
+FAVORI SISTEMI
+================================================================================
+
+- favori lokanta ekleme
+- hizli erisim listesi
+- son ziyaret edilenler
+- rota bazli favoriler
+
+AKILLI OZELLIK:
+- kullanici aliskanlik analizi
+- otomatik oneriler
+- tekrar ziyaret optimizasyonu
+
+================================================================================
+TEKNIK GEREKSINIMLER
+================================================================================
+
+HARITA TEKNOLOJILERI:
+- OpenStreetMap
+- MapLibre
+- Leaflet
+- Nominatim (geocoding)
+- OSRM (route engine)
+
+VERITABANI:
+- PostgreSQL 15+
+- PostGIS (geospatial queries)
+
+TABLOLAR:
+- restaurants
+- restaurant_images
+- menus
+- menu_items
+- reviews
+- review_replies
+- restaurant_favorites
+- restaurant_reservations
+- route_restaurant_cache
+
+PERFORMANS:
+- spatial indexing (PostGIS GiST indexes)
+- full-text search
+- query optimization
+- caching layer (Redis)
+
+================================================================================
+VERI ERISIM VE FILTRELEME
+================================================================================
+
+- indexli arama
+- rota bazli filtreleme
+- mesafe hesaplama
+- puan siralama
+- fiyat siralama
+- acik/kapali filtreleme
+
+PERFORMANS STRATEJISI:
+- pagination
+- infinite scroll
+- lazy loading
+- cached route results
+
+================================================================================
+KULLANICI YETKILERI
+================================================================================
+
+LOKANTA SAHIBI:
+- kendi lokantasini duzenler
+- menu gunceller
+- fiyat degistirir
+- rezervasyonlari gorur
+- yorumlara cevap verir
+
+GENEL KULLANICI:
+- lokanta goruntuler
+- yorum yapar
+- puan verir
+- favorilere ekler
+- rezervasyon yapar
+
+KURAL:
+- sadece aktif tasiyicilar yorum yapabilir
+- spam koruma zorunlu
+- veri manipülasyonu engellenmeli
+
+================================================================================
+MOBIL UX PRENSIPLERI
+================================================================================
+
+- tek elle kullanim
+- bottom sheet UX
+- harita + liste senkron
+- haptic feedback
+- skeleton loading
+- gesture navigation
+- floating action button
+- soft transitions
+- dark mode support
+
+================================================================================
+HATA YONETIMI
+================================================================================
+
+- network failure handling
+- GPS unavailable state
+- route not found fallback
+- offline mode support
+- retry mekanizmasi
+- graceful degradation
+
+================================================================================
+ENTEGRASYONLAR
+================================================================================
+
+- Yakit Istasyonlari Modulu
+- Rota Planlama Sistemi
+- Surucu Operasyon Sistemi
+- Finans Modulu
+- Bildirim Sistemi
+- Escrow Sistemi
+
+EVENT-DRIVEN YAPILAR:
+- restaurant.created
+- menu.updated
+- reservation.created
+- review.created
+
+================================================================================
+GUVENLIK
+================================================================================
+
+- JWT authentication
+- HTTPS zorunlu
+- rate limiting
+- input validation
+- spam filtering
+- moderation layer
+
+================================================================================
+SON KURAL
+================================================================================
+
+Bu sistem:
+
+- production-ready
+- enterprise-grade
+- scalable
+- realtime destekli
+- offline-first
+- harita merkezli
+- low-bandwidth optimized
+- future-proof
+
+olmalidir.
+
+Tum ciktilar:
+- detayli
+- uygulanabilir
+- teknik
+- mimari odakli
+- yazilima direkt baslanabilir seviyede
+
+hazirlanmalidir.
+
+Kod yazilmayacak,
+sadece mimari + sistem tasarimi + UX + database + API + workflow tanimi yapilacaktir.
+
+================================================================================
+END OF MASTER RESTAURANT MODULE PROMPT
+================================================================================

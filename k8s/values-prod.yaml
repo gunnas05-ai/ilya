@@ -1,0 +1,96 @@
+# ── KAPTAN Platform Helm Values (PRODUCTION) ──
+environment: production
+imageRegistry: registry.kaptanlojistik.com
+imageTag: stable
+
+global:
+  monitoring:
+    prometheus: true
+    grafanaDashboard: kaptan-production
+
+# ── PostgreSQL + PostGIS (Production) ──
+postgres:
+  enabled: true
+  image: postgis/postgis:15-3.3
+  replicas: 1
+  storage: 500Gi
+  storageClass: ssd
+  resources:
+    requests: { cpu: 2000m, memory: 8Gi }
+    limits: { cpu: 8000m, memory: 32Gi }
+  env:
+    POSTGRES_USER: kaptan
+    POSTGRES_DB: kaptan
+    # Sifre Vault'tan gelir!
+
+# ── Redis (Production) ──
+redis:
+  enabled: true
+  replicas: 3
+  storage: 50Gi
+  resources:
+    requests: { cpu: 500m, memory: 1Gi }
+    limits: { cpu: 2000m, memory: 4Gi }
+
+# ── Kafka (Production) ──
+kafka:
+  enabled: true
+  replicas: 3
+  storage: 200Gi
+  resources:
+    requests: { cpu: 1000m, memory: 4Gi }
+    limits: { cpu: 4000m, memory: 8Gi }
+
+# ── Backend (Production) ──
+backend:
+  replicas: 5
+  resources:
+    requests: { cpu: 1000m, memory: 2Gi }
+    limits: { cpu: 4000m, memory: 8Gi }
+  hpa:
+    enabled: true
+    minReplicas: 3
+    maxReplicas: 20
+    targetCPUUtilizationPercentage: 60
+  env:
+    NODE_ENV: production
+    PAYMENT_PROVIDER: iyzico
+    PLATFORM_COMMISSION_RATE: '3.5'
+    QUICK_PAY_ENABLED: 'true'
+    # API key'leri Vault'tan secretRef ile gelir
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 2
+      maxUnavailable: 0
+
+# ── TLS / Ingress ──
+ingress:
+  enabled: true
+  host: api.kaptanlojistik.com
+  adminHost: admin.kaptanlojistik.com
+  tls: true
+  issuer: letsencrypt-prod
+
+# ── Monitoring ──
+monitoring:
+  prometheus:
+    enabled: true
+    retentionDays: 30
+  grafana:
+    enabled: true
+    dashboards:
+      - kaptan-api-overview
+      - kaptan-kafka-lag
+      - kaptan-business-metrics
+      - kaptan-payment-metrics
+  alerting:
+    slack: '#kaptan-alerts'
+    pagerduty: enabled
+
+# ── Backup ──
+backup:
+  enabled: true
+  schedule: '0 2 * * *'    # Her gece 02:00
+  retention: 30            # 30 gün
+  destination: s3://kaptan-backups

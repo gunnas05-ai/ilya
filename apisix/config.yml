@@ -1,0 +1,70 @@
+# Apache APISIX Configuration — KAPTAN Enterprise API Gateway
+# Stand-alone mode (no etcd required for development)
+
+apisix:
+  node_listen: 9080
+  enable_admin: true
+  enable_admin_cors: true
+  enable_control: true
+  control:
+    ip: '0.0.0.0'
+    port: 9090
+
+  ssl:
+    listen:
+      - port: 9443
+        enable_http2: true
+
+  enable_heartbeat: true
+  enable_debug: false
+
+# Plugin configuration
+plugins:
+  - real-ip
+  - client-control
+  - proxy-rewrite
+  - redirect
+  - response-rewrite
+  - cors
+  - ip-restriction
+  - ua-restriction
+  - referer-restriction
+  - csrf
+  - limit-conn
+  - limit-count
+  - limit-req
+  - gzip
+  - api-breaker
+  - prometheus
+  - zipkin
+  - request-id
+  - openid-connect
+  - key-auth
+  - basic-auth
+  - jwt-auth
+  - hmac-auth
+  - authz-keycloak
+
+# Nginx configuration
+nginx_config:
+  worker_processes: auto
+  worker_rlimit_nofile: 20480
+  worker_connections: 10620
+
+  http:
+    access_log: '/usr/local/apisix/logs/access.log'
+    access_log_format: '$remote_addr - $remote_user [$time_local] $http_host \"$request\" $status $body_bytes_sent $request_time \"$http_referer\" \"$http_user_agent\" $upstream_addr $upstream_status $upstream_response_time \"$http_x_forwarded_for\"'
+    keepalive_timeout: 60s
+    client_max_body_size: 50m
+
+    # Rate limiting zones
+    lua_shared_dict:
+      plugin-limit-conn: 10m
+      plugin-limit-count: 10m
+      plugin-limit-req: 10m
+      prometheus-metrics: 10m
+      plugin-api-breaker: 10m
+      upstream-healthcheck: 10m
+      discovery: 1m
+      jwt-auth: 1m
+      introspection: 10m

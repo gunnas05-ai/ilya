@@ -1,0 +1,642 @@
+================================================================================
+KAPTAN LOJISTIK PORTAL
+YAKIT ISTASYONLARI MODULU
+
+================================================================================
+
+KAPTAN LOJISTIK PORTAL icin:
+
+enterprise-grade,
+production-ready,
+mobile-first,
+harita-merkezli,
+offline-first,
+realtime destekli,
+olceklenebilir,
+dusuk internet hizina optimize,
+premium UX odakli
+
+bir YAKIT ISTASYONLARI MODULU tasarla.
+
+Bu modul:
+- suruculerin,
+- nakliyecilerin,
+- filo yoneticilerinin
+
+rota uzerindeki en uygun yakit istasyonlarini:
+- fiyat,
+- mesafe,
+- hizmet kalitesi,
+- ekstra servisler,
+- arac ihtiyaclari
+
+bazinda bulabilmesini saglamalidir.
+
+Sistem:
+- Google Maps fuel systems
+- Waze fuel prices
+- TruckMap
+- GasBuddy
+- Parky
+- Michelin route services
+
+seviyesinde UX ve operasyon kalitesine sahip olmalidir.
+
+Roller: İstasyon Sahibi  kendi ekledikleri isletme icin kayıtları düzenleyebilir, diger kullanicilarin yorumlarina yorum ekleyebilir, diger kullanıcıların hepsi bilgleri okuyabilir, yorum yapabilir.
+- Harita: OpenStreetMap + Leaflet/MapLibre, Nominatim geocoding, OSRM mesafe.
+- Tablolar: istasyonlar, istasyon_yakit_fiyatlari, istasyon_fotograflar, lokantalar, yemekler, yorumlar, yorum_cevaplari.
+- Filtreleme ve sıralama performansı: indeksleme, PostGIS spatial sorgular.
+- Kullanıcı arayüzü: mobil öncelikli, marker clustering, infinite scroll, sadece aktif taşıyıcılar yorum yapabilir.
+
+================================================================================
+ZORUNLU GELISTIRME SIRASI
+================================================================================
+
+1. DATABASE MIMARISI
+2. POSTGIS & GEOLOCATION SISTEMI
+3. BACKEND SERVISLERI
+4. HARITA & ROTA SISTEMI
+5. YAKIT FIYAT YONETIMI
+6. FILTRELEME & SEARCH ENGINE
+7. MOBIL UX
+8. WEB PANELI
+9. FAVORI & ALARM SISTEMI
+10. REALTIME GUNCELLEME
+11. OFFLINE-FIRST MIMARI
+12. CACHE & PERFORMANS
+13. NOTIFICATION SISTEMI
+14. SECURITY & RATE LIMITING
+15. OBSERVABILITY & DEPLOYMENT
+
+================================================================================
+MODUL AMACI
+================================================================================
+
+Bu modulun amaci:
+
+- suruculere en yakin istasyonlari gostermek,
+- en uygun yakit fiyatlarini listelemek,
+- rota uzerindeki istasyonlari analiz etmek,
+- arac ihtiyacina uygun servisleri filtrelemek,
+- yakit maliyetlerini optimize etmek,
+- uzun yol operasyonlarini kolaylastirmak
+
+olmalidir.
+
+================================================================================
+ISTASYON KAYIT SISTEMI
+================================================================================
+
+ISTASYON KAYIT FORMU:
+- istasyon_adi
+- marka
+- sehir
+- ilce
+- tam_adres
+- koordinat
+- telefon
+- email
+- website
+- vergi_no
+- calisma_durumu
+
+KOORDINAT SISTEMI:
+- harita uzerinden secim
+- draggable pin support
+- reverse geocoding
+- PostGIS uyumlu koordinat yapisi
+
+MARKA SISTEMI:
+- predefined brand list
+- "Diger" secenegi
+- custom logo support
+- brand color support
+
+================================================================================
+YAKIT FIYAT SISTEMI
+================================================================================
+
+DESTEKLENEN YAKITLAR:
+- motorin
+- kursunsuz
+- LPG
+- AdBlue
+- elektrik_sarj
+
+KURALLAR:
+- motorin zorunlu
+- digerleri opsiyonel
+- her fiyat icin:
+  - guncelleme_tarihi
+  - guncelleyen_kullanici
+  - fiyat_kaynagi
+  - confidence_score
+
+FIYAT SISTEMI:
+- manuel guncelleme
+- admin onayi opsiyonu
+- topluluk destekli fiyat bildirimi
+- duplicate kontrolu
+- anormal fiyat algilama
+
+FIYAT GUNCELLIGI:
+- 24 saatten eskiyse:
+  "Guncel Degil" etiketi
+- 48 saatten eskiyse:
+  faded state
+- otomatik stale detection sistemi
+
+================================================================================
+EK HIZMETLER SISTEMI
+================================================================================
+
+CHECKBOX SERVISLER:
+- arac_yikama
+- lokanta
+- kafe
+- market
+- motel
+- otopark
+- dus_wc
+- elektrikli_sarj
+- servis_tamir
+- lastikci
+- banka_ATM
+- ucretsiz_wifi
+- cay_kahve
+
+EK OZELLIKLER:
+- servis ikon sistemi
+- kategori renkleri
+- premium hizmet etiketi
+- accessibility support
+
+================================================================================
+CALISMA SAATLERI SISTEMI
+================================================================================
+
+MODLAR:
+- 7/24
+- custom hours
+
+CUSTOM HOURS:
+- haftalik zaman plani
+- resmi tatil override
+- gece vardiyasi support
+- timezone aware
+
+================================================================================
+FOTOGRAF SISTEMI
+================================================================================
+
+KURALLAR:
+- maksimum 3 fotograf
+- WebP optimize
+- lazy loading
+- blur placeholder
+- CDN support
+
+FOTOGRAF TIPLERI:
+- genel gorunum
+- pompa alani
+- market/lokanta
+- elektrikli sarj alani
+
+DOSYA KONTROLLERI:
+- MIME validation
+- compression
+- EXIF temizleme
+- antivirus scanning
+
+================================================================================
+KULLANICI GORUNUMU
+================================================================================
+
+ROLLER:
+- tasiyici
+- sofor
+- filo_yoneticisi
+- normal_uye
+
+ANA OZELLIKLER:
+- harita gorunumu
+- liste gorunumu
+- rota uzeri istasyonlar
+- fiyat karsilastirma
+- filtreleme sistemi
+- favoriler
+- yakit alarmi
+
+================================================================================
+HARITA SISTEMI
+================================================================================
+
+HARITA STACK:
+- OpenStreetMap
+- MapLibre
+- offline map cache
+
+HARITA OZELLIKLERI:
+- yakin istasyonlar
+- rota bazli istasyonlar
+- marker clustering
+- route preview
+- live traffic support
+- ETA hesaplama
+
+PIN KART ICERIGI:
+- istasyon adi
+- marka logosu
+- motorin fiyati
+- mesafe
+- ek hizmet ikonlari
+- son guncelleme zamani
+- detay butonu
+
+PIN DAVRANISI:
+- active animation
+- bottom sheet acilisi
+- smooth transition
+- haptic feedback
+
+================================================================================
+FIYAT KARSILASTIRMA SISTEMI
+================================================================================
+
+SIRALAMA:
+- en ucuz
+- en yakin
+- en yuksek puan
+- en guncel fiyat
+- premium hizmet
+
+DEFAULT:
+- motorin fiyatina gore artan
+
+DESTEK:
+- tum yakit turleri
+
+LIST ITEM ICERIGI:
+- istasyon adi
+- marka
+- mesafe
+- fiyat
+- hizmet ikonlari
+- puan
+- yol tarifi
+
+EKSTRA:
+- fiyat trendi
+- son fiyat degisimi
+- litre basina tasarruf hesaplama
+
+================================================================================
+FILTRELEME SISTEMI
+================================================================================
+
+FILTRELER:
+- yakit tipi
+- marka
+- hizmet tipi
+- fiyat araligi
+- mesafe
+- acik/kapali
+- elektrikli sarj
+- 7/24
+
+MULTI-SELECT:
+- checkbox support
+- chip-based UI
+- instant filtering
+- saved filters
+
+================================================================================
+ROTA BAZLI ISTASYON SISTEMI
+================================================================================
+
+ROTA MOTORU:
+- OSRM
+- route optimization
+- waypoint support
+
+OZELLIKLER:
+- rota uzeri uygun istasyonlar
+- minimum sapma hesaplama
+- yakit seviyesi tahmini
+- dinamik mola onerisi
+
+AKILLI ONERI:
+- en ucuz rota istasyonu
+- premium mola noktasi
+- surucu dinlenme tavsiyesi
+
+================================================================================
+YAKIT ALARM SISTEMI
+================================================================================
+
+ALARM TURleri:
+- fiyat esigi
+- belirli marka
+- belirli bolge
+- yakit indirimi
+- yeni fiyat guncellemesi
+
+BILDIRIM:
+- push notification
+- SMS
+- email
+- in-app notification
+
+KULLANICI AYARLARI:
+- sessize alma
+- alarm zamani
+- tekrar sikligi
+
+================================================================================
+FAVORILER SISTEMI
+================================================================================
+
+OZELLIKLER:
+- favori istasyon ekleme
+- favori listesi
+- hizli erisim
+- favori bildirimleri
+
+AKILLI OZELLIKLER:
+- en sik kullanilanlar
+- son ziyaret edilenler
+- rota bazli favoriler
+
+================================================================================
+DATABASE MIMARISI
+================================================================================
+
+TEMEL TABLOLAR:
+- fuel_stations
+- fuel_prices
+- station_services
+- station_images
+- station_reviews
+- favorite_stations
+- fuel_alerts
+- fuel_price_history
+- route_station_matches
+
+POSTGIS:
+- geospatial indexing
+- nearest-neighbor queries
+- route proximity calculations
+
+DATABASE KURALLARI:
+- UUID primary key
+- audit logs
+- soft delete
+- partitioned price history
+- foreign key integrity
+
+================================================================================
+BACKEND MIMARISI
+================================================================================
+
+FRAMEWORK:
+- NestJS
+
+SERVISLER:
+- fuel-station-service
+- pricing-service
+- geo-service
+- route-service
+- notification-service
+
+MIMARI:
+- modular monolith
+- event-driven architecture
+- realtime updates
+
+ASYNC:
+- BullMQ
+- Redis queue
+- retry strategy
+
+================================================================================
+API SISTEMI
+================================================================================
+
+ORNEK ENDPOINTLER:
+GET /api/fuel-stations/nearby
+GET /api/fuel-stations/route
+GET /api/fuel-stations/prices
+POST /api/fuel-stations
+POST /api/fuel-stations/prices
+GET /api/fuel-stations/:id
+POST /api/fuel-alerts
+GET /api/favorites
+
+DESTEK:
+- pagination
+- filtering
+- sorting
+- geolocation query
+- rate limiting
+
+================================================================================
+OFFLINE-FIRST MIMARI
+================================================================================
+
+MOBILE:
+- offline map cache
+- local station cache
+- background sync
+- optimistic updates
+
+WEB:
+- IndexedDB
+- Service Worker
+- stale-while-revalidate
+
+OFFLINE SENARYOLARI:
+- son bilinen fiyatlari goster
+- cache'den harita ac
+- queue-based sync
+
+================================================================================
+REALTIME SISTEM
+================================================================================
+
+- WebSocket support
+- live fuel price updates
+- realtime alerts
+- dynamic route refresh
+
+FALLBACK:
+- polling support
+- retry mechanism
+
+================================================================================
+CACHE & PERFORMANS
+================================================================================
+
+REDIS CACHE:
+- nearby stations
+- price comparisons
+- route calculations
+
+TTL:
+- station cache = 1 saat
+- price cache = 15 dakika
+
+OPTIMIZASYON:
+- clustering
+- lazy loading
+- virtualized lists
+- image optimization
+
+================================================================================
+MOBIL UX KURALLARI
+================================================================================
+
+- tek elle kullanim
+- thumb-friendly navigation
+- bottom sheet UX
+- floating action button
+- blur surfaces
+- haptic feedback
+- smooth transitions
+- skeleton loaders
+- dark mode support
+
+================================================================================
+ERISILEBILIRLIK
+================================================================================
+
+- WCAG 2.1 AA
+- dynamic font scaling
+- screen reader support
+- color blind safe palette
+- minimum 44x44 touch targets
+
+================================================================================
+HATA YONETIMI
+================================================================================
+
+HATA TIPLERI:
+- GPS unavailable
+- route not found
+- stale prices
+- upload failure
+- network timeout
+
+KULLANICI DENEYIMI:
+- retry button
+- offline indicator
+- skeleton loading
+- fallback state
+
+================================================================================
+GUVENLIK
+================================================================================
+
+- HTTPS zorunlu
+- JWT authentication
+- MIME validation
+- rate limiting
+- TLS 1.3
+- secure uploads
+
+RATE LIMIT:
+- saniyede 10 istek
+
+================================================================================
+ENTEGRASYONLAR
+================================================================================
+
+ENTEGRASYON NOKTALARI:
+- Yuk Yukleme Modulu
+- Surucu Operasyon Sistemi
+- Harita & GPS Sistemi
+- Finans Modulu
+- Bildirim Sistemi
+- Escrow Sistemi
+
+EVENTLER:
+- route.created
+- shipment.started
+- fuel.price.updated
+- driver.location.updated
+
+================================================================================
+OBSERVABILITY
+================================================================================
+
+LOGGING:
+- Loki
+- ELK Stack optional
+
+MONITORING:
+- Prometheus
+- Grafana
+
+TRACING:
+- OpenTelemetry
+
+================================================================================
+CI/CD
+================================================================================
+
+CI:
+- GitHub Actions
+
+CD:
+- ArgoCD
+
+PIPELINE:
+1. lint
+2. test
+3. build
+4. docker build
+5. security scan
+6. staging deploy
+7. production deploy
+
+================================================================================
+FINAL KURAL
+================================================================================
+
+Olusturulacak sistem:
+
+- production-ready,
+- enterprise-grade,
+- scalable,
+- maintainable,
+- harita-merkezli,
+- realtime destekli,
+- offline-first,
+- low-bandwidth optimized,
+- future-proof
+
+olmalidir.
+
+Tum ciktilar:
+- profesyonel,
+- detayli,
+- teknik,
+- uygulanabilir,
+- production seviyesinde
+
+olmalidir.
+
+Kod yazmadan:
+- database,
+- backend,
+- API,
+- UX,
+- harita sistemi,
+- geolocation,
+- cache,
+- route engine,
+- realtime architecture,
+- performans,
+- guvenlik
+
+detayli sekilde tasarlanmalidir.
+

@@ -1,0 +1,588 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===================================================== */
+/*  onespace.md — Turuncu Tema (#FF6B00)                  */
+/*  Kaynak: D:\Proje\01\kod\contexts\ThemeContext.tsx     */
+/* ===================================================== */
+:root {
+  --bg: #0A1628;
+  --bg-secondary: #0F1D32;
+  --surface: #132039;
+  --surface-light: #1A2A4A;
+  --surface-elevated: #1E3355;
+  --border: #1E3355;
+  --border-light: #253D5E;
+  --text: #FFFFFF;
+  --text-secondary: #8B9DC3;
+  --text-muted: #5A7099;
+  --text-accent: #FF6B00;
+  --primary: #FF6B00;
+  --primary-light: #FF8A3D;
+  --primary-dark: #E05500;
+  --primary-glow: rgba(255, 107, 0, 0.15);
+  --shadow: rgba(255, 255, 255, 0.05);
+  --card-shadow: 0 2px 8px rgba(0,0,0,0.4);
+  --success: #10B981;
+  --warning: #F59E0B;
+  --error: #EF4444;
+  --info: #3B82F6;
+  --ftl: #3B82F6;
+  --ltl: #8B5CF6;
+  --city: #10B981;
+  --moving: #EC4899;
+  --tab-bar-bg: #060E1A;
+}
+
+.light {
+  --bg: #F5F7FA;
+  --bg-secondary: #FFFFFF;
+  --surface: #FFFFFF;
+  --surface-light: #F0F2F5;
+  --surface-elevated: #E8ECF2;
+  --border: #D1D5DB;
+  --border-light: #E5E7EB;
+  --text: #0F1722;
+  --text-secondary: #374151;
+  --text-muted: #6B7280;
+  --text-accent: #C24900;
+  --primary: #E85D00;
+  --primary-light: #FF8A3D;
+  --primary-dark: #C24900;
+  --primary-glow: rgba(232, 93, 0, 0.1);
+  --shadow: rgba(0, 0, 0, 0.1);
+  --card-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  --success: #059669;
+  --warning: #D97706;
+  --error: #DC2626;
+  --info: #2563EB;
+  --ftl: #2563EB;
+  --ltl: #7C3AED;
+  --city: #059669;
+  --moving: #DB2777;
+  --tab-bar-bg: #FFFFFF;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  transition: background-color 0.2s ease, color 0.2s ease;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+h1, h2, h3, h4 { color: var(--text); }
+h2 { font-size: 24px; font-weight: 700; }
+h3 { font-size: 18px; font-weight: 700; }
+
+/* ===================================================== */
+/*  PORTAL ŞABLONU — Ana Yapı                            */
+/* ===================================================== */
+
+.app-container {
+  max-width: 1600px;
+  margin: 0 auto;
+  min-height: 100vh;
+}
+
+/* Logo */
+.logo-img {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* ── Top Frame ── */
+.top-frame {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 85px;
+  height: 15vh;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.logo-area {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.logo-icon {
+  font-size: 32px;
+}
+
+.logo-text h1 {
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--primary);
+  margin: 0;
+  letter-spacing: 2px;
+}
+
+.logo-text span {
+  font-size: 11px;
+  color: var(--text-secondary);
+  font-weight: 500;
+  letter-spacing: 1px;
+}
+
+.nav-menu {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.nav-menu li {
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nav-menu li:hover {
+  background: var(--primary-glow);
+  color: var(--primary);
+}
+
+.theme-toggle-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+}
+
+.theme-toggle-btn:hover {
+  border-color: var(--primary);
+  background: var(--primary-glow);
+}
+
+/* ── Mid Frame ── */
+.mid-frame {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 24px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.faq-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+.faq-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.faq-dropdown {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  min-width: 400px;
+  transition: all 0.2s ease;
+}
+
+.faq-dropdown:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 1px;
+}
+
+.search-box {
+  position: relative;
+  flex: 0 0 auto;
+  width: 180px;
+  margin-left: auto;
+  margin-right: 0;
+}
+
+.search-box input {
+  width: 100%;
+  padding: 5px 10px 5px 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 11px;
+  transition: all 0.2s ease;
+}
+
+.search-box input:focus {
+  outline: none;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px var(--primary-glow);
+}
+
+.search-box .search-icon {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+/* ── Main Content ── */
+.main-content {
+  display: flex;
+  min-height: 60vh;
+}
+
+/* Sol kategori sidebar */
+.categories-sidebar {
+  width: 240px;
+  flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 12px 0;
+}
+
+.categories-sidebar h3 {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  padding: 8px 20px 4px;
+  margin: 0;
+  font-weight: 700;
+}
+
+.category-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--text);
+  transition: all 0.2s ease;
+  border-left: 3px solid transparent;
+}
+
+.category-item:hover {
+  background: var(--primary-glow);
+  color: var(--primary);
+}
+
+.category-item.active {
+  background: var(--primary-glow);
+  color: var(--primary);
+  border-left-color: var(--primary);
+  font-weight: 600;
+}
+
+.category-icon {
+  font-size: 18px;
+  width: 24px;
+  text-align: center;
+}
+
+/* Sağ içerik alanı */
+.right-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  padding: 16px 24px;
+  gap: 16px;
+}
+
+/* Kontrol bar */
+.control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: var(--surface);
+  border-radius: 12px;
+  border: 1px solid var(--border);
+}
+
+.dynamic-title {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.control-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-dropdown {
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.page-info {
+  font-size: 12px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.page-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.page-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-glow);
+}
+
+.page-btn.active-page {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+  font-weight: 700;
+}
+
+/* Kart Grid */
+.templates-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.template-card {
+  background: var(--surface);
+  border-radius: 14px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  transition: all 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.template-card:hover {
+  border-color: var(--primary);
+  box-shadow: 0 4px 20px rgba(45, 212, 191, 0.1);
+  transform: translateY(-2px);
+}
+
+.template-card img {
+  width: 100%;
+  height: 140px;
+  object-fit: cover;
+}
+
+.card-body {
+  padding: 14px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.card-id-tag {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--primary);
+  background: var(--primary-glow);
+  padding: 4px 10px;
+  border-radius: 6px;
+  display: inline-block;
+  align-self: flex-start;
+}
+
+.card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.card-btn {
+  flex: 1;
+  padding: 9px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: center;
+}
+
+.card-btn.primary-btn {
+  background: var(--primary);
+  color: #fff;
+  border-color: var(--primary);
+}
+
+.card-btn.primary-btn:hover {
+  opacity: 0.85;
+}
+
+.card-btn.secondary-btn {
+  background: transparent;
+  color: var(--text);
+}
+
+.card-btn.secondary-btn:hover {
+  border-color: var(--primary);
+  color: var(--primary);
+  background: var(--primary-glow);
+}
+
+/* ── Footer ── */
+.app-footer {
+  padding: 16px 24px;
+  text-align: center;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 13px;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--surface);
+  border: 1px solid var(--primary);
+  color: var(--text);
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+  z-index: 9999;
+  animation: toastIn 0.3s ease;
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ===================================================== */
+/*  RESPONSIVE                                           */
+/* ===================================================== */
+@media (max-width: 1000px) {
+  .templates-grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 780px) {
+  .top-frame {
+    flex-direction: column;
+    height: auto;
+    min-height: auto;
+    padding: 16px;
+    gap: 12px;
+  }
+  .nav-menu { flex-wrap: wrap; justify-content: center; }
+  .main-content { flex-direction: column; }
+  .categories-sidebar {
+    width: 100%;
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 8px;
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    overflow-x: auto;
+  }
+  .categories-sidebar h3 { display: none; }
+  .category-item {
+    padding: 8px 14px;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+  }
+  .category-item.active {
+    border-left: none;
+    border-bottom-color: var(--primary);
+  }
+  .templates-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 540px) {
+  .templates-grid { grid-template-columns: 1fr; }
+  .mid-frame { flex-direction: column; }
+  .control-bar { flex-direction: column; align-items: flex-start; }
+  .control-right { width: 100%; }
+}
+
+/* ===================================================== */
+/*  Klavye Erisilebilirligi                              */
+/* ===================================================== */
+*:focus-visible {
+  outline: 2px solid var(--primary) !important;
+  outline-offset: 2px !important;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-secondary); }
+
+/* Card accent stripe (KAPTAN_MASTER Bölüm 1.2) */
+.card-accent {
+  position: relative;
+}
+.card-accent::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 5px;
+  border-top-left-radius: inherit;
+  border-bottom-left-radius: inherit;
+  background: var(--accent-color, var(--primary));
+}

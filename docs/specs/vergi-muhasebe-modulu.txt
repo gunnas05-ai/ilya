@@ -1,0 +1,697 @@
+# ENTERPRISE VERGİ, MUHASEBE, E-BELGE VE FİNANS YÖNETİM MODÜLÜ
+# KAPTAN LOJİSTİK PLATFORMU İÇİN TEKNİK MASTER PROMPT
+
+## ROLE
+
+You are a senior enterprise software architecture and fintech engineering team specialized in:
+
+- Turkish Tax Legislation
+- GİB (Gelir İdaresi Başkanlığı) e-Belge Systems
+- e-Fatura / e-Arşiv / e-İrsaliye / e-SMM / e-Defter
+- Logistics ERP Systems
+- FinTech & Escrow Payment Systems
+- Accounting Automation
+- React Native & React Web Development
+- PostgreSQL Database Engineering
+- Enterprise API Architecture
+- Financial Reporting Systems
+- Tax Calculation Engines
+- Multi-Tenant SaaS Systems
+- KVKK & Security Compliance
+- High Scalability Enterprise Platforms
+
+Your task is to design and implement a FULLY INTEGRATED TAX, ACCOUNTING, E-DOCUMENT, FINANCIAL REPORTING AND DECLARATION MANAGEMENT MODULE for a logistics platform operating in Türkiye.
+MODULE NAME:VERGİ, MUHASEBE, E-BELGE VE FİNANS YÖNETİM MODÜLÜ (Her kullanıcının Profil menüsünde bu isimle yerleştir.)
+The system must be:
+
+- Fully compliant with Turkish tax legislation
+- Compatible with GİB e-Belge infrastructure
+- Multi-company and multi-branch ready
+- Extensible for future legislation changes
+- Enterprise-grade secure
+- Mobile + Web compatible
+- Auditable and traceable
+- Suitable for large-scale logistics operations
+
+---
+
+# SECTION A — CORE SYSTEM OBJECTIVES
+
+The system must automatically:
+
+1. Calculate taxes
+2. Prepare declaration drafts
+3. Generate accounting records
+4. Produce e-Belge compatible outputs
+5. Track tax liabilities
+6. Track government receivables
+7. Generate financial summaries
+8. Provide real-time tax dashboards
+9. Automate BA/BS processes
+10. Prepare e-Defter compatible ledger outputs
+11. Support accountants and auditors
+12. Minimize manual accounting workload
+
+---
+
+# SECTION B — TAX ENGINE ARCHITECTURE
+
+## B.1 VAT (KDV) ENGINE
+
+The system must support:
+
+- %1
+- %10
+- %20
+- Zero-rated invoices
+- Export exemption invoices
+- Withholding VAT (Tevkifatlı KDV)
+- Partial withholding
+- Full withholding
+- Reduced rate calculations
+- Exempt transaction calculations
+
+### VAT Calculations
+
+System must automatically calculate:
+
+- Calculated VAT
+- Deductible VAT
+- VAT payable
+- Deferred VAT
+- Refundable VAT
+- Export VAT refund eligibility
+- VAT by invoice type
+- VAT by sector
+- VAT by branch/company
+
+---
+
+## B.2 WITHHOLDING TAX (STOPAJ)
+
+The system must support:
+
+- Serbest meslek stopajı
+- Kira stopajı
+- Gider pusulası stopajı
+- Maaş stopajı
+- Muhtasar calculations
+- SGK employer integrations
+- Employee tax brackets
+
+Automatic calculations:
+
+- Gross amount
+- Stopaj amount
+- Net payable
+- Muhtasar summary
+- Monthly withholding totals
+
+---
+
+## B.3 TEMPORARY TAX (GEÇİCİ VERGİ)
+
+The engine must:
+
+- Calculate quarterly tax automatically
+- Support previous year loss deduction
+- Calculate tax base
+- Calculate temporary tax payable
+- Track previous temporary tax payments
+- Perform annual offset calculations
+
+---
+
+## B.4 STAMP TAX (DAMGA VERGİSİ)
+
+The system must support:
+
+- Contract stamp tax
+- Payroll stamp tax
+- Declaration stamp taxes
+- Dynamic yearly rates
+
+---
+
+# SECTION C — GİB E-DOCUMENT SYSTEMS
+
+## C.1 SUPPORTED DOCUMENT TYPES
+
+The platform must support:
+
+- e-Fatura
+- e-Arşiv Fatura
+- e-İrsaliye
+- e-SMM
+- e-Müstahsil
+- e-Defter
+- XML export
+- PDF generation
+- QR verification
+- GİB status tracking
+
+---
+
+## C.2 GİB INTEGRATION
+
+The system must support:
+
+- SOAP integrations
+- REST integrations
+- Integrator compatibility
+- Direct GİB integration architecture
+- Retry mechanisms
+- Error logging
+- Offline queue architecture
+- Scheduled synchronization
+
+---
+
+## C.3 TEVKIFAT CONTROL ENGINE
+
+The system must automatically determine whether invoices are subject to withholding tax based on:
+
+- Buyer taxpayer status
+- Public institution status
+- Sector codes
+- Service type
+- Invoice type
+- GİB rules
+
+Supported examples:
+
+- Logistics invoices
+- Freight invoices
+- Service invoices
+- Public institution invoices
+
+---
+
+## C.4 E-INVOICE XML VALIDATION
+
+The system must:
+
+- Validate XML schema
+- Validate tax totals
+- Validate withholding structures
+- Validate mandatory fields
+- Validate VKN/TCKN
+- Prevent invalid submission
+
+---
+
+# SECTION D — ACCOUNTING AUTOMATION
+
+## D.1 AUTOMATIC ACCOUNTING ENTRIES
+
+Automatically generate:
+
+- Journal entries
+- Ledger entries
+- VAT accounts
+- Withholding accounts
+- Expense accounts
+- Revenue accounts
+- Collection/payment records
+
+---
+
+## D.2 CHART OF ACCOUNTS
+
+Support:
+
+- Tek Düzen Hesap Planı
+- Custom company accounts
+- Sector-based account templates
+- Automatic account mapping
+
+---
+
+## D.3 BA/BS AUTOMATION
+
+### BA FORM
+
+Automatically list:
+
+- Suppliers exceeding threshold
+- Supplier VKN
+- Supplier name
+- Invoice count
+- Total amount
+
+### BS FORM
+
+Automatically list:
+
+- Customers exceeding threshold
+- Customer VKN
+- Customer name
+- Invoice count
+- Total amount
+
+### Warning System
+
+Detect:
+
+- Missing VKN
+- Invalid taxpayer IDs
+- Threshold risks
+- Duplicate entries
+
+---
+
+## D.4 E-DEFTER COMPATIBILITY
+
+Generate:
+
+- Journal ledger
+- General ledger
+- Monthly trial balance
+- XML export
+- Berat-ready structures
+
+---
+
+# SECTION E — TAX DASHBOARD & REPORTING
+
+## E.1 REAL-TIME TAX DASHBOARD
+
+Dashboard widgets must show:
+
+- VAT payable
+- Stopaj payable
+- Temporary tax payable
+- Stamp tax payable
+- Deferred VAT
+- Refundable VAT
+- Net tax liability
+- Government receivables
+
+---
+
+## E.2 “HOW MUCH WILL I PAY TO THE GOVERNMENT?” SCREEN
+
+Features:
+
+- Monthly tax summary
+- Yearly comparison
+- Tax trend charts
+- Pie chart by tax type
+- Cash outflow estimation
+- Tax burden analysis
+
+---
+
+## E.3 YEAR-END TAX SUMMARY
+
+Generate:
+
+- Total turnover
+- Total expenses
+- Profit/Loss
+- Paid VAT
+- Paid withholding tax
+- Paid temporary tax
+- Paid stamp tax
+- Effective tax rate
+
+---
+
+## E.4 GOVERNMENT RECEIVABLES TRACKING
+
+Track:
+
+- Refundable VAT
+- Deferred VAT
+- Temporary tax offsets
+- Excess payments
+- Refund requests
+
+---
+
+## E.5 DECLARATION CALENDAR
+
+Support reminders for:
+
+- KDV
+- Muhtasar
+- BA/BS
+- Temporary Tax
+- Annual Income Tax
+- Corporate Tax
+
+Notifications:
+
+- Push notification
+- Email reminders
+- In-app alerts
+
+---
+
+# SECTION F — DATABASE ARCHITECTURE
+
+## F.1 CORE TABLES
+
+### TAX_DEFINITIONS
+- tax_id
+- tax_code
+- tax_name
+- tax_rate
+- tax_type
+- active
+
+### WITHHOLDING_DEFINITIONS
+- withholding_id
+- withholding_code
+- withholding_rate
+- withholding_type
+- service_code
+
+### TAX_PERIOD_SUMMARY
+- period_id
+- year
+- month
+- calculated_vat
+- deductible_vat
+- deferred_vat
+- withholding_total
+- temporary_tax
+- revenue_total
+- expense_total
+- profit_total
+
+### DECLARATION_DRAFTS
+- declaration_id
+- declaration_type
+- draft_json
+- status
+- submission_date
+- tahakkuk_no
+- tahakkuk_amount
+
+### E_DOCUMENT_LOGS
+- log_id
+- document_type
+- document_uuid
+- gib_status
+- error_message
+- retry_count
+
+### AUDIT_LOGS
+- user_id
+- action_type
+- old_value
+- new_value
+- ip_address
+- timestamp
+
+---
+
+# SECTION G — BACKEND ARCHITECTURE
+
+## G.1 TECHNOLOGY STACK
+
+Preferred stack:
+
+- Backend: Node.js / NestJS or Python FastAPI
+- Database: PostgreSQL
+- Cache: Redis
+- Queue: RabbitMQ / Kafka
+- File Storage: S3 compatible
+- PDF Engine: Puppeteer
+- XML Generator
+- Cron Scheduler
+- Dockerized architecture
+
+---
+
+## G.2 MICROSERVICE ARCHITECTURE
+
+Recommended services:
+
+- Tax Service
+- Invoice Service
+- Accounting Service
+- Notification Service
+- Reporting Service
+- GİB Integration Service
+- Authentication Service
+- Escrow Payment Service
+
+---
+
+## G.3 API REQUIREMENTS
+
+API must support:
+
+- REST API
+- OpenAPI/Swagger
+- JWT authentication
+- Role-based permissions
+- Webhooks
+- Versioning
+- Rate limiting
+
+---
+
+# SECTION H — FRONTEND ARCHITECTURE
+
+## H.1 MOBILE
+
+- React Native
+- Offline-first support
+- Push notifications
+- Multi-language support
+- Dark/light mode
+
+---
+
+## H.2 WEB PANEL
+
+- React
+- Next.js recommended
+- Responsive admin dashboard
+- Real-time widgets
+- Financial charts
+- Report export tools
+
+---
+
+## H.3 STATE MANAGEMENT
+
+Preferred:
+
+- Redux Toolkit
+OR
+- Zustand
+
+---
+
+# SECTION I — SECURITY & COMPLIANCE
+
+## I.1 SECURITY
+
+Mandatory:
+
+- End-to-end encryption
+- HTTPS everywhere
+- Secure token storage
+- Database encryption
+- IP logging
+- MFA support
+- Session timeout
+
+---
+
+## I.2 KVKK COMPLIANCE
+
+System must support:
+
+- Explicit consent tracking
+- Personal data masking
+- Data retention policies
+- User data deletion workflows
+- Access logs
+
+---
+
+## I.3 AUDITABILITY
+
+Every financial action must be traceable:
+
+- User
+- Timestamp
+- Previous value
+- New value
+- IP address
+- Device information
+
+---
+
+# SECTION J — USER ROLES
+
+Supported roles:
+
+## J.1 COMPANY OWNER
+- Full access
+
+## J.2 ACCOUNTANT
+- Tax and declaration management
+
+## J.3 DRIVER
+- Limited invoice visibility
+
+## J.4 BRANCH MANAGER
+- Branch-based reports
+
+## J.5 OPERATIONS STAFF
+- Shipment and invoice operations
+
+## J.6 ADMIN
+- System settings and legislation updates
+
+---
+
+# SECTION K — LEGISLATION UPDATE ENGINE
+
+The system must support:
+
+- Dynamic tax rate updates
+- Dynamic declaration dates
+- Dynamic withholding rules
+- Admin-managed legislation settings
+- Feature flags
+- Version-controlled tax rules
+
+---
+
+# SECTION L — AI ASSISTED ACCOUNTING FEATURES
+
+The system should optionally support AI-powered tools:
+
+- OCR invoice reading
+- Receipt scanning
+- Automatic expense categorization
+- Tax anomaly detection
+- Missing declaration prediction
+- Financial risk analysis
+- Smart accountant assistant chatbot
+
+---
+
+# SECTION M — NOTIFICATION SYSTEM
+
+Notifications must include:
+
+- Upcoming declarations
+- Tax payment reminders
+- Failed GİB submissions
+- Missing accounting records
+- Refund eligibility alerts
+- Excessive tax burden warnings
+
+Channels:
+
+- Push
+- SMS
+- Email
+- In-app
+
+---
+
+# SECTION N — TEST SCENARIOS
+
+## N.1 VAT TESTS
+
+- Sales only
+- Purchase only
+- Deferred VAT
+- Export exemption
+- Withholding invoices
+
+---
+
+## N.2 STOPAJ TESTS
+
+- Salary withholding
+- Rent withholding
+- Freelancer withholding
+
+---
+
+## N.3 GİB TESTS
+
+- Successful XML submission
+- Invalid XML rejection
+- Retry mechanism
+- Timeout handling
+
+---
+
+## N.4 ACCOUNTING TESTS
+
+- Ledger balancing
+- Duplicate prevention
+- Currency consistency
+
+---
+
+# SECTION O — PERFORMANCE & SCALABILITY
+
+The platform must support:
+
+- Multi-tenant SaaS architecture
+- High concurrent users
+- Horizontal scaling
+- Queue-based processing
+- Event-driven architecture
+- CDN support
+- Background processing
+
+---
+
+# SECTION P — ACCEPTANCE CRITERIA
+
+1. Tax calculations must be automatic.
+2. All GİB XML structures must validate successfully.
+3. e-Documents must comply with Turkish regulations.
+4. BA/BS forms must auto-generate.
+5. e-Defter outputs must be compatible.
+6. Dashboards must update in real time.
+7. All tax logs must be auditable.
+8. System must support legislation updates.
+9. Multi-company architecture must work correctly.
+10. Mobile and web synchronization must be stable.
+11. Financial reports must be exportable.
+12. Notification systems must function correctly.
+13. Tax reminders must work automatically.
+14. Government receivables must be trackable.
+15. Platform must remain modular and extensible.
+
+---
+
+# FINAL INSTRUCTION
+
+Generate:
+
+- Full system architecture
+- Database schema
+- Backend APIs
+- Mobile and web UI flows
+- Accounting workflows
+- Tax calculation engine
+- GİB integration layer
+- Notification architecture
+- Reporting system
+- Role-based permission system
+- Production-ready enterprise code structure
+
+All outputs must follow:
+
+- Enterprise software standards
+- Turkish tax legislation
+- GİB e-Belge requirements
+- Scalable SaaS architecture principles
+- Financial software best practices
+- Audit-ready accounting standards
+- Clean architecture principles

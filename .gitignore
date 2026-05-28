@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+
+# Expo
+.expo/
+mobile/dist/
+mobile/android/
+mobile/ios/
+
+# Next.js
+web/.next/
+
+# Build output
+backend/dist/
+
+# Environment
+.env
+.env.local
+.env*.local
+
+# Logs
+*.log
+logs/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# TypeScript
+*.tsbuildinfo
+
+# Helm
+*.tgz
+

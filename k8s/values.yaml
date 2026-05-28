@@ -1,0 +1,166 @@
+# ── KAPTAN Platform Helm Values (Production) ──
+
+# Ortam
+environment: production
+imageRegistry: registry.kaptanlojistik.com
+imageTag: latest
+
+# ── Global annotations ──
+global:
+  monitoring:
+    prometheus: true
+    grafanaDashboard: kaptan-overview
+
+# ── PostgreSQL + PostGIS ──
+postgres:
+  enabled: true
+  image: postgis/postgis:15-3.3
+  replicas: 1
+  storage: 100Gi
+  storageClass: ssd
+  resources:
+    requests:
+      cpu: 1000m
+      memory: 2Gi
+    limits:
+      cpu: 4000m
+      memory: 8Gi
+  env:
+    POSTGRES_USER: kaptan
+    POSTGRES_DB: kaptan
+    POSTGRES_PASSWORD: kaptan_dev_2026  # Production'da Vault'tan gelmeli
+  service:
+    port: 5432
+
+# ── Redis ──
+redis:
+  enabled: true
+  image: redis:7-alpine
+  replicas: 1
+  storage: 10Gi
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+  service:
+    port: 6379
+
+# ── Apache Kafka ──
+kafka:
+  enabled: true
+  image: confluentinc/cp-kafka:7.5.0
+  replicas: 1
+  storage: 50Gi
+  resources:
+    requests:
+      cpu: 500m
+      memory: 2Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  service:
+    externalPort: 9092
+    internalPort: 9093
+  zookeeper:
+    enabled: true
+    replicas: 1
+    storage: 10Gi
+
+# ── Apache APISIX Gateway ──
+apisix:
+  enabled: true
+  image: apache/apisix:3.8.0-debian
+  replicas: 2
+  resources:
+    requests:
+      cpu: 200m
+      memory: 256Mi
+    limits:
+      cpu: 1000m
+      memory: 512Mi
+  service:
+    httpPort: 9080
+    httpsPort: 9443
+    adminPort: 9180
+  ingress:
+    enabled: true
+    host: api.kaptanlojistik.com
+    tls: true
+  config:
+    standAlone: true
+
+# ── Backend (NestJS) ──
+backend:
+  enabled: true
+  replicas: 3
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+  service:
+    port: 3000
+  env:
+    NODE_ENV: production
+    PORT: '3000'
+    DB_HOST: kaptan-postgres
+    DB_PORT: '5432'
+    DB_USER: kaptan
+    DB_NAME: kaptan
+    USE_POSTGIS: 'true'
+    REDIS_HOST: kaptan-redis
+    KAFKA_BROKERS: kaptan-kafka:9093
+    OTEL_EXPORTER_OTLP_ENDPOINT: http://kaptan-apisix:4317
+    OTEL_SERVICE_NAME: kaptan-backend
+  hpa:
+    enabled: true
+    minReplicas: 2
+    maxReplicas: 10
+    targetCPUUtilizationPercentage: 70
+    targetMemoryUtilizationPercentage: 80
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+
+# ── MinIO (Object Storage) ──
+minio:
+  enabled: true
+  image: minio/minio:latest
+  replicas: 1
+  storage: 200Gi
+  env:
+    MINIO_ROOT_USER: kaptan_admin
+  service:
+    apiPort: 9000
+    consolePort: 9001
+
+# ── Monitoring Stack ──
+monitoring:
+  prometheus:
+    enabled: true
+    retentionDays: 15
+  grafana:
+    enabled: true
+    dashboards:
+      - kaptan-api-overview
+      - kaptan-kafka-lag
+      - kaptan-business-metrics
+  elk:
+    enabled: false  # Production'da harici ELK kullaniliyor
+
+# ── Sentry (Error Tracking) ──
+sentry:
+  enabled: true
+  dsn: https://sentry.kaptanlojistik.com/123
+
+# ── Network Policies ──
+networkPolicy:
+  enabled: true
+  restrictExternalAccess: true

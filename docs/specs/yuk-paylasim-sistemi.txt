@@ -1,0 +1,169 @@
+xxxvergi.txt dosyasını tekrar oku, aplikasyonun ilgili modüllerini oku ve eksiklik var ise tamamla.
+
+
+SENARYO:
+Sen; kurumsal yazılım mimarisi, lojistik operasyonları, FinTech, React Native/web geliştirme, gerçek zamanlı sistemler, harita/konum servisleri, WebSocket, UX/UI tasarımı, PostgreSQL+PostGIS, mobil performans, derin bağlantı (deep link) ve ilişkilendirme (attribution) sistemleri, sesli asistan/konuşma tanıma ve ödeme sistemleri konularında uzman bir yazılım geliştirme takımı gibi davranacaksın.
+
+<thinking>
+Temel ihtiyaç: Yük detayının sosyal platformlarda paylaşılabilmesi ve paylaşım yoluyla yeni kullanıcı kazanımı (growth loop).
+
+Kullanıcının kafasındaki akış:
+1. Mevcut kullanıcı yük detayında "Paylaş" butonuna basar.
+2. WhatsApp, Telegram, SMS, Facebook, Instagram gibi platformlara bir link gönderir.
+3. Linki alan kişi (potansiyel yeni kullanıcı) tıkladığında:
+   a) Yükün tüm detaylarını (fiyat, güzergah, tarih, yük cinsi, miktar) ama İRTİBAT BİLGİLERİ HARİÇ görür.
+   b) "Yükü Al" butonuna basar.
+   c) Uygulama yüklüyse → direkt yük detay ekranına gider.
+   d) Uygulama yüklü değilse → App Store / Google Play Store'a yönlendirilir.
+   e) Uygulamayı indirip ilk açtığında → otomatik olarak o yükün detayına yönlendirilir (deferred deep link).
+
+Geliştirilmesi gereken ek noktalar:
+- WhatsApp/Telegram'da link paylaşıldığında OG (Open Graph) meta etiketleri ile zengin bir önizleme kartı çıkmalı (yük başlığı, güzergah, fiyat, mini harita görseli).
+- Paylaşılan web sayfası (landing page) SSR veya statik olarak hızlı yüklenmeli, mobil uyumlu olmalı.
+- "Yükü Al" butonuna basan kullanıcı sayısı, indirme oranı gibi metrikler izlenebilmeli.
+- Paylaşım yapan kullanıcıya "Yükün 5 kişi tarafından görüntülendi" gibi geri bildirim verilebilir.
+- Kötüye kullanımı önlemek için linkin belirli bir süre sonra (yükün teslim tarihi geçince) geçersiz olması.
+- GDPR/KVKK uyumu: paylaşılan sayfada gereksiz veri toplanmamalı.
+- Kullanıcı girişi olmadan yük detayı görülebilmeli; "Yükü Al" butonuna basınca giriş/kayıt akışı başlamalı.
+</thinking>
+
+GÖREV: YÜK PAYLAŞIM SİSTEMİ TASARIMI VE GELİŞTİRMESİ
+
+Mevcut lojistik uygulamasına (KAPTAN) aşağıdaki "Yükü Paylaş" özelliğini eksiksiz entegre et:
+
+1. YÜK DETAY SAYFASI - PAYLAŞ BUTONU:
+   - Yük detay ekranının sağ üst köşesine "Yükü Paylaş" butonu ekle.
+   - Buton, platformun diğer paylaşım ikonlarıyla tutarlı bir ikona sahip olsun (paylaşım oku, üç nokta bağlantı vb.).
+   - Butona tıklandığında iOS/Android yerel paylaşım paneli (Share Sheet) açılsın.
+
+2. PAYLAŞIM İÇERİĞİ:
+   Platforma özel olarak aşağıdaki bilgileri içeren dinamik bir link ve önizleme oluştur:
+
+   a) PAYLAŞIM BAŞLIĞI:
+      "[Kalkış Şehri] → [Varış Şehri] | [Miktar] [Yük Cinsi] | [Fiyat] TL"
+      Örnek: "Samsun → Mersin | 27 Ton Buğday | 950 TL/ton"
+
+   b) PAYLAŞIM AÇIKLAMASI:
+      "Yükleme: [Tarih] [Saat] | Teslim: [Tarih] [Saat] | Mesafe: [km]"
+      "Detaylar ve iletişim için uygulamayı aç."
+
+   c) PAYLAŞILAN LİNK (URL Yapısı):
+      https://kaptan.app/yuk/[unique-share-id]
+      Örnek: https://kaptan.app/yuk/abc123xyz
+
+   d) PAYLAŞILMAYACAK VERİLER:
+      - Yükü verenin adı, soyadı
+      - Yükü verenin telefon numarası
+      - Yükü teslim alacak kişinin adı, soyadı, telefonu
+      Bu bilgiler yalnızca uygulama içinde, oturum açmış kullanıcıya gösterilecek.
+
+3. LANDING PAGE (AÇILIŞ SAYFASI) TASARIMI:
+   Linke tıklayan kişi, uygulama yüklü olsun veya olmasın, mobil uyumlu bir web sayfasına yönlensin. Bu sayfa şunları içermeli:
+
+   a) ÜST BÖLÜM:
+      - Yük başlığı (büyük font)
+      - Kalkış → Varış animasyonlu ok
+      - Mesafe bilgisi
+
+   b) ORTA BÖLÜM (YÜK DETAY KARTI):
+      - Yük Cinsi & Miktar (ikonsuz, sade metin)
+      - Yükleme Tarihi & Saati
+      - Teslim Tarihi & Saati
+      - Fiyat Bilgisi (büyük ve belirgin)
+      - Yük Tipi (Tam / Parsiyel / Evden Eve)
+      - Mini harita görüntüsü (statik OpenStreetMap tile, iki nokta işaretli)
+
+   c) ALT BÖLÜM (CTA - Harekete Geçirici Buton):
+      - Büyük, kontrast renkli "Yükü Al" butonu
+      - Buton altında küçük metin: "KAPTAN uygulamasında görüntüle ve teklif ver"
+      - Uygulama simgesi ve adı
+
+   d) FOOTER:
+      - "KAPTAN - Lojistikte Yeni Nesil" gibi kısa slogan
+      - Gizlilik politikası linki
+
+4. DEEP LINK VE YÖNLENDİRME MANTIĞI:
+   "Yükü Al" butonuna basıldığında aşağıdaki akış çalışmalı:
+
+   a) CİHAZ TESPİTİ:
+      - iOS mu Android mi olduğunu otomatik algıla (User-Agent parsing).
+      - Buna göre doğru mağaza linkini hazırla.
+
+   b) DEEP LINK DENEMESİ:
+      - Önce uygulamanın deep link şeması dene: kaptan://yuk/abc123xyz
+      - Uygulama yüklüyse açılır ve direkt yük detay sayfasına gider.
+      - Uygulama yüklü değilse veya deep link zaman aşımına uğrarsa (2 saniye içinde açılmazsa):
+
+   c) STORE'A YÖNLENDİRME:
+      - iOS: App Store linkine
+      - Android: Google Play Store linkine
+      - Her iki durumda da URL parametresi olarak yük ID'si eklenmeli (deferred deep linking için).
+
+   d) DEFERRED DEEP LINKING:
+      - Kullanıcı uygulamayı indirip ilk açtığında, uygulama store'dan geldiğini ve hangi yük için geldiğini anlamalı.
+      - İlk açılışta ilgili yükün detay sayfasına otomatik yönlendirilmeli.
+      - Bunun için Firebase Dynamic Links, Branch.io veya özel bir çözüm kullanılabilir.
+      - Alternatif olarak, uygulama ilk açıldığında clipboard (pano) kontrolü yapıp son kopyalanan linki okuyabilir (daha basit ama daha az güvenilir).
+
+5. SOSYAL MEDYA ÖNİZLEMELERİ (OG META TAGS):
+   Web sayfasında dinamik Open Graph meta etiketleri oluştur ki WhatsApp, Telegram, Facebook, X (Twitter) paylaşımlarında güzel bir kart çıksın:
+
+   og:title: [Kalkış] → [Varış] | [Miktar] [Yük Cinsi]
+   og:description: Yükleme: [tarih] | Fiyat: [fiyat] TL
+   og:image: Dinamik oluşturulmuş bir görsel (güzergah mini harita + yük detayları yazılı)
+   og:url: https://kaptan.app/yuk/abc123xyz
+   twitter:card: summary_large_image
+
+6. GÜVENLİK VE SÜRE YÖNETİMİ:
+   - Her paylaşım için unique bir ID (UUID) oluştur. Bu ID veritabanında yük ID'si ile eşleşsin.
+   - Yükün teslim tarihi geçtiğinde link otomatik olarak "Bu yükün süresi doldu" sayfasına yönlendirilsin.
+   - Rate limiting uygula: aynı IP'den kısa sürede çok fazla istek gelirse engelle.
+   - Hassas veriler (isim, telefon) API'den yalnızca authenticated kullanıcılara dönsün, landing page'te asla gösterilmesin.
+
+7. ANALİTİK VE İZLEME:
+   Şu olayları takip et:
+   - Paylaş butonuna tıklanma (hangi platform seçildi)
+   - Landing page görüntülenme sayısı
+   - "Yükü Al" butonuna tıklanma sayısı
+   - Store'a yönlendirme sayısı
+   - Uygulama indirme ve ilk açılış (deferred deep link başarı oranı)
+   - Paylaşımı yapan kullanıcıya dashboard'da "Yükün X kişi tarafından görüntülendi, Y kişi uygulamayı indirdi" göster.
+
+8. TEKNİK GEREKSİNİMLER:
+   - Landing page: Next.js, Remix veya Astro ile SSR/SSG olarak geliştirilmeli, Vercel/Cloudflare gibi bir CDN'de serve edilmeli.
+   - Deep link: React Native'te react-native-deep-linking veya Firebase Dynamic Links kullanılmalı.
+   - Deferred deep linking: Branch.io, Firebase veya özel clipboard tabanlı çözüm.
+   - Backend: Paylaşım anında yük detaylarını içeren bir "share" kaydı oluştur (ID, yük ID, oluşturma tarihi, son kullanma tarihi).
+   - API: Public endpoint (auth gerektirmez) share ID ile yükün paylaşıma uygun verilerini dönsün.
+   - OG Image: Dinamik görsel oluşturmak için Vercel OG Image, Puppeteer veya basit bir Canvas API kullanılabilir. Alternatif olarak statik bir şablon görsel de kabul edilebilir.
+
+9. KULLANICI DENEYİMİ AKIŞI:
+   KULLANICI A (YÜKÜ PAYLAŞAN):
+   1. Yük detayını açar
+   2. Sağ üstte "Paylaş" butonuna tıklar
+   3. iOS/Android paylaşım paneli açılır
+   4. WhatsApp'ı seçer
+   5. Kişi veya grubu seçer
+   6. Otomatik oluşan mesajı gönderir
+   7. Uygulamaya döner, "Paylaşıldı" onayı alır
+
+   KULLANICI B (LİNKİ ALAN):
+   1. WhatsApp'ta linki görür (zengin önizleme ile)
+   2. Linke tıklar
+   3. Mobil tarayıcıda yük detay sayfası açılır
+   4. Detayları inceler
+   5. "Yükü Al" butonuna tıklar
+   6a. Uygulama yüklüyse → uygulama açılır, yük detayı gelir
+   6b. Uygulama yüklü değilse → Store'a gider, indirir, açar, yük detayı gelir
+   7. Giriş yapar / kayıt olur
+   8. Yükü verenin iletişim bilgilerini görür
+   9. İletişime geçer
+
+10. KABUL KRİTERLERİ:
+    - Yük detay sayfasında "Paylaş" butonu görünür ve çalışır durumda.
+    - WhatsApp, Telegram, SMS ile paylaşımda düzgün bir önizleme kartı çıkar.
+    - Linke tıklayan kişi, irtibat bilgileri olmadan tüm yük detaylarını görür.
+    - "Yükü Al" butonu uygulama yüklüyse direkt yük detayına, değilse store'a yönlendirir.
+    - Uygulama ilk açıldığında deferred deep link ile doğru yük detayına gider.
+    - Yükün süresi dolduğunda link geçersiz olur ve uygun mesaj gösterilir.
+    - Paylaşım analitiği dashboard'da görüntülenebilir.

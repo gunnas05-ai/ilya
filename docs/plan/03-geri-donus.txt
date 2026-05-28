@@ -1,0 +1,505 @@
+KAPTAN LOJISTIK PLATFORMU
+GERI DONUS YUKU BULMA MODULU
+DETAYLI TEKNIK YAZILIM VE UX/UI SPESIFIKASYONU
+
+ROL:
+Sen deneyimli bir:
+- Enterprise Yazilim Mimari
+- Lojistik Operasyon Uzmani
+- React Native / Web Uygulama Gelistiricisi
+- Realtime System Architect
+- Harita ve Geo-Location Uzmani
+- PostgreSQL + PostGIS Uzmani
+- Routing ve Navigation Sistem Uzmani
+- WebSocket ve Event-Driven Sistem Uzmani
+- Mobil Performans Muhendisi
+- AI Matching Algorithm Specialist
+- UX/UI Tasarimcisi
+
+gibi davranacaksin.
+
+AMAC:
+Modern bir lojistik platformunda tasiyicilarin:
+- Bos donus yapmasini azaltmak
+- Teslimat sonrasi otomatik geri donus yukleri bulmak
+- Yakindaki uygun yukleri eslestirmek
+- Verimliligi artirmak
+- Yakit maliyetini dusurmek
+- Operasyonel sureci optimize etmek
+
+icin production-level bir:
+“Geri Donus Yuku Bulma Sistemi”
+
+tasarlamaktir.
+
+Sistem:
+Uber Freight, Convoy, DAT Load Board ve modern AI tabanli lojistik platformlarindan UX/UI ve operasyon mantigi olarak esinlenmelidir.
+
+ONEMLI:
+- Tum menu, popup, bildirim, hata mesaji ve kullaniciya gorunen tum alanlar TURKCE olmalidir.
+- Harita sistemi sadece OpenStreetMap tabanli olmalidir.
+- Sistem realtime, event-driven ve geo-location destekli olmalidir.
+- Tum eslestirme algoritmalari performans odakli calismalidir.
+
+====================================================
+1. TETIKLEYICI OLAY
+====================================================
+
+Tasiyici:
+“Yuku Teslim Ettim”
+
+butonuna bastiginda sistem otomatik olarak:
+
+- GPS konumunu alir
+- Teslim koordinatini kaydeder
+- Teslim zamanini loglar
+- Teslim dogrulama surecini baslatir
+
+====================================================
+TESLIM DOGRULAMA KURALLARI
+====================================================
+
+Modul aktif olmadan once:
+- Dijital imza
+- QR kod dogrulamasi
+- Fotograf yukleme
+- OTP kod onayi
+- GPS teslim dogrulamasi
+
+kontrollerinden en az biri tamamlanmis olmalidir.
+
+Teslim onayi olmadan:
+“Geri Donus Yuku Bul”
+
+modulu aktif edilmez.
+
+====================================================
+2. GERI DONUS YUK ALGORITMASI
+====================================================
+
+Sistem:
+Teslim lokasyonunun belirli bir yaricapindaki aktif yuk ilanlarini tarar.
+
+Varsayilan yaricap:
+- 100 KM
+
+Kullanici isterse:
+- 25 KM
+- 50 KM
+- 100 KM
+- 250 KM
+- 500 KM
+
+filtreleriyle yaricap degistirebilir.
+
+====================================================
+ALGORITMA ESLESTIRME KRITERLERI
+====================================================
+
+Sistem asagidaki kriterlere gore yukleri filtreler:
+
+1. Arac Tipi Uyumlulugu
+- Birebir eslesme zorunlu
+
+2. Tonaj Uyumlulugu
+- Yuk tasiyici kapasitesini asmamali
+
+3. Hacim Uyumlulugu
+- Arac hacmine uygun olmali
+
+4. Tarih Uyumlulugu
+- Yukleme tarihi:
+Teslimattan minimum 1 saat sonra olmali
+
+- Maksimum:
+Teslimattan sonraki 48 saat icinde olmali
+
+5. Lokasyon Uyumlulugu
+- En yakin yukler once listelenmeli
+
+6. Rota Verimliligi
+- Donus rotasina yakin yukler onceliklendirilmeli
+
+====================================================
+AKILLI PUANLAMA SISTEMI
+====================================================
+
+Sistem her yuk icin AI destekli:
+“Uyumluluk Skoru”
+
+hesaplar.
+
+Puanlama kriterleri:
+- Mesafe
+- Kazanc
+- Bos kilometre
+- Tahmini yakit maliyeti
+- Arac uyumlulugu
+- Tarih uygunlugu
+- Geri donus verimliligi
+
+====================================================
+3. KULLANICI ARAYUZU
+====================================================
+
+Ana aksiyon butonlari:
+
+- Geri Donus Yuku Bul
+- Bos Donme, Yuk Bul
+- Yakinimdaki Yukler
+- Donus Rotama Uygun Yukler
+
+====================================================
+ILAN KARTLARI
+====================================================
+
+Her ilan kartinda:
+
+- Yuk Veren Firma
+- Yukleme Noktasi
+- Teslim Noktasi
+- Mesafe
+- Yuk Cesidi
+- Arac Tipi
+- Tonaj
+- Yukleme Tarihi
+- Yukleme Saati
+- Tahmini Odeme
+- Teklif Sayisi
+- Aciliyet Durumu
+- Escrow Durumu
+- Guvenli Odeme Rozeti
+- Uyum Skoru (%)
+
+====================================================
+KART AKSIYONLARI
+====================================================
+
+- Rezerv Et
+- Teklif Ver
+- Haritada Goster
+- Rotayi Ac
+- Favorilere Ekle
+- Sesli Oku
+
+====================================================
+4. REZERVASYON VE TEKLIF SISTEMI
+====================================================
+
+Kullanici:
+“Teklif Ver”
+
+butonuna bastiginda expandable modal acilir.
+
+====================================================
+MODAL ALANLARI
+====================================================
+
+- Teklif Fiyati
+- Tahmini Varis Zamani
+- Yuku Alabilecegi Saat
+- Not (Opsiyonel)
+- Bos Donus Orani
+- Escrow Odeme Istegi
+
+====================================================
+TEKLIF GONDERME AKISI
+====================================================
+
+1. Tasiyici teklif gonderir
+2. Ilan sahibine realtime bildirim gider
+3. Ilan sahibi:
+   - Kabul eder
+   - Karsi teklif verir
+   - Reddeder
+
+4. Kabul edilirse:
+- Yuk rezerve edilir
+- Tasiyicinin:
+  “Aktif Yuklerim”
+
+listesine eklenir.
+
+====================================================
+5. BOS DONUS ANALITIGI
+====================================================
+
+Sistem:
+Bos donusleri analiz eder.
+
+Kaydedilecek veriler:
+- Bos gidilen kilometre
+- Donus yuk oranlari
+- Ortalama doluluk
+- Kazanc optimizasyonu
+- Yakıt tasarrufu
+
+====================================================
+VERIMLILIK PUANI
+====================================================
+
+Tasiyicilara:
+“Verimlilik Puani”
+
+verilir.
+
+Puan kriterleri:
+- Basarili geri donus yukleri
+- Dusuk bos kilometre
+- Yuksek teslim oranlari
+- Zamaninda teslim
+- Musteri memnuniyeti
+
+====================================================
+TESVIK SISTEMI
+====================================================
+
+Push notification senaryolari:
+
+- Sana uygun donus yuku bulundu
+- Rota ustunde yeni yuk var
+- Bos donusunu azalt
+- Yuksek kazancli donus yuku bulundu
+
+====================================================
+6. HARITA SISTEMI
+====================================================
+
+Harita Teknolojileri:
+- OpenStreetMap
+- Leaflet.js
+
+Routing:
+- OSRM
+- Leaflet Routing Machine
+
+====================================================
+HARITA OZELLIKLERI
+====================================================
+
+- Kullanici konumu
+- Teslim noktasi marker
+- Yukleme noktasi marker
+- Route polyline
+- Mesafe hesaplama
+- Tahmini sure hesaplama
+- Zoom controls
+- Marker popup
+- Cluster support
+
+====================================================
+MARKER SISTEMI
+====================================================
+
+Marker renkleri:
+- Alim Noktasi = Yesil
+- Teslim Noktasi = Kirmizi
+- Geri Donus Yukleri = Mavi
+- Escrow Garantili Yukler = Altin Sari
+
+Popup icinde:
+- Acik adres
+- Tahmini sure
+- Tonaj
+- Arac tipi
+- Fiyat
+- Teklif sayisi
+
+====================================================
+ROTA SISTEMI
+====================================================
+
+Secilen ilan icin:
+- Tek rota gosterilir
+- Mavi route line
+- 3-4 px kalinlik
+- Tahmini mesafe
+- Tahmini sure
+
+====================================================
+7. GEOLOCATION VE MESAFE HESAPLAMA
+====================================================
+
+Koordinat bazli arama sistemi kullanilir.
+
+Mesafe hesaplama:
+- Haversine Formula
+veya
+- OSRM distance matrix
+
+====================================================
+GEO SERVISLER
+====================================================
+
+- Reverse geocoding
+- Nominatim API
+- Geo indexing
+- Radius search
+- Nearby search
+
+====================================================
+8. RACE CONDITION VE REZERVASYON KONTROLU
+====================================================
+
+Sistem:
+Ayni ilana ayni anda birden fazla teklif gelmesini kontrol etmelidir.
+
+Kurallar:
+- Optimistic locking
+- Transaction management
+- Reservation timeout
+- Atomic reservation update
+
+Eger yuk baska tasiyiciya rezerve edilmisse:
+- Kullaniciya realtime bilgi gosterilir
+- UI otomatik guncellenir
+
+====================================================
+9. REALTIME SISTEM MIMARISI
+====================================================
+
+WebSocket eventleri:
+
+- NEW_RETURN_LOAD
+- LOAD_RESERVED
+- LOAD_EXPIRED
+- NEW_BID
+- BID_ACCEPTED
+- BID_REJECTED
+- FILTER_MATCH
+- ROUTE_MATCH
+
+====================================================
+REALTIME OZELLIKLER
+====================================================
+
+- Instant updates
+- Realtime sync
+- Optimistic UI
+- Offline queue
+- Reconnect handling
+- Event buffering
+
+====================================================
+10. SESLI KOMUT SISTEMI
+====================================================
+
+Teknoloji:
+- Web Speech API
+
+Ozellikler:
+- Voice-to-command
+- Speech-to-text
+- Text-to-speech
+
+====================================================
+DESTEKLENEN KOMUTLAR
+====================================================
+
+- "Yakinimdaki donus yuklerini goster"
+- "100 kilometre icindeki yukleri filtrele"
+- "Escrow garantili yukleri goster"
+- "5000 TL teklif ver"
+- "Rotayi ac"
+- "Ilani oku"
+
+====================================================
+11. TEXT TO SPEECH SISTEMI
+====================================================
+
+“Ilani Oku”
+
+komutunda sistem sesli olarak:
+
+- Yuk tipi
+- Tonaj
+- Yukleme noktasi
+- Teslim noktasi
+- Tahmini fiyat
+- Escrow durumu
+- Tahmini sure
+
+bilgilerini okur.
+
+====================================================
+12. TEKNIK ALTYAPI
+====================================================
+
+Frontend:
+- React Native
+- Expo
+- TypeScript
+
+Backend:
+- Node.js
+- NestJS veya Express
+
+Database:
+- PostgreSQL
+- PostGIS
+- Redis
+
+Realtime:
+- Socket.IO veya Native WebSocket
+
+Harita:
+- OpenStreetMap
+- Leaflet
+- OSRM
+
+Geo:
+- Nominatim API
+
+====================================================
+13. PERFORMANS VE OPTIMIZASYON
+====================================================
+
+Sistem:
+- Lazy loading
+- Infinite scrolling
+- Virtualized list
+- Tile cache
+- Geo cache
+- Background sync
+
+Mobil optimizasyon:
+- Dusuk internet hizi destegi
+- Offline mode
+- Dusuk RAM optimizasyonu
+
+====================================================
+14. GUVENLIK
+====================================================
+
+- JWT Authentication
+- API rate limiting
+- GPS spoofing kontrolu
+- WebSocket authentication
+- Secure storage
+- SQL injection protection
+- XSS protection
+- Escrow fraud detection
+
+====================================================
+15. UX/UI TASARIM KURALLARI
+====================================================
+
+Tasarim:
+- Modern lojistik marketplace
+- Mobil-first
+- Tek elle kullanim
+- Surucu dostu arayuz
+- Minimum dikkat dagitimi
+- Buyuk dokunmatik alanlar
+
+Animasyonlar:
+- Smooth transitions
+- Skeleton loading
+- Haptic feedback
+- Swipe gestures
+- Realtime loading states
+
+Tum sistem:
+hizli, stabil, akilli, geo-aware, realtime ve production-ready olmalidir.
+
+BITIS

@@ -1,0 +1,698 @@
+# KAPTAN LOJISTIK PLATFORMU
+
+# YUK EKLE MODULU
+
+## DETAYLI TEKNIK YAZILIM VE UX/UI SPESIFIKASYONU
+
+---
+
+# ROL
+
+Sen deneyimli bir:
+
+- Enterprise Yazilim Mimari
+- Mobil Uygulama Gelistiricisi
+- React Native Uzmani
+- UX/UI Tasarimcisi
+- Lojistik Operasyon Uzmani
+- Backend API Mimari
+- Form ve Validasyon Sistemi Uzmani
+
+gibi davranacaksin.
+
+Tum uygulama altyapisi profesyonel, moduler, mobil uyumlu, API destekli ve production seviyesinde tasarlanmalidir.
+
+---
+
+# ONEMLI
+
+- Modul isimleri teknik olarak Ingilizce olabilir.
+- Ancak uygulama icindeki TUM menu, alan isimleri, butonlar, popup mesajlari, validasyon mesajlari ve kullaniciya gorunen tum ekranlar TURKCE olacaktir.
+- Tum Turkce karakterler (ç,ğ,ı,ö,ş,ü) eksiksiz desteklenmelidir.
+- Mobil cihazlarda iOS ve Android uyumlu responsive tasarim uygulanmalidir.
+
+---
+
+# 1. MODUL: YUK EKLE
+
+Kullanici ana sayfadaki:
+
+**"Yuk Ekle"**
+
+ikonuna tikladiginda sistem:
+
+**"Sevkiyat Ekle"**
+
+ekranini acar.
+
+---
+
+# 1.1. GENEL AKIS VE KULLANICI DENEYIMI
+
+## Kurallar
+
+- Tum zorunlu alanlar doldurulmadan sonraki ekrana gecilemez.
+- Zorunlu alanlar "*" ile belirtilmelidir.
+- Form validasyonlari anlik calismalidir.
+- Hata mesajlari kullanici dostu ve Turkce olmalidir.
+- Her ekranda sol ustte:
+
+**"Geri Don"**
+
+butonu bulunmalidir.
+
+- Geri Don butonu kesinlikle ana sayfaya atmamalidir.
+- Sadece onceki ekrana donmelidir.
+- Scroll sistemi tum cihazlarda sorunsuz calismalidir.
+- Klavye acildiginda input alanlari kapanmamalidir.
+- Alt kisimdaki butonlara ulasilabilmelidir.
+- Mobil cihazlarda numeric alanlarda otomatik numeric keyboard acilmalidir.
+
+---
+
+# 1.2. 1. EKRAN — ORTAK ALANLAR
+
+Sayfanin en ustunde:
+
+**"Yuk Turu Seciniz"**
+
+dropdown menusu bulunur.
+
+## Secenekler
+
+- Tam Yuk
+- Kismi Yuk
+- Evden Eve
+- Sehir Ici
+
+Kullanici hangi yuk turunu secerse:
+
+**2. ekran dinamik olarak o secime gore olusturulur.**
+
+---
+
+# ORTAK FORM ALANLARI
+
+## 1. Baslik *
+
+Kullanici yuk ilani basligi yazar.
+
+### Ornekler
+
+- 28 Ton Komur
+- Ev Esyasi Tasima
+- Istanbul Ankara Parsiyel Yuk
+
+### Kurallar
+
+- Minimum 5 karakter
+- Maksimum 20 karakter
+
+---
+
+## 2. Nereden (Il / Ilce) *
+
+- Dropdown veya harita secimi
+- "Konum Bul" butonu
+- GPS destekli otomatik konum algilama
+
+---
+
+## 3. Yukleme Adresi *
+
+- Mahalle
+- Sokak
+- Bina No
+- Acik adres
+
+---
+
+## 4. Nereye (Il / Ilce) *
+
+---
+
+## 5. Teslimat Adresi *
+
+---
+
+## 6. Irtibat Kisisi *
+
+Iki ayri alan:
+
+- Ad Soyad
+- Telefon Numarasi
+
+---
+
+## 7. Yukleme Tarihi *
+
+- Takvim secici
+
+---
+
+## 8. Yukleme Saati
+
+- Opsiyonel
+- Tarih alaninin yaninda yatay hizali olacak
+
+---
+
+## 9. Teslim Tarihi *
+
+- Takvim secici
+
+---
+
+## 10. Teslim Saati
+
+- Opsiyonel
+- Tarih alaninin yaninda yatay hizali olacak
+
+---
+
+## 11. Aciklama
+
+- Maksimum 300 karakter
+
+---
+
+## Buton
+
+**"Devam Et"**
+
+Tiklandiginda:
+
+- Veriler gecici kaydedilir
+- Kullanici secilen yuk turunun detay ekranina yonlendirilir
+
+---
+
+# 1.3. 2. EKRAN — YUK TURUNE OZEL ALANLAR
+
+---
+
+# A) TAM YUK
+
+## Alanlar
+
+### 1. Arac Tipi
+
+Dropdown:
+
+- Cekici (TIR)
+- Kamyon
+- Kirkayak Kamyon
+- Lowbed Cekici
+- Tanker Cekici
+- Frigorifik Arac
+- Konteyner Tasiyici
+- Silobas Cekici
+
+---
+
+### 2. Dorse Tipi
+
+Dropdown:
+
+- Tenteli Dorse
+- Mega Dorse
+- Frigorifik Dorse
+- Damper Dorse
+- Havuz Dorse
+- Lowbed Dorse
+- Konteyner Dorse
+- Silobas Dorse
+- Tanker Dorse
+- Platform Dorse
+- Sal Dorse
+- Acik Kasa Dorse
+
+---
+
+### 3. Toplam Agirlik (Kg) *
+
+- Sayisal alan
+
+---
+
+### 4. Soguk Zincir Gerekiyor mu?
+
+- Evet
+- Hayir
+
+---
+
+### 5. Aciklama
+
+- Maksimum 300 karakter
+
+---
+
+# B) KISMI YUK
+
+## Alanlar
+
+### 1. Arac Tipi
+
+ComboBox Dropdown
+
+---
+
+### 2. Dorse Tipi
+
+ComboBox Dropdown
+
+---
+
+### 3. Parca Sayisi *
+
+- Sayisal
+
+---
+
+### 4. Toplam Agirlik (Ton)
+
+---
+
+### 5. Hacim (m3) *
+
+---
+
+### 6. Paket Tipi
+
+Dropdown:
+
+- Palet
+- Koli
+- Adet
+
+---
+
+### 7. Paylasimli Tasima Izni
+
+- Evet
+- Hayir
+
+---
+
+### 8. Yuk Aciliyeti
+
+Radio Button:
+
+- Dusuk
+- Normal
+- Yuksek
+
+---
+
+### 9. Aciklama
+
+- Maksimum 300 karakter
+
+---
+
+# C) EVDEN EVE
+
+## Alanlar
+
+### 1. Arac Tipi
+
+Dropdown:
+
+- Kapali Kasa Kamyon
+- Kapali Kasa Kamyonet
+- Panelvan
+- Liftli Nakliye Araci
+- Asansorlu Nakliyat Araci
+
+---
+
+### 2. Dorse Tipi
+
+Dropdown:
+
+- Kapali Kasa
+- Liftli Kapali Kasa
+- Mobilya Tasima Kasasi
+- Asansorlu Tasima Sistemi
+
+---
+
+### 3. Tasima Tipi
+
+Dropdown:
+
+- Ev Esyasi
+- Ofis Esyasi
+- Beyaz Esya
+- Mobilya
+- Parca Esya
+- Antika / Hassas Esya
+
+---
+
+### 4. Esya Listesi
+
+- Metin alani
+
+---
+
+### 5. Kat Bilgileri
+
+- Gonderen Kat Sayisi
+- Alici Kat Sayisi
+
+---
+
+### 6. Asansor Var mi?
+
+Iki ayri secim:
+
+- Gonderen
+- Alici
+
+---
+
+### 7. Ambalaj Gerekiyor mu?
+
+- Evet
+- Hayir
+
+---
+
+### 8. Aciklama
+
+- Maksimum 300 karakter
+
+---
+
+# D) SEHIR ICI
+
+## Alanlar
+
+### 1. Arac Tipi
+
+Dropdown:
+
+- Panelvan
+- Kamyonet
+- Pickup
+- Moto Kurye
+- Minivan
+- Frigorifik Minivan
+- Hafif Ticari Arac
+
+---
+
+### 2. Dorse Tipi
+
+Dropdown:
+
+- Kapali Kasa
+- Acik Kasa
+- Frigorifik Kasa
+- Kurye Kasasi
+- Hafif Ticari Kasa
+
+---
+
+### 3. Tasima Turu
+
+Dropdown:
+
+- Market Dagitimi
+- Restoran Sevkiyati
+- Ilac Dagitimi
+- E-Ticaret Teslimati
+- Soguk Zincir
+- Tarim Urunleri
+- Kargo Dagitimi
+- Sanayi Ici Dagitim
+
+---
+
+### 4. Tahmini Mesafe (Km) *
+
+- Sayisal alan
+
+---
+
+### 5. Teslimat Saat Araligi
+
+Dropdown:
+
+- 09:00 - 12:00
+- 12:00 - 17:00
+- 17:00 - 21:00
+
+---
+
+### 6. Aciliyet Durumu
+
+Radio:
+
+- Ayni Gun
+- Ertesi Gun
+- 3 Gun Icinde
+
+---
+
+### 7. Yuk Boyutu
+
+Dropdown:
+
+- Kucuk
+- Orta
+- Buyuk
+
+---
+
+### 8. Aciklama
+
+- Maksimum 300 karakter
+
+---
+
+# 1.4. 3. EKRAN — FIYATLANDIRMA / IHALE / SIGORTA
+
+## Alanlar
+
+### 1. Yuk Ihale Edilecek mi?
+
+- Evet
+- Hayir
+
+Eger "Evet" secilirse:
+
+### Dinamik Alanlar
+
+- Alt Limit Fiyati
+- Ust Limit Fiyati
+- Ihale Baslangic Tarihi
+- Ihale Baslangic Saati
+- Ihale Bitis Tarihi
+- Ihale Bitis Saati
+
+---
+
+### 2. Kapida Odeme Var mi?
+
+- Evet
+- Hayir
+
+---
+
+### 3. Sigorta Istiyor mu?
+
+- Evet
+- Hayir
+
+Eger "Evet":
+
+- Sigorta modulu acilir
+- Farkli sigorta paketleri listelenir
+- Kullanici paket secer
+- Secilen paket sisteme kaydedilir
+
+---
+
+### 4. Guvenli Odeme (Escrow) Istiyor mu?
+
+- Evet
+- Hayir
+
+Eger "Evet":
+
+Yuk detayinda:
+
+**"Guvenli Odeme"**
+
+etiketi gorunur.
+
+---
+
+# FIYATLANDIRMA SISTEMI
+
+## Yuk Hesaplama Tipi
+
+Radio:
+
+- Tonaj Bazli
+- Komple / Adet Bazli
+
+---
+
+## Tonaj Bazli
+
+- Toplam Tonaj
+- Ton Basi Fiyat
+
+### Formul
+
+Toplam = Tonaj x Ton Basi Fiyat
+
+Sonrasinda:
+
++ %20 KDV
+
+---
+
+## Komple Bazli
+
+- Toplam Yuk Kg
+- Komple Yuk Fiyati
+
+Sonuc:
+
++ %20 KDV
+
+---
+
+# FIYAT OZETI
+
+Kullaniciya gosterilecek bilgiler:
+
+- Net Tutar
+- KDV (%20)
+- Sigorta Ucreti
+- Ihale Durumu
+- Guvenli Odeme Durumu
+- Toplam Fiyat
+
+---
+
+# BUTONLAR
+
+- Geri Don
+- Kaydet
+- Yuku Listele
+- Havuza Ekle
+
+---
+
+# KAYDETME SISTEMI
+
+Sistem:
+
+- Benzersiz yuk ID olusturur
+
+## ID Formati
+
+Yil + Ay + Gun + Saat + Dakika + Saniye
+
+### Ornek
+
+202606151425066
+
+Bu ID:
+
+- Log sistemine yazilir
+- Veritabani kaydina eklenir
+
+Yuk:
+
+**"Satilik Urun Havuzu"**
+
+icerisine aktarilir.
+
+---
+
+# KAYIT SONRASI
+
+Kayit basariliysa:
+
+- Basarili popup mesaji
+- Ana sayfaya yonlendirme
+
+Ayrica:
+
+- Yuk onizleme karti gosterilir
+
+Kullanici isterse:
+
+**"Duzenle"**
+
+butonuna basarak kaydi revize edebilir.
+
+---
+
+# HATA YONETIMI
+
+## Kurallar
+
+- Sayisal alanlara harf girilemez
+- Numeric keyboard otomatik acilir
+- Teslim tarihi yukleme tarihinden once olamaz
+- Hatalar log sistemine yazilir
+- API hatalari yakalanir
+- Offline kayit sistemi bulunur
+- Baglanti koparsa veriler cihazda saklanir
+- Internet geldiginde otomatik gonderilir
+
+---
+
+# TEKNIK MIMARI
+
+## Sistem Destekleri
+
+- React Native
+- Expo
+- REST API
+- Dynamic Form Engine
+- Offline Cache
+- Local Storage
+- Form State Management
+- Multi Step Wizard
+- Turkish Localization
+
+---
+
+# ONERILEN TEKNOLOJILER
+
+- React Hook Form
+- Zod veya Yup
+- Zustand veya Redux
+- AsyncStorage
+- Axios
+- React Navigation
+- DateTime Picker
+
+---
+
+# UX/UI TASARIM KURALLARI
+
+## Tasarim Ozellikleri
+
+- Modern lojistik platform gorunumu
+- Mobil uyumlu
+- Buyuk dokunmatik alanlar
+- Sticky bottom button
+- Step indicator
+- Yukleme animasyonlari
+- Skeleton loading
+- Basarili kayit animasyonu
+- Dark Mode
+- Light Mode
+
+Tum kullanici deneyimi:
+butun pencerelere "Geri" tuşu koy

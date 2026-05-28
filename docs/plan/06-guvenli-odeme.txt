@@ -1,0 +1,419 @@
+================================================================================
+KAPTAN LOJISTIK PORTAL
+GUVENLI ODEME MODULU
+(ENTERPRISE ESCROW + QR + MILESTONE PAYMENT SYSTEM)
+
+TEMEL AMAC
+================================================================================
+
+KAPTAN LOJISTIK PLATFORMU icin:
+
+enterprise-grade,
+production-ready,
+financially secure,
+audit edilebilir,
+fraud-resistant,
+realtime destekli,
+offline-first uyumlu,
+olceklenebilir
+
+bir GUVENLI ODEME (ESCROW + QR + MILESTONE PAYMENT) SISTEMI tasarla.
+
+Bu sistem:
+- lojistik odemelerini guvence altina alacak,
+- teslimata bagli otomatik odeme release saglayacak,
+- dolandiricilik riskini minimize edecek,
+- dispute (uyusmazlik) yonetimi saglayacak,
+- anlik cüzdan sistemi sunacak
+
+sekilde tasarlanmalidir.
+
+================================================================================
+SISTEMIN TEMEL PRENSIBI
+================================================================================
+
+"ODEME TESLIMATA BAGLIDIR"
+
+- Para asla dogrudan tasiyiciya gitmez
+- Tum odemeler escrow hesapta tutulur
+- Sadece dogrulanmis teslimat sonrası release edilir
+
+DOGRULAMA KANALLARI:
+- QR verification
+- GPS verification
+- Device fingerprint
+- AI fraud detection
+- Foto/video kaniti
+
+================================================================================
+KULLANICI ROLLERI
+================================================================================
+
+- yuk_veren
+- tasiyici
+- sofor
+- filo_yoneticisi
+- platform_operatoru
+- marketplace_satici
+- marketplace_alici
+- dispute_moderator (hakem)
+
+ROL BAZLI YETKILER:
+- odeme baslatma
+- escrow goruntuleme
+- dispute acma
+- kanit yukleme
+- odeme release onayi
+- fraud inceleme
+
+================================================================================
+ESCROW ODEME AKISI
+================================================================================
+
+1. Yuk veren tasiyici secer
+2. Odeme sisteme aktarilir
+   -> ESCROW_FUNDS_LOCKED
+3. Para escrow hesabinda tutulur
+4. Tasima baslar
+5. Pickup QR okutulur
+6. GPS + device + QR dogrulanir
+7. Shipment process baslar
+8. Milestone QR’lari kullanilir (varsa)
+9. Final delivery QR okutulur
+10. AI fraud analizi calisir
+11. Odeme release edilir
+   -> ESCROW_FUNDS_RELEASED
+
+================================================================================
+MILESTONE PAYMENT SISTEMI
+================================================================================
+
+Büyük lojistik operasyonlar icin:
+
+ORNEK:
+Toplam 100.000 TL
+
+- %30 Pickup
+- %40 Transit checkpoint
+- %30 Final delivery
+
+HER MILESTONE:
+- ayrilmis escrow lock
+- ayrilmis QR token
+- ayrilmis fraud score
+- ayrilmis release karari
+
+KURAL:
+Her milestone bagimsiz finansal unit olarak davranir.
+
+================================================================================
+QR DOGRULAMA SISTEMI
+================================================================================
+
+QR TOKEN YAPISI:
+{
+  shipmentId,
+  driverId,
+  customerId,
+  timestamp,
+  nonce,
+  signature,
+  checkpointType
+}
+
+GUVENLIK:
+- AES-256-GCM encryption
+- HMAC-SHA256 signature
+- 15 dakika TTL
+- single-use QR
+- replay protection
+
+================================================================================
+QR DOGRULAMA AKISI
+================================================================================
+
+1. QR generate edilir
+2. Driver QR okutur
+3. Sistem kontrol eder:
+   - JWT auth
+   - nonce validity
+   - TTL kontrolu
+   - GPS validation
+   - device fingerprint
+4. Basarili:
+   -> QR_SCANNED event
+5. Basarisiz:
+   -> QR_SCAN_FAILED event
+
+================================================================================
+GPS DOGRULAMA SISTEMI
+================================================================================
+
+PostGIS tabanli kontrol:
+
+- max sapma: 500 metre (ST_DWithin)
+- route alignment check
+- speed anomaly detection
+- location jump detection
+- fake GPS detection
+
+RISK ARTIRAN DURUMLAR:
+- rota disi hareket
+- ani lokasyon degisimi
+- imkansiz hiz
+
+================================================================================
+AI FRAUD DETECTION ENGINE
+================================================================================
+
+VERI KAYNAKLARI:
+- GPS logs
+- QR history
+- device fingerprint
+- IP address
+- network patterns
+- wallet behavior
+- dispute history
+
+FRAUD ANALIZ:
+- fake route detection
+- emulator/root detection
+- QR replay attack
+- multi-device anomaly
+- impossible delivery time
+
+RISK SKORU:
+
+0-29  -> AUTO RELEASE
+30-69 -> MANUAL REVIEW
+70+   -> PAYMENT_ON_HOLD
+
+================================================================================
+DISPUTE (UYUSMAZLIK) SISTEMI
+================================================================================
+
+TRIGGER:
+- hasar
+- eksik teslim
+- gecikme
+- evrak eksikligi
+- yanlis teslim
+
+SUREC:
+1. PAYMENT_ON_HOLD
+2. kanit toplama (72 saat)
+3. foto/video/pdf upload
+4. GPS route evidence
+5. moderator review
+6. karar:
+   - release
+   - partial refund
+   - full refund
+
+================================================================================
+WALLET SISTEMI
+================================================================================
+
+KULLANICI WALLET ALANLARI:
+- available_balance
+- escrow_balance
+- pending_release
+- transaction_history
+- commission_history
+
+ISLEMLER:
+- withdraw
+- IBAN transfer
+- yakit avansi
+- milestone payout
+- cashback
+
+EVENTLER:
+- WALLET_CREDITED
+- WALLET_DEBITED
+
+================================================================================
+REALTIME EVENT MIMARISI
+================================================================================
+
+EVENT BUS:
+- Redis Pub/Sub OR RabbitMQ
+
+EVENTLER:
+- ESCROW_FUNDS_LOCKED
+- ESCROW_FUNDS_RELEASED
+- QR_SCANNED
+- QR_SCAN_FAILED
+- DELIVERY_CONFIRMED
+- FRAUD_ALERT_TRIGGERED
+- PAYMENT_ON_HOLD
+- DISPUTE_OPENED
+- WALLET_CREDITED
+
+WEBSOCKET CHANNELS:
+- shipment:{id}
+- wallet:{userId}
+- dispute:{id}
+
+================================================================================
+OFFLINE-FIRST MIMARI
+================================================================================
+
+OFFLINE DURUMDA:
+- QR scan queue'ya alinir
+- GPS cache edilir
+- kanitlar local storage’da tutulur
+- sync background’da calisir
+
+SYNC KURALI:
+- internet gelince otomatik sync
+- 24 saat sync olmazsa SMS/email fallback
+
+================================================================================
+OUTBOX PATTERN (KRITIK FINANSAL GUVENLIK)
+================================================================================
+
+- her transaction DB’ye yazilir
+- ayni transaction outbox’a kaydedilir
+- background worker event publish eder
+- event kaybi OLMAZ
+- retry mekanizmasi garanti edilir
+
+================================================================================
+API MIMARISI
+================================================================================
+
+REST API:
+- /escrow/create
+- /escrow/release
+- /wallet/balance
+- /wallet/withdraw
+- /qr/generate
+- /qr/validate
+- /dispute/open
+- /dispute/resolve
+
+WEBSOCKET:
+- realtime payment status
+- shipment updates
+- fraud alerts
+
+================================================================================
+GUVENLIK SISTEMI
+================================================================================
+
+AUTH:
+- JWT access token (15 min)
+- refresh token (7 days)
+
+DEVICE SECURITY:
+- device fingerprinting
+- jailbreak/root detection
+- emulator detection
+
+PAYMENT SECURITY:
+- idempotency key
+- transaction signing
+- nonce protection
+- encrypted QR payload
+
+RATE LIMIT:
+- 5 request/sec
+- exceed -> 15 min block
+
+================================================================================
+COMPLIANCE
+================================================================================
+
+- PCI-DSS uyumlu tokenization
+- KVKK veri koruma
+- GDPR delete/export rights
+- audit logging zorunlu
+- encrypted PII storage
+
+================================================================================
+HATA SENARYOLARI
+================================================================================
+
+- GPS mismatch -> QR rejected
+- duplicate payment -> idempotent reject
+- QR replay attack -> blocked nonce
+- network loss -> offline queue
+- fraud HIGH -> PAYMENT_ON_HOLD
+- milestone timeout -> auto refund
+
+================================================================================
+MONITORING & OBSERVABILITY
+================================================================================
+
+METRICS:
+- escrow release time
+- QR success rate
+- fraud ratio
+- dispute rate
+- API latency
+
+TOOLS:
+- Prometheus
+- Grafana
+- OpenTelemetry
+- Loki / ELK
+
+================================================================================
+SCALABILITY
+================================================================================
+
+- PostgreSQL replication
+- Redis cluster
+- horizontal scaling
+- worker-based queue system
+- websocket sticky sessions
+- CDN integration
+
+================================================================================
+AI DESTEKLI SISTEMLER
+================================================================================
+
+- dynamic fraud scoring
+- smart delivery validation
+- route anomaly detection
+- wallet abuse detection
+- risk-based payment release
+
+================================================================================
+ENTEGRASYONLAR
+================================================================================
+
+- Teklif Modulu -> escrow create
+- Yuk Yukleme -> pickup QR trigger
+- Sürücü Sistemi -> GPS tracking
+- Finans Modulu -> wallet management
+- Marketplace -> escrow based payments
+
+================================================================================
+FINAL KURAL
+================================================================================
+
+Bu sistem:
+
+- financial-grade security
+- enterprise architecture
+- fraud-resistant
+- realtime distributed system
+- offline-first capable
+- scalable
+- audit-ready
+
+olmalidir.
+
+Tum tasarim:
+- production seviyesinde
+- implement edilebilir
+- teknik detayli
+- mimari odakli
+
+hazirlanmalidir.
+
+Kod yazilmaz.
+Sadece sistem tasarimi, mimari, veri modeli, akislar ve API tanimlanir.
+

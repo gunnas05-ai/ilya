@@ -1,0 +1,484 @@
+KAPTAN LOJISTIK PLATFORMU
+2. MODUL: YUK AL (TASIYICI MODULU)
+ESCROW (GUVENLI ODEME) ENTEGRELI
+DETAYLI TEKNIK YAZILIM VE UX/UI SPESIFIKASYONU
+
+ROL:
+Sen deneyimli bir:
+- Enterprise Yazilim Mimari
+- FinTech ve Escrow Sistem Uzmani
+- Lojistik Operasyon Uzmani
+- React Native / Web Uygulama Gelistiricisi
+- Realtime System Architect
+- Harita ve Geo-Location Uzmani
+- WebSocket ve Event-Driven Sistem Uzmani
+- UX/UI Tasarimcisi
+- PostgreSQL + PostGIS Uzmani
+- Mobil Performans Muhendisi
+- Voice AI / Speech API Uzmani
+- Payment Gateway ve Dijital Cuzdan Uzmani
+
+gibi davranacaksin.
+
+AMAC:
+Modern bir lojistik platformu icin tasiyici odakli:
+
+- Yuk Bulma
+- Harita Uzerinden Yuk Arama
+- Teklif Verme
+- Pazarlik Yapma
+- Escrow (Guvenli Odeme Alma)
+- Gercek Zamanli Teklif Takibi
+- Sesli Komut ve Sesli Okuma
+- Dijital Odeme ve Komisyon Yonetimi
+
+sistemlerini iceren production-level bir “Yuk Al” modulu tasarlamaktir.
+
+Sistem:
+Uber Freight, Convoy, DAT Load Board, TIRPORT, Sahibinden, Trendyol Express ve modern marketplace uygulamalarindan UX/UI ve operasyon mantigi olarak esinlenmelidir.
+
+ONEMLI:
+- Teknik altyapi Ingilizce olabilir.
+- Ancak uygulama icindeki tum menu, popup, hata mesaji, bildirim, buton ve kullaniciya gorunen tum alanlar TURKCE olmalidir.
+- Escrow (Guvenli Odeme) sistemi modulin merkezinde bulunmalidir.
+- Mobil ve desktop responsive tasarim zorunludur.
+- Tum sistem realtime ve event-driven mantikta calismalidir.
+
+====================================================
+1. KULLANICI ROLLERI VE YETKILENDIRME
+====================================================
+
+Bu modulu sadece:
+- Tasiyici Firma
+- Sofor
+- Filo Yoneticisi
+
+rollerine sahip kullanicilar kullanabilir.
+
+Yetkilendirme:
+- JWT Authentication
+- Role Based Authorization
+- Refresh Token sistemi
+- Session timeout kontrolu
+- API access middleware
+
+Kurallar:
+- Yetkisiz kullanicilar teklif veremez.
+- Yetkisiz API istekleri otomatik reject edilir.
+- Escrow islemleri sadece dogrulanmis hesaplarda aktif olur.
+
+====================================================
+2. TEKLIF ONCESI ZORUNLU PROFIL KONTROLU
+====================================================
+
+Tasiyici teklif vermeden once asagidaki alanlari doldurmus olmalidir:
+
+- Ehliyet Bilgisi
+- Arac Plakasi
+- Arac Tipi
+- Arac Kapasitesi
+- Tonaj Bilgisi
+- Hacim Bilgisi
+- K Belgesi Numarasi
+- SRC Belgesi Numarasi
+- IBAN Bilgisi
+- Vergi Bilgileri
+- Escrow Odeme Hesabi
+
+Kurallar:
+- Eksik profil varsa:
+  "Teklif Ver"
+
+butonu disabled olur.
+
+- Escrow hesabi eksikse:
+  "Guvenli Odeme Alabilmek Icin Hesabinizi Dogrulayin"
+
+uyarisi gosterilir.
+
+Ek Ozellikler:
+- Profil tamamlama yuzdesi
+- Progress bar sistemi
+- Eksik alan highlight
+- "Profilimi Tamamla" yonlendirme butonu
+
+====================================================
+3. ANA MODUL YAPISI
+====================================================
+
+Modul 5 ana bolumden olusur:
+
+1. Harita Alani
+2. Filtre Paneli
+3. Ilan Listesi
+4. Teklif / Pazarlik Paneli
+5. Escrow ve Odeme Paneli
+
+====================================================
+4. HARITA SISTEMI
+====================================================
+
+Harita teknolojisi:
+- OpenStreetMap
+- Leaflet.js
+
+KESINLIKLE:
+Google Maps kullanilmayacak.
+
+====================================================
+HARITA OZELLIKLERI
+====================================================
+
+- Ilan pinleri
+- Marker clustering
+- Zoom support
+- Canli filtreleme
+- Route polyline
+- Kalkis / Varis marker
+- Marker tooltip
+- Mini ilan popup
+
+Popup icinde:
+- Yuk tipi
+- Tonaj
+- Arac tipi
+- Tahmini fiyat
+- Escrow uygunlugu
+- Guvenli odeme etiketi
+- Teklif durumu
+
+====================================================
+5. FILTRE SISTEMI
+====================================================
+
+Filtreler:
+
+- Il
+- Ilce
+- Arac Tipi
+- Dorse Tipi
+- Tonaj Araligi
+- Hacim Araligi
+- Yuk Tipi
+- Frigorifik Uygunlugu
+- ADR Uygunlugu
+- Tarih Araligi
+- Mesafe Araligi
+- Escrow Destekli Yukler
+- Acil Yukler
+- Hemen Odeme Yapilan Yukler
+
+====================================================
+AKILLI FILTRELER
+====================================================
+
+- Bana Uygun Yukler
+- Yakindaki Yukler
+- Escrow Garantili Yukler
+- En Yuksek Kazanc
+- Donus Yukleri
+- Favori Rotalar
+
+====================================================
+6. ILAN LISTESI
+====================================================
+
+Her ilan kartinda:
+
+- Yuk Basligi
+- Kalkis Noktasi
+- Varis Noktasi
+- Mesafe
+- Tonaj
+- Yuk Tipi
+- Arac Tipi
+- Tahmini Odeme
+- Teklif Sayisi
+- Aciliyet Durumu
+- Escrow Durumu
+- Guvenli Odeme Rozeti
+
+====================================================
+KART AKSIYONLARI
+====================================================
+
+- Teklif Ver
+- Detay Gor
+- Haritada Ac
+- Favorilere Ekle
+- Sesli Oku
+- Escrow Detaylarini Goster
+
+====================================================
+7. TEKLIF VERME AKISI
+====================================================
+
+Expandable teklif paneli bulunur.
+
+Alanlar:
+- Teklif Fiyati
+- Teklif Notu
+- Tahmini Teslim Suresi
+- Bos Donus Uygunlugu
+- Teklif Gecerlilik Suresi
+
+Sure secenekleri:
+- 15 Dakika
+- 30 Dakika
+- 1 Saat
+- 2 Saat
+- 24 Saat
+
+====================================================
+REALTIME HESAPLAMA
+====================================================
+
+Kullanici teklif girdiginde sistem anlik olarak hesaplar:
+
+- Platform Komisyonu
+- Escrow Hizmet Bedeli
+- KDV
+- Net Kazanc
+- Tahmini Hesaba Gecis Tutari
+
+====================================================
+8. ESCROW (GUVENLI ODEME) SISTEMI
+====================================================
+
+Sistem:
+- Emanet odeme mantiginda calisir.
+- Yuk sahibi odemeyi sistemde bloke eder.
+- Tasiyici isi tamamladiginda odeme serbest birakilir.
+
+====================================================
+ESCROW AKISI
+====================================================
+
+1. Yuk Sahibi:
+- Guvenli odemeyi aktif eder.
+- Odeme platform escrow hesabina aktarilir.
+
+2. Tasiyici:
+- "Guvenli Odeme Var" etiketi gorur.
+- Teklif verir.
+
+3. Yuk sahibi:
+- Teklifi kabul eder.
+
+4. Sistem:
+- Escrow odemesini lock eder.
+- Odeme durumunu:
+  "Blokede"
+
+olarak isaretler.
+
+5. Teslimat tamamlaninca:
+- Teslim onayi alinir.
+- QR / OTP / Dijital imza kontrol edilir.
+- Odeme tasiyici hesabina aktarilir.
+
+====================================================
+ESCROW DURUMLARI
+====================================================
+
+- Beklemede
+- Blokede
+- Teslimat Bekleniyor
+- Onaylandi
+- Serbest Birakildi
+- Iptal Edildi
+- Itiraz Surecinde
+
+====================================================
+ESCROW GUVENLIK OZELLIKLERI
+====================================================
+
+- Fraud detection
+- Risk scoring
+- KYC kontrolu
+- IBAN dogrulama
+- OTP onayi
+- Dijital teslim kaniti
+- QR teslim dogrulamasi
+- Teslim fotografi
+- GPS teslim dogrulamasi
+
+====================================================
+9. PAZARLIK / KARSI TEKLIF SISTEMI
+====================================================
+
+Sistem:
+- WebSocket tabanli
+- Gercek zamanli
+- Event-driven
+
+====================================================
+PAZARLIK PANELI
+====================================================
+
+Timeline sistemi:
+
+- Fiyat hareketleri
+- Timestamp
+- Kullanici rolu
+- Son teklif highlight
+- Escrow durumu
+- Komisyon bilgisi
+
+====================================================
+TEKLIF DURUMLARI
+====================================================
+
+- Pending
+- Countered
+- Accepted
+- Rejected
+- Expired
+- Escrow Locked
+- Payment Released
+
+====================================================
+10. SESLI KOMUT SISTEMI
+====================================================
+
+Teknoloji:
+- Web Speech API
+
+Ozellikler:
+- Voice-to-command
+- Speech-to-text
+- Text-to-speech
+
+====================================================
+DESTEKLENEN SESLI KOMUTLAR
+====================================================
+
+- "Haritada Istanbul ilanlarini goster"
+- "10 ton altindaki yukleri filtrele"
+- "5000 TL teklif ver"
+- "Pazarligi kabul et"
+- "Escrow detaylarini ac"
+- "Guvenli odemeli yukleri filtrele"
+- "Ilani oku"
+
+====================================================
+11. TEXT TO SPEECH SISTEMI
+====================================================
+
+"Ilani Oku" komutunda sistem sesli olarak:
+
+- Yuk tipi
+- Tonaj
+- Kalkis noktasi
+- Varis noktasi
+- Escrow durumu
+- Tahmini fiyat
+- Odeme garantisi
+
+bilgilerini okur.
+
+====================================================
+12. REALTIME SISTEM MIMARISI
+====================================================
+
+WebSocket eventleri:
+
+- NEW_BID
+- COUNTER_BID
+- BID_ACCEPTED
+- BID_REJECTED
+- BID_EXPIRED
+- ESCROW_LOCKED
+- PAYMENT_RELEASED
+- NEW_LOAD
+- FILTER_MATCH
+
+====================================================
+13. NOTIFICATION SISTEMI
+====================================================
+
+Bildirim tipleri:
+
+- Push Notification
+- In-App Popup
+- Badge Notification
+- Sound Notification
+
+====================================================
+BILDIRIM SENARYOLARI
+====================================================
+
+- Yeni teklif geldi
+- Karsi teklif geldi
+- Teklif kabul edildi
+- Escrow odemesi bloke edildi
+- Odeme serbest birakildi
+- Teslim onayi bekleniyor
+- Yeni uygun yuk bulundu
+
+====================================================
+14. TEKNIK ALTYAPI
+====================================================
+
+Frontend:
+- React Native
+- Expo
+- TypeScript
+
+Backend:
+- Node.js
+- NestJS veya Express
+
+Database:
+- PostgreSQL
+- PostGIS
+- Redis
+
+Realtime:
+- Socket.IO veya native WebSocket
+
+Harita:
+- OpenStreetMap
+- Leaflet
+
+Voice:
+- Web Speech API
+
+Payment:
+- Iyzico
+- Stripe
+- PayTR
+- Wise
+- Escrow wallet system
+
+====================================================
+15. UX/UI TASARIM KURALLARI
+====================================================
+
+Tasarim:
+- Modern lojistik marketplace
+- FinTech odakli odeme deneyimi
+- Koyu tema + acik tema
+- Buyuk dokunmatik alanlar
+- Tek elle kullanim optimizasyonu
+- Surucu dostu arayuz
+- Minimum dikkat dagitimi
+
+Animasyonlar:
+- Smooth transitions
+- Realtime loading states
+- Skeleton loaders
+- Swipe gestures
+- Haptic feedback
+
+Escrow UX:
+- Guven rozetleri
+- Kilit ikonlari
+- Guvenli odeme bannerlari
+- Odeme sureci timeline
+- Finansal durum kartlari
+
+Tum sistem:
+hizli, stabil, guvenli, realtime, fintech uyumlu ve production-ready olmalidir.
+
+BITIS

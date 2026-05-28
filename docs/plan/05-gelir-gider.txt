@@ -1,0 +1,687 @@
+================================================================================
+KAPTAN LOJISTIK PORTAL
+GELİR-GİDER MODULU
+
+TEMEL GOREV
+================================================================================
+
+KAPTAN LOJISTIK PORTAL icin:
+
+enterprise-grade,
+production-ready,
+mobile-first,
+offline-first,
+AI-destekli,
+olceklenebilir,
+guvenli,
+moduler
+
+bir FINANS VE MUHASEBE MODULU tasarla.
+
+Bu modul:
+- aile butce sistemi,
+- filo maliyet yonetimi,
+- lojistik operasyon maliyetleri,
+- gelir/gider yonetimi,
+- OCR destekli fis/fatura isleme,
+- arac bazli maliyet analizi,
+- finansal dashboard,
+- otomatik gelir kayitlari,
+- raporlama sistemi sunmalidir.
+
+================================================================================
+ZORUNLU GELISTIRME SIRASI
+================================================================================
+
+1. DATABASE MIMARISI
+2. BACKEND SERVISLERI
+3. EVENT SISTEMI
+4. OCR PIPELINE
+5. FINANSAL HESAPLAMA MOTORU
+6. API KATMANI
+7. WEB FRONTEND
+8. MOBIL FRONTEND
+9. OFFLINE-FIRST SENKRONIZASYON
+10. DASHBOARD & RAPORLAMA
+11. CACHE & PERFORMANS
+12. SECURITY & COMPLIANCE
+13. TEST & QA
+14. OBSERVABILITY
+15. PRODUCTION DEPLOYMENT
+
+================================================================================
+MODUL AMACI
+================================================================================
+
+Bu modulun amaci:
+
+- bireysel aile finanslarini,
+- ticari tasimacilik gelirlerini,
+- arac bazli maliyetleri,
+- surucu harcamalarini,
+- OCR destekli gider yonetimini,
+- otomatik gelir kayitlarini,
+- operasyonel nakit akislarini
+
+tek merkezde yonetebilmektir.
+
+================================================================================
+KULLANICI HIERARSISI VE DAVET SISTEMI
+================================================================================
+
+ROLLER:
+- owner
+- member
+
+OWNER:
+- aile reisi
+- filo yoneticisi
+- isletme sahibi
+
+MEMBER:
+- aile uyesi
+- sofor
+- personel
+
+OZELLIKLER:
+- davet kodu olusturma
+- QR ile davet
+- davet linki
+- expiration date support
+- invite usage limit
+- role assignment
+- arac atama
+- izin bazli erisim sistemi
+
+DAVET AKISI:
+1. owner davet kodu olusturur
+2. kod paylasilir
+3. member kayit olur
+4. owner onay verir
+5. arac atanir
+6. finansal yetkiler tanimlanir
+
+================================================================================
+GELIR TAKIP SISTEMI
+================================================================================
+
+GELIR TURleri:
+- maas
+- kira
+- ticari_kazanc
+- yatirim
+- yardim
+- diger
+- tasima_kazanci
+
+OTOMATIK GELIR SISTEMI:
+- shipment tamamlandiginda event tetiklenmeli
+- income otomatik olusmali
+- source='auto'
+- silinemez olmali
+- audit log zorunlu olmali
+
+EVENT AKISI:
+shipment.completed
+-> finance-service
+-> income.create
+-> wallet.update
+-> notification.trigger
+
+MANUEL GELIR GIRISI:
+FORM ALANLARI:
+- gelir_turu
+- tarih
+- tutar
+- odeme_yontemi
+- aciklama
+- ilgili_yuk
+- ilgili_arac
+- ilgili_sofor
+
+TEKRARLAYAN GELIR SISTEMI:
+- recurring_income_templates tablosu
+- cron scheduler
+- otomatik olusturma
+- hata durumunda retry
+- duplicate kontrolu
+
+FILTRELEME:
+- income_type
+- date_range
+- vehicle_id
+- driver_id
+- source
+- amount_range
+
+================================================================================
+GIDER TAKIP SISTEMI
+================================================================================
+
+DINAMIK KATEGORILER:
+LOJISTIK:
+- yakit
+- bakim
+- sigorta
+- vergi
+- personel
+- kredi_leasing
+- lastik
+- yol_kopru_tunel
+- park
+- ceza
+- diger
+
+AILE:
+- fatura
+- market
+- saglik
+- egitim
+- ulasim
+- kira
+- eglence
+- giyim
+- diger
+
+KATEGORI SISTEMI:
+- role-based category visibility
+- admin editable categories
+- custom category support
+- category icon support
+- category color support
+
+MANUEL GIDER GIRISI:
+- kategori
+- tarih
+- tutar
+- aciklama
+- dekont
+- arac_plakasi
+- ilgili_kisi
+- odeme_yontemi
+- vergi_durumu
+- lokasyon
+
+DOSYA YUKLEME:
+- maksimum 5MB
+- MIME validation
+- image compression
+- WebP optimization
+- secure storage
+- antivirus scanning
+
+================================================================================
+OCR DESTEKLI FIS/FATURA ISLEME SISTEMI
+================================================================================
+
+OCR PIPELINE:
+1. upload
+2. preprocessing
+3. OCR extraction
+4. parsing
+5. AI categorization
+6. confidence scoring
+7. preview screen
+8. user approval
+9. expense creation
+
+GORSEL ON ISLEME:
+- grayscale
+- deskew
+- contrast enhancement
+- denoise
+- crop
+- perspective correction
+
+OCR ENGINE:
+PRIMARY:
+- OCR.space
+
+FALLBACK:
+- Tesseract.js
+
+PARSING SISTEMI:
+- regex extraction
+- amount detection
+- date detection
+- merchant extraction
+- tax number extraction
+
+AI KATEGORILENDIRME:
+- keyword matching
+- merchant recognition
+- expense prediction
+- category confidence score
+
+KULLANICI ONAY EKRANI:
+- duzenlenebilir alanlar
+- OCR confidence indicator
+- compare original image
+- retry OCR
+- manual override
+
+HATA YONETIMI:
+- timeout
+- parse failure
+- unsupported format
+- low confidence score
+- file size limit
+- OCR unavailable
+
+================================================================================
+KAR / ZARAR SISTEMI
+================================================================================
+
+API:
+GET /api/finance/profit-loss
+
+PARAMETRELER:
+- start_date
+- end_date
+- user_id
+- vehicle_id
+- category
+- income_type
+
+DONUS:
+- total_income
+- total_expense
+- net_profit
+- gross_profit
+- category_breakdown
+- monthly_breakdown
+- vehicle_breakdown
+
+GRAFIKLER:
+- line chart
+- bar chart
+- donut chart
+- stacked finance graph
+
+RENK KURALI:
+- gelir = yesil
+- gider = kirmizi
+- kar = mavi
+- zarar = turuncu
+
+================================================================================
+ARAC BAZLI MALIYET TAKIP SISTEMI
+================================================================================
+
+ARAC PROFILI:
+vehicles tablosu kullanilmali.
+
+ARAC OZELLIKLERI:
+- plaka
+- dorse_tipi
+- yakit_tipi
+- km
+- kapasite
+- aktif_durum
+
+API:
+GET /api/vehicles/:id/expenses
+GET /api/vehicles/:id/incomes
+GET /api/vehicles/:id/profitability
+
+KM BASINA MALIYET:
+formula:
+total_expense / total_distance
+
+MESAFE HESAPLAMA:
+- shipment_km
+- extra_km
+- route_km
+
+ROTA SISTEMI:
+- OSRM entegrasyonu
+- ETA support
+- route optimization
+- historical route analysis
+
+EKSTRA ANALIZLER:
+- yakit tuketimi
+- aylik maliyet trendi
+- arac verimlilik skoru
+- bos kilometre analizi
+- gelir/gider orani
+
+================================================================================
+DASHBOARD SISTEMI
+================================================================================
+
+OWNER DASHBOARD:
+- toplam gelir
+- toplam gider
+- net kar
+- aktif yukler
+- bagli kullanici sayisi
+- bekleyen odemeler
+- escrow bakiyesi
+
+KART SISTEMI:
+- finans ozeti
+- son harcamalar
+- son gelirler
+- aktif araclar
+- operasyon durumu
+
+GRAFIKLER:
+- aylik gelir trendi
+- gider dagilimi
+- arac kullanim orani
+- nakit akis grafigi
+
+LISTELER:
+- son islemler
+- kritik harcamalar
+- yaklasan odemeler
+- hatirlatmalar
+
+================================================================================
+HATIRLATICI SISTEMI
+================================================================================
+
+API:
+GET /api/reminders/upcoming
+
+HATIRLATICILAR:
+- sigorta bitis tarihi
+- muayene tarihi
+- vergi odemesi
+- kredi odemesi
+- personel maasi
+- kira odemesi
+
+BILDIRIM:
+- push notification
+- email
+- SMS
+- WhatsApp
+
+================================================================================
+DATABASE MIMARISI
+================================================================================
+
+TEMEL TABLOLAR:
+- incomes
+- expenses
+- recurring_income_templates
+- expense_categories
+- OCR_documents
+- vehicles
+- finance_reminders
+- wallets
+- transactions
+- audit_logs
+
+DATABASE KURALLARI:
+- UUID primary key
+- soft delete
+- audit logging
+- created_by
+- updated_by
+- partitioned tables
+- foreign key integrity
+
+PARTITION:
+- incomes aylik partition
+- expenses aylik partition
+
+MATERIALIZED VIEW:
+- monthly finance summary
+- vehicle profitability summary
+
+================================================================================
+BACKEND MIMARISI
+================================================================================
+
+FRAMEWORK:
+- NestJS
+
+SERVISLER:
+- finance-service
+- OCR-service
+- analytics-service
+- notification-service
+- wallet-service
+
+MIMARI:
+- modular monolith
+- event-driven
+- domain-based structure
+
+ASYNC ISLEMLER:
+- BullMQ
+- Redis queue
+- retry strategy
+- dead-letter queue
+
+================================================================================
+CACHE & PERFORMANS
+================================================================================
+
+REDIS CACHE:
+- son 30 gunluk toplamlar
+- TTL = 1 saat
+- dashboard cache
+- vehicle summary cache
+
+OPTIMIZASYON:
+- pagination
+- lazy loading
+- infinite scroll
+- virtualized lists
+- query optimization
+
+================================================================================
+OFFLINE-FIRST MIMARI
+================================================================================
+
+MOBILE:
+- AsyncStorage queue
+- local finance cache
+- optimistic UI
+- retry sync
+
+WEB:
+- IndexedDB
+- Service Worker
+- stale-while-revalidate
+
+AG KESINTISI:
+- local queue
+- idempotency key
+- automatic retry
+- conflict resolution
+
+================================================================================
+HATA YONETIMI
+================================================================================
+
+HATA TIPLERI:
+- OCR timeout
+- parse error
+- upload failure
+- validation error
+- authorization error
+- sync conflict
+
+HTTP KODLARI:
+- 400
+- 401
+- 403
+- 404
+- 409
+- 422
+- 500
+
+KULLANICI DENEYIMI:
+- user-friendly messages
+- retry button
+- fallback state
+- skeleton loading
+- offline indicator
+
+================================================================================
+API STANDARTLARI
+================================================================================
+
+RESTFUL API KURALLARI:
+- versioning support
+- pagination
+- filtering
+- sorting
+- rate limiting
+
+ORNEK ENDPOINTLER:
+GET /api/finance/incomes
+POST /api/finance/incomes
+GET /api/finance/expenses
+POST /api/finance/expenses
+POST /api/finance/OCR/upload
+GET /api/finance/dashboard
+GET /api/finance/vehicle-summary
+
+================================================================================
+GUVENLIK
+================================================================================
+
+- HTTPS zorunlu
+- JWT authentication
+- Access token: 15 dakika
+- Refresh token: 7 gun
+- MIME validation
+- antivirus scanning
+- rate limiting
+- encryption at rest
+- TLS 1.3
+- audit logging
+
+RATE LIMIT:
+- saniyede 10 istek
+
+================================================================================
+ENTEGRASYON NOKTALARI
+================================================================================
+
+ENTEGRASYONLAR:
+- Tasiyici Teklif Modulu
+- Yuk Yukleme Modulu
+- Surucu Operasyon Sistemi
+- Finans ve Cuzdan Sistemi
+- Escrow Sistemi
+- GIB Sistemi
+- Bildirim Sistemi
+
+EVENT BAGLANTILARI:
+- shipment.completed
+- payment.released
+- escrow.completed
+- invoice.generated
+- driver.expense.created
+
+================================================================================
+MOBIL UX KURALLARI
+================================================================================
+
+- tek elle kullanim
+- thumb-friendly navigation
+- bottom sheet UX
+- floating action button
+- blur backgrounds
+- haptic feedback
+- smooth animations
+- skeleton loaders
+- dark mode
+- offline indicator
+
+================================================================================
+ERISILEBILIRLIK
+================================================================================
+
+- WCAG 2.1 AA
+- dynamic font scaling
+- screen reader support
+- color blind safe palette
+- minimum 44x44 touch target
+
+================================================================================
+OBSERVABILITY
+================================================================================
+
+LOGGING:
+- Loki
+- ELK Stack optional
+
+MONITORING:
+- Prometheus
+- Grafana
+
+TRACING:
+- OpenTelemetry
+
+================================================================================
+CI/CD
+================================================================================
+
+CI:
+- GitHub Actions
+
+CD:
+- ArgoCD
+
+PIPELINE:
+1. lint
+2. test
+3. build
+4. docker build
+5. security scan
+6. staging deploy
+7. production deploy
+
+================================================================================
+FINAL KURAL
+================================================================================
+
+Olusturulacak sistem:
+
+- production-ready,
+- enterprise-grade,
+- scalable,
+- maintainable,
+- secure,
+- offline-first,
+- AI-ready,
+- low-bandwidth optimized,
+- future-proof
+
+olmalidir.
+
+Tum ciktilar:
+- profesyonel,
+- detayli,
+- teknik,
+- uygulanabilir,
+- production seviyesinde
+
+olmalidir.
+
+Kod yazmadan:
+- mimari,
+- database,
+- backend,
+- API,
+- UX,
+- event sistemleri,
+- OCR pipeline,
+- performans,
+- guvenlik,
+- cache,
+- hata yonetimi
+
+detayli sekilde tasarlanmalidir.
+
+================================================================================
+END OF FINANCE & ACCOUNTING MASTER PROMPT
+================================================================================

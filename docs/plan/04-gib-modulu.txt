@@ -1,0 +1,275 @@
+================================================================================
+GİB UYUMLU KURUMSAL E-BELGE SİSTEMİ (KAPTAN LOJİSTİK)
+TEK PARÇA MASTER TEKNİK TASARIM PROMPT
+================================================================================
+
+SİSTEM KİMLİĞİ:
+Bu doküman, KAPTAN Lojistik Platformu için geliştirilecek;
+- Gelir İdaresi Başkanlığı (GİB) teknik kılavuzlarına,
+- UBL-TR 1.2 standardına,
+- Vergi Usul Kanunu (VUK) yuvarlama/defter kayıt kurallarına,
+- Türk Ticaret Kanunu'na,
+tam uyumlu, ERP seviyesinde üretim (production-ready) bir E-Belge modülünün 
+eksiksiz teknik tasarım talimatıdır.
+
+================================================================================
+TEMEL MİMARİ PRENSİPLER
+================================================================================
+1. Tüm belgeler "resmî mali evrak" statüsünde, immutable (değiştirilemez) ve 
+   audit edilebilir olacaktır.
+2. Tüm parasal hesaplamalarda decimal(19,2) hassasiyeti ve VUK yuvarlama 
+   kuralları zorunludur. Floating point kullanımı yasaktır.
+3. Her belge için PDF (A4 görsel), UBL-TR XML (veri) ve JSON (API yanıtı) 
+   eşzamanlı üretilir.
+4. Sistem hem web hem mobil arayüzlerden yönetilebilir; PDF çıktıları selectable 
+   text içerir (image-based değil).
+5. Tüm kullanıcı arayüzü Türkçedir; PDF'ler resmî Türkçe evrak formatındadır.
+6. Backend Node.js + TypeScript, veritabanı PostgreSQL, önbellek Redis'tir.
+7. İletişim HTTPS, kimlik doğrulama JWT, yetkilendirme RBAC'tır.
+
+================================================================================
+DESTEKLENEN BELGE TİPLERİ
+================================================================================
+Aşağıdaki 12 belge tipi, tek bir üretim hattı (pipeline) üzerinden oluşturulur.
+Her belge tipi kendine özgü başlık ve ek alanlara sahiptir:
+
+1.  E-Fatura
+2.  E-Arşiv Fatura
+3.  Proforma Fatura
+4.  Temel Fatura
+5.  Ticari Fatura
+6.  İrsaliyeli Fatura
+7.  E-İrsaliye
+8.  İstisna Faturası
+9.  İhracat Faturası
+10. Tevkifatlı Fatura
+11. KDV Muaf Fatura
+12. U-ETDS (lojistik entegrasyon)
+
+================================================================================
+İŞ AKIŞI (WORKFLOW) – SORU SORMAYA YER BIRAKMAZ
+================================================================================
+Kullanıcı adımları ve sistem davranışı aşağıdaki sırayla ve zorunlu olarak işler:
+
+1. YENİ BELGE OLUŞTUR
+   - "Yeni Belge" butonu her ekranda yeşil ve sabit konumdadır.
+
+2. BELGE TİPİ SEÇİMİ (Dropdown Box)
+   - Kullanıcı yukarıdaki 12 belge tipinden birini seçer.
+   - Seçime göre ek alanlar (ör: Tevkifat, İrsaliye, İhracat) dinamik açılır.
+
+3. GÖNDEREN (FİRMA) BİLGİLERİ
+   - Sistem, companies tablosundan kayıtlı firmayı otomatik doldurur.
+   - Eksik veri varsa ekranın üstünde "E-Belge için Profil Ayarlarınızı 
+     tamamlayın" uyarısı gösterilir ve ilerlemeye izin verilmez.
+
+4. ALICI BİLGİLERİ
+   - CRM'den seçim veya manuel giriş.
+   - Her yeni alıcı otomatik "Sık Kullanılanlar" listesine eklenir.
+   - Alıcı Tipi: Bireysel (TCKN) / Kurumsal (VKN).
+
+5. KALEM / HİZMET EKLEME
+   - Dinamik satır ekleme/silme.
+   - Her satır için ürün kodu, açıklama, miktar, birim, birim fiyat, 
+     iskonto (%), KDV oranı (% seçim) girilir.
+   - Satır toplamı anlık hesaplanır.
+
+6. VERGİ & KDV HESAPLAMA (Bknz. Vergi Motoru)
+
+7. LOJİSTİK ALANLAR (yalnızca ilgili belge tiplerinde)
+   - Plaka, sürücü TCKN, sevk adresi, nakliye türü.
+
+8. ÖNİZLEME (PDF DRAFT)
+   - Sunucu tarafında Puppeteer/pdfmake ile A4 PDF oluşturulur.
+   - Base64 görüntü modal içinde gösterilir.
+
+9. ONAY / GÖNDERİM
+   - E-Fatura  → GİB entegratör API'ye XML + imza iletilir.
+   - E-Arşiv   → GİB'e raporlanır, PDF e-posta ile alıcıya gider.
+   - Proforma  → yalnızca PDF üretilir.
+   - Diğerleri → senaryoya göre PDF + XML arşivlenir.
+
+10. ARŞİVLEME & LOG
+    - invoice_logs tablosuna immutable kayıt.
+    - Audit trail (kim, ne zaman, ne yaptı) eksiksiz tutulur.
+
+================================================================================
+ZORUNLU VERİ MODELİ (HER BELGE İÇİN)
+================================================================================
+GÖNDEREN (Firma):
+- Unvan, VKN/TCKN, Vergi Dairesi, Adres (satır satır), Telefon, E-posta,
+  MERSİS No, Ticaret Sicil No
+
+ALICI:
+- Tip (Bireysel/Kurumsal), Unvan/Ad Soyad, VKN/TCKN, Adres, E-posta, Telefon,
+  Vergi Dairesi (kurumsal ise)
+
+BELGE BAŞLIĞI:
+- Belge Tipi, Belge No (auto sequence), ETTN (UUID v4), Tarih/Saat (ISO 8601),
+  Para Birimi (TRY), Senaryo (Temel/Ticari/...), Sipariş No (opsiyonel)
+
+FATURA KALEMİ:
+- Sıra No, Ürün/Hizmet Kodu, Açıklama, Miktar (decimal 12.4), Birim (enum),
+  Birim Fiyat, İskonto (%), KDV Oranı (%), KDV Tutarı, Tevkifat (varsa),
+  Ara Toplam, Satır Toplamı
+
+================================================================================
+VERGİ & KDV HESAPLAMA MOTORU (KURALLAR)
+================================================================================
+- Desteklenen KDV Oranları: %1, %10, %20.
+- Tevkifat oranları: %0, %5, %10, %15.
+- İskonto, KDV matrahına etki edecek şekilde uygulanır.
+- Formül:
+  Ara Toplam = Miktar × Birim Fiyat
+  İskonto Tutarı = Ara Toplam × (İskonto/100)
+  KDV Matrahı = Ara Toplam – İskonto Tutarı
+  KDV Tutarı = KDV Matrahı × (KDV Oranı/100)
+  Satır Toplamı = KDV Matrahı + KDV Tutarı – Tevkifat
+- Tüm tutarlar en yakın kuruşa (0.01 TL) yuvarlanır.
+- Genel Toplam, satır toplamlarının decimal toplamıdır.
+- VUK uyumu: yuvarlama satır bazında değil, belge genel toplamında yapılır 
+  (mali mühür kaynaklı küsurat farkı oluşmaması için backend’te netleştirilir).
+
+================================================================================
+TOPLAM PANELİ (FINANCIAL SUMMARY – PDF ALT BÖLÜM)
+================================================================================
+Belgenin alt tablosunda sırasıyla:
+- Mal/Hizmet Toplamı
+- Toplam İskonto
+- KDV Matrahı
+- Hesaplanan KDV
+- Tevkifat Tutarı
+- Vergiler Dahil Toplam
+- NET ÖDENECEK TUTAR (yazı ile de belirtilir)
+Opsiyonel platform kalemleri (KAPTAN):
+- Escrow Hizmet Bedeli
+- Platform Komisyonu
+- Güvenli Ödeme Kesintisi
+- Sigorta Bedeli
+(Bu kalemler faturada ayrı satır olarak gösterilir.)
+
+================================================================================
+A4 PDF GÖRSEL TASARIM STANDARTLARI (GİB UYUMLU, SORUMSUZ)
+================================================================================
+1. SAYFA:
+   - Boyut: A4 dikey (210 × 297 mm)
+   - Arka plan: #FFFFFF (saf beyaz)
+   - Kenar boşlukları: Sol 20 mm, Sağ 10 mm, Üst 25 mm, Alt 20 mm
+
+2. FONT:
+   - Başlık ve etiketler: Arial Bold (18 pt başlık, 10 pt etiket)
+   - Veri metni: Arial Normal (9-10 pt)
+   - Monospace (ETTN, VKN): Courier New 10 pt
+   - Tüm metin rengi: #000000 (siyah); KDV/indirim vurguları dahil bold siyah
+
+3. LOGO:
+   - Sol üst köşe, maks. 25 mm yükseklik, 60 mm genişlik
+   - Logo yoksa şirket unvanı 12 pt bold yazılır
+
+4. BAŞLIK BLOĞU (Sağ üst):
+   - Belge tipi (ör: "E-FATURA") 18 pt BOLD
+   - Alt satırda "Senaryo: ..." 9 pt
+   - Belge No, Tarih hemen altında
+
+5. ÇERÇEVE & ÇİZGİLER:
+   - Dış border: 1 pt düz siyah (#000000)
+   - İç bölüm çizgileri: 0.5 pt gri (#808080)
+   - Tablo başlık satırı: arka plan %10 siyah (gri tonu), yazı bold siyah
+   - Zebra striping: satırlar sırayla #FFFFFF ve #F4F4F4
+
+6. QR KOD (E-Fatura / E-Arşiv zorunlu, diğerlerinde opsiyonel):
+   - Konum: Sağ alt köşe (son toplamın yanında) veya sol üst logo altına alternatif
+   - Boyut: 22×22 mm
+   - İçerik: GİB sorgulama URL'si (https://ebelge.gib.gov.tr/sorgula?uuid=...)
+   - QR altında 7 pt "Belge Doğrulama Kodu" metni
+
+7. FİLİGRAN:
+   - "e-Fatura" / "e-Arşiv" yazısı, açık gri (#D9D9D9), 45° açı, sayfa ortasına
+     büyük punto (60 pt) ve düşük opaklıkla basılır (zorunlu değil, önerilir)
+
+8. FOOTER (her sayfa):
+   - "Bu belge elektronik ortamda oluşturulmuştur. Islak imza aranmaz."
+   - "GİB Uyumludur – KAPTAN Lojistik Sistemi"
+   - Sayfa numarası (x/y)
+   - Oluşturma tarihi (gg/aa/yyyy ss:dd)
+
+================================================================================
+UBL-TR XML ÜRETİMİ
+================================================================================
+- UBL-TR 1.2 (Ticaret Bakanlığı / GİB profili) standardına birebir uygun
+- namespace'ler ve zorunlu alanlar (cbc, cac) eksiksiz
+- XSD şema validasyonu backend'te xmlbuilder2 ile yapılır, hata varsa belge 
+  onaylanamaz
+- ETTN = UUID (Invoice/ID)
+- XML içinde dijital imza (xmldsig) alanı boş bırakılır, imza entegratör 
+  tarafından atılır
+- PDF içeriği XML'den bağımsız olarak aynı veri kaynağından üretilir (tutarlılık)
+
+================================================================================
+API MİMARİSİ (REST)
+================================================================================
+Tüm endpoint'ler /api/v1/ altında, JWT auth gerektirir.
+- POST   /invoice/create            -> Yeni belge taslağı
+- POST   /invoice/:id/preview       -> PDF draft (base64) döner
+- POST   /invoice/:id/approve       -> Durumu onaya taşır, GİB'e iletir
+- POST   /invoice/:id/send-gib      -> Manuel GİB gönderimi (E-Fatura)
+- GET    /invoice/:id               -> Belge detayı (JSON)
+- GET    /invoice/pdf/:id           -> PDF indir (application/pdf)
+- GET    /invoice/xml/:id           -> UBL-TR XML indir (application/xml)
+- GET    /invoice/qr/:id            -> QR kod görseli (PNG)
+- GET    /customer/frequent         -> Sık kullanılan alıcılar listesi
+- POST   /customer/frequent         -> Yeni alıcı ekle
+
+================================================================================
+VERİTABANI ŞEMASI (POSTGRESQL – TEMEL TABLOLAR)
+================================================================================
+- companies: id, vkn, name, tax_office, address, mersis, sicil_no, ...
+- customers: id, company_id, type, vkn_tckn, name, address, email, phone, ...
+- invoices:
+    id UUID PK, company_id FK, customer_id FK, invoice_type ENUM(…),
+    invoice_no VARCHAR(30), ettn UUID UNIQUE, scenario VARCHAR(20),
+    currency VARCHAR(3) DEFAULT 'TRY', issue_date TIMESTAMPTZ,
+    status ENUM(draft, pending, sent, approved, rejected, cancelled, archived),
+    subtotal DECIMAL(19,2), discount_total DECIMAL(19,2), vat_total DECIMAL(19,2),
+    withholding_total DECIMAL(19,2), grand_total DECIMAL(19,2),
+    qr_url TEXT, pdf_path TEXT, xml_path TEXT, created_by UUID, created_at, ...
+- invoice_items: id, invoice_id FK, line_no, product_code, description,
+    quantity DECIMAL(12,4), unit, unit_price DECIMAL(19,2), discount_pct,
+    vat_rate DECIMAL(4,2), vat_amount, withholding_amount, line_total
+- invoice_logs: id, invoice_id, action, performed_by, timestamp (immutable)
+- xml_documents: id, invoice_id, xml_content (BYTEA), xsd_valid BOOLEAN, ...
+- gib_submissions: id, invoice_id, request_payload, response_code, response_body, ...
+
+Tüm decimal alanlar DECIMAL(19,2) hassasiyetindedir.
+Indexler: vkn, invoice_no, ettn, created_at.
+
+================================================================================
+GÜVENLİK VE UYUMLULUK
+================================================================================
+- JWT + Refresh Token mekanizması
+- Rol tabanlı erişim (admin, muhasebe, operasyon)
+- Invoice kayıtları soft-delete dahi olmaz; immutable audit log
+- XML export'u isteğe bağlı imzalı (xmldsig) olabilir
+- Veritabanı şifreleme AES-256 at rest
+- Tüm iletişim HTTPS
+
+================================================================================
+LOKALİZASYON
+================================================================================
+- Tüm kullanıcı arayüzü Türkçe
+- Tarih formatı gg/aa/yyyy
+- Para birimi simgesi ₺ veya TL
+- PDF'ler resmî Türkçe (Ünvan, Vergi Dairesi, Adres, vb.)
+
+================================================================================
+SONUÇ VE BAĞLAYICILIK
+================================================================================
+Bu prompt, yapay zekâ veya yazılım ekibi tarafından hiçbir ek açıklama ya da 
+soru sorulmasına gerek kalmaksızın, KAPTAN Lojistik Platformu için GİB uyumlu, 
+üretime hazır E-Belge modülünün bütün teknik, görsel ve yasal detaylarını 
+tanımlar. Uygulama sırasında bu kuralların dışına çıkılması, belgelerin 
+resmî geçerliliğini kaybetmesine yol açar.
+
+================================================================================
+END OF MASTER PROMPT
+================================================================================
