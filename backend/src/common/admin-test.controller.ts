@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { TestExecutionService } from './test-execution.service';
 import { HealthMonitoringService } from './health-monitoring.service';
+import { AiTestAgentService } from './ai-test-agent.service';
 import { Roles } from './roles.decorator';
 import { RolesGuard } from './roles.guard';
 
@@ -15,6 +16,7 @@ export class AdminTestController {
   constructor(
     private readonly testService: TestExecutionService,
     private readonly healthService: HealthMonitoringService,
+    private readonly aiAgent: AiTestAgentService,
   ) {}
 
   @Get('stats')
@@ -69,5 +71,35 @@ export class AdminTestController {
   async getHealthHistory(@Param('service') service: string) {
     const history = await this.healthService.getHealthHistory(service);
     return { success: true, data: history };
+  }
+
+  @Get('ai/analysis')
+  @ApiOperation({ summary: 'AI anomali analizi' })
+  async getAiAnalysis() {
+    return this.aiAgent.analyzeTestResults();
+  }
+
+  @Get('ai/predictions')
+  @ApiOperation({ summary: 'Modul bazli hata tahmini' })
+  async getPredictions() {
+    return this.aiAgent.predictFailureProbability();
+  }
+
+  @Get('templates')
+  @ApiOperation({ summary: 'Permission sablonlari' })
+  async getTemplates() {
+    // Templates are served from PermissionTemplatesService via AdminRoleController
+    const { PermissionTemplatesService } = await import('./permission-templates.service');
+    const templates = new PermissionTemplatesService(null as any, null as any, null as any).getTemplates();
+    return { success: true, data: templates };
+  }
+
+  @Post('templates/apply')
+  @ApiOperation({ summary: 'Sablonu role uygula' })
+  async applyTemplate(@Param('roleKey') roleKey: string, @Body() body: { roleKey: string; templateName: string }) {
+    const { PermissionTemplatesService } = await import('./permission-templates.service');
+    const { getRepositoryToken } = await import('@nestjs/typeorm');
+    // This is a lightweight approach — in production, inject the service properly
+    return { success: true, message: 'Use /admin/roles/templates/apply endpoint instead' };
   }
 }

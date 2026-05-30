@@ -8,6 +8,7 @@ import { Permission } from '../common/permission.entity';
 import { RolePermission } from '../common/role-permission.entity';
 import { Roles } from '../common/roles.decorator';
 import { RolesGuard } from '../common/roles.guard';
+import { PermissionTemplatesService } from '../common/permission-templates.service';
 
 @ApiTags('admin')
 @Controller({ path: 'admin/roles', version: '1' })
@@ -19,6 +20,7 @@ export class AdminRoleController {
     @InjectRepository(Role) private roleRepo: Repository<Role>,
     @InjectRepository(Permission) private permRepo: Repository<Permission>,
     @InjectRepository(RolePermission) private rpRepo: Repository<RolePermission>,
+    private readonly templateService: PermissionTemplatesService,
   ) {}
 
   @Get()
@@ -114,5 +116,18 @@ export class AdminRoleController {
       await this.rpRepo.save(newRp);
     }
     return { success: true, count: sourceRps.length };
+  }
+
+  @Get('templates/list')
+  @ApiOperation({ summary: 'Permission sablonlarini listele' })
+  getTemplates() {
+    return { success: true, data: this.templateService.getTemplates() };
+  }
+
+  @Post('templates/apply')
+  @ApiOperation({ summary: 'Sablonu role uygula' })
+  async applyTemplate(@Body() body: { roleKey: string; templateName: string }) {
+    const result = await this.templateService.applyTemplate(body.roleKey, body.templateName);
+    return { success: true, ...result };
   }
 }
