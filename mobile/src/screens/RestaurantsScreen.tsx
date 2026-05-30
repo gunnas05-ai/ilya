@@ -647,9 +647,7 @@ export default function RestaurantsScreen({ navigation }: any) {
         <EmptyState emoji="🍽️" message="Yakınınızda restoran bulunamadı." />
       ) : (
         <ScrollView style={styles.listScroll} contentContainerStyle={{ paddingBottom: spacing['2xl'] }}>
-          {/* restaurants list - kept as ScrollView because items have complex expandable content */}
-          ) : (
-            restaurants.map((rest, index) => {
+          {restaurants.map((rest, index) => {
               const isExpanded = expandedRestId === rest.id;
               const hasTirPark = rest.hasTirParking || rest.parkingCapacity > 0;
               const restServices = rest.services || [];
