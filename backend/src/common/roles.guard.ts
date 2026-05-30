@@ -40,11 +40,15 @@ export class RolesGuard implements CanActivate {
 
     // Permission-based check (granular)
     if (requiredPermissions && requiredPermissions.length > 0) {
+      const now = new Date();
       const userPermissions = await this.rolePermRepo.find({
         where: { role: user.role },
         relations: ['permission'],
       });
-      const userPermKeys = userPermissions.map((rp) => rp.permission.key);
+      // Gecici yetkileri filtrele — suresi dolmus olanlari gec
+      const userPermKeys = userPermissions
+        .filter((rp) => !rp.expiresAt || rp.expiresAt > now)
+        .map((rp) => rp.permission.key);
 
       const hasAllPermissions = requiredPermissions.every((perm) =>
         userPermKeys.includes(perm),

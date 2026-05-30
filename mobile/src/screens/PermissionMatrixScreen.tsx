@@ -27,6 +27,13 @@ interface RoleData {
 
 const CHECKBOX = { on: '☑', off: '☐', partial: '▣' };
 
+// Tehlikeli yetkiler — kirmizi vurgulanir
+const DANGEROUS_PERMS = new Set([
+  'admin:manage_users', 'admin:moderate_listings', 'admin:resolve_disputes',
+  'admin:manage_kvkk', 'admin:integrations', 'escrow:release',
+  'load:delete', 'finance:manage_budget',
+]);
+
 export default function PermissionMatrixScreen() {
   const { colors } = useTheme();
   const { can } = usePermission();
@@ -196,15 +203,20 @@ export default function PermissionMatrixScreen() {
 
                 {isExpanded && (
                   <View style={{ marginTop: spacing.sm, marginLeft: spacing.xl }}>
-                    {perms.map((p) => (
-                      <TouchableOpacity key={p.key} onPress={() => togglePerm(p.key)} style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 4 }}>
-                        <Text style={[s.checkIcon, { color: rolePerms.has(p.key) ? colors.success : colors.textTertiary }]}>
-                          {rolePerms.has(p.key) ? CHECKBOX.on : CHECKBOX.off}
-                        </Text>
-                        <Text style={[typography.body, { color: colors.text, flex: 1 }]}>{p.label}</Text>
-                        <Text style={[typography.small, { color: colors.textTertiary, fontSize: 10 }]}>{p.key}</Text>
-                      </TouchableOpacity>
-                    ))}
+                    {perms.map((p) => {
+                      const isDangerous = DANGEROUS_PERMS.has(p.key);
+                      const isSelected = rolePerms.has(p.key);
+                      return (
+                        <TouchableOpacity key={p.key} onPress={() => togglePerm(p.key)} style={[s.permRow, isDangerous && isSelected && { backgroundColor: '#EF4444' + '10' }]}>
+                          <Text style={[s.checkIcon, { color: isSelected ? (isDangerous ? '#EF4444' : colors.success) : colors.textTertiary }]}>
+                            {isSelected ? CHECKBOX.on : CHECKBOX.off}
+                          </Text>
+                          <Text style={[typography.body, { color: isDangerous && isSelected ? '#EF4444' : colors.text, flex: 1, fontWeight: isDangerous ? '700' : '400' }]}>{p.label}</Text>
+                          {isDangerous && <Text style={[typography.small, { color: '#EF4444', marginRight: 4 }]}>⚠</Text>}
+                          <Text style={[typography.small, { color: colors.textTertiary, fontSize: 10 }]}>{p.key}</Text>
+                        </TouchableOpacity>
+                      );
+                    })}
                   </View>
                 )}
               </Card>
@@ -223,4 +235,5 @@ const s = StyleSheet.create({
   btnText: { color: '#FFF', fontWeight: '800', fontSize: 14 },
   checkIcon: { fontSize: 22, marginRight: spacing.sm, width: 28, textAlign: 'center' },
   countBadge: { paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill },
+  permRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 4, borderRadius: 4, paddingHorizontal: 4 },
 });

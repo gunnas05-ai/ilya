@@ -24,6 +24,12 @@ export class RolePermission {
   @JoinColumn({ name: 'roleId' })
   roleEntity: Role;
 
+  @Column({ nullable: true })
+  expiresAt: Date; // Gecici yetki — null ise kalici
+
+  @Column({ nullable: true, length: 100 })
+  grantedBy: string; // Yetkiyi veren admin email
+
   @CreateDateColumn()
   createdAt: Date;
 }

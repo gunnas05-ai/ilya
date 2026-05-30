@@ -87,6 +87,11 @@ export class HealthMonitoringService {
     return this.saveHealthLog('email', 'degraded', Date.now() - start, 'Email servisi yapilandirilmadi — mock mod');
   }
 
+  async checkGpsHealth(): Promise<SystemHealthLog> {
+    const start = Date.now();
+    return this.saveHealthLog('gps', 'degraded', Date.now() - start, 'GPS servisi harici — expo-location uzerinden calisiyor');
+  }
+
   async checkAll(): Promise<SystemHealthLog[]> {
     const results = await Promise.allSettled([
       this.checkApiHealth(),
@@ -96,6 +101,7 @@ export class HealthMonitoringService {
       this.checkPaymentGateway(),
       this.checkSmsHealth(),
       this.checkEmailHealth(),
+      this.checkGpsHealth(),
     ]);
     return results
       .filter((r): r is PromiseFulfilledResult<SystemHealthLog> => r.status === 'fulfilled')
@@ -103,7 +109,7 @@ export class HealthMonitoringService {
   }
 
   async getLatestHealth(): Promise<Record<string, SystemHealthLog>> {
-    const services = ['api', 'database', 'redis', 'ws', 'payment', 'sms', 'email'];
+    const services = ['api', 'database', 'redis', 'ws', 'payment', 'sms', 'email', 'gps'];
     const result: Record<string, SystemHealthLog> = {};
     for (const svc of services) {
       const latest = await this.healthRepo.findOne({

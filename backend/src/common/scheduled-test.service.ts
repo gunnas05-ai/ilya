@@ -14,13 +14,19 @@ export class ScheduledTestService {
 
   @Cron(CronExpression.EVERY_5_MINUTES)
   async runApiHealthCheck() {
-    this.logger.log('Scheduled: API health check');
+    this.logger.log('Scheduled: API health check (5dk)');
     await this.healthService.checkApiHealth().catch(() => {});
+  }
+
+  @Cron('*/15 * * * *') // Her 15 dakikada bir
+  async runLoginTest() {
+    this.logger.log('Scheduled: Login test (15dk)');
+    await this.healthService.checkAll().catch(() => {});
   }
 
   @Cron(CronExpression.EVERY_30_MINUTES)
   async runSmokeTests() {
-    this.logger.log('Scheduled: Smoke tests');
+    this.logger.log('Scheduled: Smoke tests (30dk)');
     await this.testService.runAllTests('smoke', 'scheduled').catch(() => {});
   }
 
