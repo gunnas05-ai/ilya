@@ -3,6 +3,7 @@ import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
 import { Roles } from '../common/roles.decorator';
 import { RolesGuard } from '../common/roles.guard';
+import { AuditService } from '../common/audit.service';
 import { IsString, IsOptional, IsBoolean, IsNumber } from 'class-validator';
 
 class UpdateProfileDto {
@@ -25,7 +26,7 @@ class UpdateProfileDto {
 
 @Controller('users')
 export class UsersController {
-  constructor(private usersService: UsersService) {}
+  constructor(private usersService: UsersService, private auditService: AuditService) {}
 
   @Get('me')
   @UseGuards(AuthGuard('jwt'))
@@ -66,16 +67,32 @@ export class UsersController {
   @Post(':id/block')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('super_admin', 'admin')
-  async toggleUserBlock(@Param('id') id: string) {
+  async toggleUserBlock(@Req() req: any, @Param('id') id: string) {
     const user = await this.usersService.toggleUserStatus(id);
+    await this.auditService.logAdminAction({
+      adminId: req.user.id, adminEmail: req.user.email,
+      action: user?.isActive ? 'user_unblock' : 'user_block',
+      description: `${user?.isActive ? 'Kullanici blokaji kaldirildi' : 'Kullanici engellendi'}: ${user?.email}`,
+      targetUserId: id, targetUserEmail: user?.email,
+      ipAddress: req.ip,
+    });
     return { success: true, data: user };
   }
 
   @Post(':id/role')
   @UseGuards(AuthGuard('jwt'), RolesGuard)
   @Roles('super_admin', 'admin')
-  async updateUserRole(@Param('id') id: string, @Body('role') role: string) {
+  async updateUserRole(@Req() req: any, @Param('id') id: string, @Body('role') role: string) {
+    const oldUser = await this.usersService.findById(id);
     const user = await this.usersService.updateUserRole(id, role);
+    await this.auditService.logAdminAction({
+      adminId: req.user.id, adminEmail: req.user.email,
+      action: 'role_change',
+      description: `Rol degistirildi: ${oldUser?.role} → ${role}`,
+      targetUserId: id, targetUserEmail: user?.email,
+      metadata: { oldRole: oldUser?.role, newRole: role },
+      ipAddress: req.ip,
+    });
     return { success: true, data: user };
   }
 }
