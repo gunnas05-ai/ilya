@@ -138,6 +138,7 @@ export default function AdminPanelScreen({ navigation }: any) {
         { key: 'settings_language', label: 'Çoklu Dil Desteği',     icon: '🌐' },
         { key: 'settings_permissions', label: 'Yetki Matrisi',     icon: '🔐', route: 'PermissionMatrix' },
         { key: 'settings_test', label: 'Test Merkezi',          icon: '🧪', route: 'TestCenter' },
+        { key: 'settings_audit', label: 'Islem Gecmisi (Audit)', icon: '📋', route: 'AuditLog' },
       ],
     },
     {

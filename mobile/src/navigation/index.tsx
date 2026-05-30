@@ -30,6 +30,7 @@ import AnalyticsDashboardScreen from '../screens/AnalyticsDashboardScreen';
 import AdminPanelScreen from '../screens/AdminPanelScreen';
 import TestCenterScreen from '../screens/TestCenterScreen';
 import PermissionMatrixScreen from '../screens/PermissionMatrixScreen';
+import AuditLogScreen from '../screens/AuditLogScreen';
 import FuelStationsScreen from '../screens/FuelStationsScreen';
 import RestaurantsScreen from '../screens/RestaurantsScreen';
 import RoutePlannerScreen from '../screens/RoutePlannerScreen';
@@ -96,6 +97,7 @@ const SCREEN_CONFIGS: Omit<ScreenConfig, 'options'>[] = [
   { name: 'AdminPanel', component: AdminPanelScreen, i18nKey: 'nav.adminPanel' },
   { name: 'TestCenter', component: TestCenterScreen },
   { name: 'PermissionMatrix', component: PermissionMatrixScreen },
+  { name: 'AuditLog', component: AuditLogScreen },
   { name: 'FuelStations', component: FuelStationsScreen, i18nKey: 'nav.fuelStations' },
   { name: 'Restaurants', component: RestaurantsScreen, i18nKey: 'nav.restaurants' },
   { name: 'RoutePlanner', component: RoutePlannerScreen },

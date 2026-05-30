@@ -19,6 +19,7 @@ export type RootStackParamList = {
   AdminPanel: undefined;
   TestCenter: undefined;
   PermissionMatrix: undefined;
+  AuditLog: undefined;
   FuelStations: undefined;
   Restaurants: undefined;
   RoutePlanner: undefined;
