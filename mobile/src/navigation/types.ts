@@ -17,6 +17,7 @@ export type RootStackParamList = {
   ApiKeyManagement: undefined;
   AnalyticsDashboard: undefined;
   AdminPanel: undefined;
+  TestCenter: undefined;
   FuelStations: undefined;
   Restaurants: undefined;
   RoutePlanner: undefined;

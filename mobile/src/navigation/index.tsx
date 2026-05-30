@@ -28,6 +28,7 @@ import WebhookManagementScreen from '../screens/settings/WebhookManagementScreen
 import ApiKeyManagementScreen from '../screens/settings/ApiKeyManagementScreen';
 import AnalyticsDashboardScreen from '../screens/AnalyticsDashboardScreen';
 import AdminPanelScreen from '../screens/AdminPanelScreen';
+import TestCenterScreen from '../screens/TestCenterScreen';
 import FuelStationsScreen from '../screens/FuelStationsScreen';
 import RestaurantsScreen from '../screens/RestaurantsScreen';
 import RoutePlannerScreen from '../screens/RoutePlannerScreen';
@@ -92,6 +93,7 @@ const SCREEN_CONFIGS: Omit<ScreenConfig, 'options'>[] = [
   { name: 'ApiKeyManagement', component: ApiKeyManagementScreen, i18nKey: 'nav.apiKeyManagement' },
   { name: 'AnalyticsDashboard', component: AnalyticsDashboardScreen, i18nKey: 'nav.analyticsDashboard' },
   { name: 'AdminPanel', component: AdminPanelScreen, i18nKey: 'nav.adminPanel' },
+  { name: 'TestCenter', component: TestCenterScreen },
   { name: 'FuelStations', component: FuelStationsScreen, i18nKey: 'nav.fuelStations' },
   { name: 'Restaurants', component: RestaurantsScreen, i18nKey: 'nav.restaurants' },
   { name: 'RoutePlanner', component: RoutePlannerScreen },
