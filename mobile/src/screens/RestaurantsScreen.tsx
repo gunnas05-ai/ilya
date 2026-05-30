@@ -1,8 +1,17 @@
 import React, { useState, useEffect } from 'react';
-import {
-  View, Text, StyleSheet, ScrollView, FlatList,
-  TouchableOpacity, ActivityIndicator, Alert, Modal,
-  TextInput, KeyboardAvoidingView, Platform, Image
+import { 
+  View, 
+  Text, 
+  StyleSheet, 
+  ScrollView, 
+  TouchableOpacity, 
+  ActivityIndicator, 
+  Alert, 
+  Modal, 
+  TextInput, 
+  KeyboardAvoidingView, 
+  Platform,
+  Image
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -13,6 +22,7 @@ import { PhoneInput } from '../components/shared/PhoneInput';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, radius, typography } from '../theme';
 import Card from '../components/shared/Card';
+import SkeletonLoader from '../components/shared/SkeletonLoader';
 import ListSkeleton from '../components/shared/ListSkeleton';
 import ErrorState from '../components/shared/ErrorState';
 import EmptyState from '../components/shared/EmptyState';
@@ -96,12 +106,15 @@ export default function RestaurantsScreen({ navigation }: any) {
   };
 
   // States
+  const [userLocation, setUserLocation] = useState<any>({ lat: 40.7854, lng: 31.3021 }); // Kaynaşlı Coordinate
+  const [activeTab, setActiveTab] = useState<'all' | 'nearby' | 'favorites'>('all');
+  const [userLat] = useState(40.7854);
+  const [userLng] = useState(31.3021);
+
   const restaurantsQuery = useNearbyRestaurants(userLat, userLng, 50);
   const restaurants = restaurantsQuery.data || [];
   const loading = restaurantsQuery.isLoading;
-  const [userLocation, setUserLocation] = useState<any>({ lat: 40.7854, lng: 31.3021 }); // Kaynaşlı Coordinate
-  const [activeTab, setActiveTab] = useState<'all' | 'nearby' | 'favorites'>('all');
-  
+
   // Accordions expanded states
   const [expandedRestId, setExpandedRestId] = useState<string | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
@@ -196,6 +209,7 @@ export default function RestaurantsScreen({ navigation }: any) {
     }
   }, [activePreOrder]);
 
+  const fetchRestaurants = () => restaurantsQuery.refetch();
 
   const handleSearchSubmit = async () => {
     if (!searchQuery) {
@@ -226,7 +240,7 @@ export default function RestaurantsScreen({ navigation }: any) {
       restaurantsQuery.refetch();
       setIsSearched(true);
     } catch (err) {
-      console.error('Error searching restaurants:', err);
+      console.log('Error searching restaurants:', err);
     } finally {
       setLoading(false);
     }
@@ -318,7 +332,7 @@ export default function RestaurantsScreen({ navigation }: any) {
       Alert.alert('Tebrikler!', 'Yorumunuz başarıyla gönderildi.');
       setReviewModalVisible(false);
       setComment('');
-      restaurantsQuery.refetch();
+      fetchRestaurants();
     } catch {
       Alert.alert('Tebrikler!', 'Yorumunuz başarıyla gönderildi (Simüle edildi).');
       setReviewModalVisible(false);
@@ -356,7 +370,7 @@ export default function RestaurantsScreen({ navigation }: any) {
         Alert.alert('Görsel Eklendi', 'Tesis fotoğrafı optimize edilerek eklendi (<2MB).');
       }
     } catch (err) {
-      console.error('Error picking image:', err);
+      console.log('Error picking image:', err);
       Alert.alert('Hata', 'Görsel seçilirken veya optimize edilirken hata oluştu.');
     }
   };
@@ -505,9 +519,9 @@ export default function RestaurantsScreen({ navigation }: any) {
         Alert.alert('Başarılı', 'Yeni tesis başarıyla eklendi.');
       }
       setEditModalVisible(false);
-      restaurantsQuery.refetch();
+      fetchRestaurants();
     } catch (err) {
-      console.error('Error saving restaurant:', err);
+      console.log('Error saving restaurant:', err);
       // Fallback local simulation if server connectivity drops
       Alert.alert('İşlem Tamamlandı', 'Tesis başarıyla kaydedildi (Simüle edildi).');
       setEditModalVisible(false);
@@ -524,10 +538,10 @@ export default function RestaurantsScreen({ navigation }: any) {
           try {
             await restaurantService.delete(restId);
             Alert.alert('Başarılı', 'Tesis silindi.');
-            restaurantsQuery.refetch();
+            fetchRestaurants();
           } catch {
             Alert.alert('Başarılı', 'Tesis başarıyla silindi (Simüle edildi).');
-            setRestaurants(restaurants.filter(r => r.id !== restId));
+            restaurantsQuery.refetch();
           }
         }}
       ]
@@ -639,15 +653,29 @@ export default function RestaurantsScreen({ navigation }: any) {
       )}
 
       {/* Loading Indicator */}
-      {restaurantsQuery.isError ? (
-        <ErrorState message="Restoranlar yüklenirken bir hata oluştu." onRetry={() => restaurantsQuery.refetch()} />
-      ) : loading ? (
-        <View style={styles.listScroll}><ListSkeleton count={4} /></View>
-      ) : restaurants.length === 0 ? (
-        <EmptyState emoji="🍽️" message="Yakınınızda restoran bulunamadı." />
+      {loading ? (
+        <ScrollView style={styles.listScroll} contentContainerStyle={{ paddingBottom: spacing['2xl'] }}>
+          {[1, 2, 3, 4].map((i) => (
+            <Card key={i} style={{ marginBottom: spacing.md, padding: spacing.md }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                <SkeletonLoader width={64} height={64} borderRadius={radius.md} />
+                <View style={{ flex: 1, marginLeft: spacing.md }}>
+                  <SkeletonLoader width="80%" height={24} borderRadius={radius.sm} style={{ marginBottom: spacing.xs }} />
+                  <SkeletonLoader width="50%" height={16} borderRadius={radius.sm} />
+                </View>
+              </View>
+            </Card>
+          ))}
+        </ScrollView>
       ) : (
         <ScrollView style={styles.listScroll} contentContainerStyle={{ paddingBottom: spacing['2xl'] }}>
-          {restaurants.map((rest, index) => {
+          {restaurants.length === 0 ? (
+            <View style={styles.emptyContainer}>
+              <Text style={{ fontSize: 48 }}>🍽️</Text>
+              <Text style={[typography.h3, { color: colors.text, marginTop: spacing.md }]}>Tesis Bulunamadı</Text>
+            </View>
+          ) : (
+            restaurants.map((rest, index) => {
               const isExpanded = expandedRestId === rest.id;
               const hasTirPark = rest.hasTirParking || rest.parkingCapacity > 0;
               const restServices = rest.services || [];
@@ -850,7 +878,7 @@ export default function RestaurantsScreen({ navigation }: any) {
                 </Card>
               );
             })
-          }
+          )}
         </ScrollView>
       )}
 
