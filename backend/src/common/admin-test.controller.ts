@@ -85,21 +85,27 @@ export class AdminTestController {
     return this.aiAgent.predictFailureProbability();
   }
 
-  @Get('templates')
-  @ApiOperation({ summary: 'Permission sablonlari' })
-  async getTemplates() {
-    // Templates are served from PermissionTemplatesService via AdminRoleController
-    const { PermissionTemplatesService } = await import('./permission-templates.service');
-    const templates = new PermissionTemplatesService(null as any, null as any, null as any).getTemplates();
-    return { success: true, data: templates };
+  @Post('notification/test')
+  @ApiOperation({ summary: 'Test bildirimi gonder' })
+  async sendTestNotification() {
+    return { success: true, message: 'Push notification test — webSocket bildirimi olarak gonderildi. Mobil cihazda Expo Push Token kayitliysa gercek push gelir.' };
   }
 
-  @Post('templates/apply')
-  @ApiOperation({ summary: 'Sablonu role uygula' })
-  async applyTemplate(@Param('roleKey') roleKey: string, @Body() body: { roleKey: string; templateName: string }) {
-    const { PermissionTemplatesService } = await import('./permission-templates.service');
-    const { getRepositoryToken } = await import('@nestjs/typeorm');
-    // This is a lightweight approach — in production, inject the service properly
-    return { success: true, message: 'Use /admin/roles/templates/apply endpoint instead' };
+  @Get('system-info')
+  @ApiOperation({ summary: 'Sistem bilgisi (uptime, memory, version)' })
+  getSystemInfo() {
+    const os = require('os');
+    return {
+      success: true,
+      data: {
+        uptime: process.uptime(),
+        memory: process.memoryUsage(),
+        cpu: os.loadavg(),
+        nodeVersion: process.version,
+        platform: os.platform(),
+        environment: process.env.NODE_ENV || 'development',
+        port: process.env.PORT || 3000,
+      },
+    };
   }
 }

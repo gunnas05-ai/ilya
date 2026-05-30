@@ -12,6 +12,7 @@ import { ToastProvider } from './src/utils/toast';
 import { queryClient } from './src/services/queryClient';
 import { checkAppVersion } from './src/services/versionService';
 import { trackAppLaunch, shouldShowRatingPrompt, showRatingPrompt } from './src/services/ratingService';
+import { notificationService } from './src/services/notificationService';
 import { useThemeStore } from './src/store/themeStore';
 
 export default function App() {
@@ -24,6 +25,13 @@ export default function App() {
     trackAppLaunch().then(() => {
       shouldShowRatingPrompt().then(show => { if (show) setTimeout(showRatingPrompt, 3000); });
     });
+    // Push notification token kaydi — expo-notifications kuruluysa
+    try {
+      const Notifications = require('expo-notifications');
+      Notifications.getExpoPushTokenAsync?.()
+        .then((token: any) => token?.data && notificationService.registerPushToken(token.data))
+        .catch(() => {});
+    } catch {}
   }, []);
 
   const resolved = mode === 'system' ? scheme ?? 'light' : mode;
