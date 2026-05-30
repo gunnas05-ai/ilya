@@ -40,6 +40,7 @@ const FAB_MENU_ITEMS: FABItemConfig[] = [
   { icon: '🤖', title: 'AI ile Yük Ekle', desc: 'Doğal dil ile yük oluşturun', perm: 'ai:use_dialog', screen: 'AiDialog' },
   { icon: '🚗', title: 'Araç İlanları', desc: 'Araç satın al ve sat', screen: 'ListingsBrowse' },
   { icon: '🧪', title: 'Test Merkezi', desc: 'QA test ve sistem sağlığı', perm: 'admin:view_panel', screen: 'TestCenter' },
+  { icon: '🔐', title: 'Yetki Matrisi', desc: 'Rol ve yetki yönetimi', perm: 'admin:view_panel', screen: 'PermissionMatrix' },
   { icon: '⚙️', title: 'Admin Paneli', desc: 'Kullanıcı ve sistem yönetimi', perm: 'admin:view_panel', screen: 'AdminPanel' },
 ];
 

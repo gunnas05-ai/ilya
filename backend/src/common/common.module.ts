@@ -22,6 +22,7 @@ import { HealthController } from './health.controller';
 import { AdminTestController } from './admin-test.controller';
 import { TestExecutionService } from './test-execution.service';
 import { HealthMonitoringService } from './health-monitoring.service';
+import { ScheduledTestService } from './scheduled-test.service';
 import { LoadsV2Controller, LoadsV1DeprecatedController } from './versioning-example.controller';
 import { SozlesmeController } from './sozlesme.controller';
 import { KafkaModule } from './kafka/kafka.module';
@@ -34,7 +35,7 @@ import { VaultConfigService } from './vault/vault.service';
     KafkaModule.forRootAsync(),
   ],
   controllers: [WhatsAppController, LanguageController, CommunityController, HealthController, AdminTestController, LoadsV2Controller, LoadsV1DeprecatedController, SozlesmeController],
-  providers: [WhatsAppService, RolesGuard, LanguageService, CommunityService, MessageBusService, StructuredLogger, VaultConfigService, TestExecutionService, HealthMonitoringService],
+  providers: [WhatsAppService, RolesGuard, LanguageService, CommunityService, MessageBusService, StructuredLogger, VaultConfigService, TestExecutionService, HealthMonitoringService, ScheduledTestService],
   exports: [WhatsAppService, TypeOrmModule, RolesGuard, LanguageService, CommunityService, MessageBusService, StructuredLogger, VaultConfigService, TestExecutionService, HealthMonitoringService],
 })
 export class CommonModule {}

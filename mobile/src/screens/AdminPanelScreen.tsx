@@ -136,6 +136,8 @@ export default function AdminPanelScreen({ navigation }: any) {
         { key: 'settings_promo',    label: 'Promosyon & Komisyon',   icon: '🏷️' },
         { key: 'settings_kvkk',     label: 'KVKK Yasal Metni',       icon: '🛡️' },
         { key: 'settings_language', label: 'Çoklu Dil Desteği',     icon: '🌐' },
+        { key: 'settings_permissions', label: 'Yetki Matrisi',     icon: '🔐', route: 'PermissionMatrix' },
+        { key: 'settings_test', label: 'Test Merkezi',          icon: '🧪', route: 'TestCenter' },
       ],
     },
     {
