@@ -1,17 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ScrollView, 
-  TouchableOpacity, 
-  ActivityIndicator, 
-  Alert, 
-  Modal, 
-  TextInput, 
-  KeyboardAvoidingView, 
-  Platform,
-  Image
+import {
+  View, Text, StyleSheet, ScrollView, FlatList,
+  TouchableOpacity, ActivityIndicator, Alert, Modal,
+  TextInput, KeyboardAvoidingView, Platform, Image
 } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -22,8 +13,11 @@ import { PhoneInput } from '../components/shared/PhoneInput';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, radius, typography } from '../theme';
 import Card from '../components/shared/Card';
-import SkeletonLoader from '../components/shared/SkeletonLoader';
+import ListSkeleton from '../components/shared/ListSkeleton';
+import ErrorState from '../components/shared/ErrorState';
+import EmptyState from '../components/shared/EmptyState';
 import { restaurantService } from '../services/restaurantService';
+import { useNearbyRestaurants } from '../hooks/query';
 import { useAuthStore } from '../store/authStore';
 
 // Haversine Distance Formula
@@ -102,8 +96,9 @@ export default function RestaurantsScreen({ navigation }: any) {
   };
 
   // States
-  const [restaurants, setRestaurants] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const restaurantsQuery = useNearbyRestaurants(userLat, userLng, 50);
+  const restaurants = restaurantsQuery.data || [];
+  const loading = restaurantsQuery.isLoading;
   const [userLocation, setUserLocation] = useState<any>({ lat: 40.7854, lng: 31.3021 }); // Kaynaşlı Coordinate
   const [activeTab, setActiveTab] = useState<'all' | 'nearby' | 'favorites'>('all');
   
@@ -182,7 +177,7 @@ export default function RestaurantsScreen({ navigation }: any) {
   const [newDishPopular, setNewDishPopular] = useState(false);
 
   useEffect(() => {
-    fetchRestaurants();
+    restaurantsQuery.refetch();
   }, [activeTab]);
 
   useEffect(() => {
@@ -201,51 +196,6 @@ export default function RestaurantsScreen({ navigation }: any) {
     }
   }, [activePreOrder]);
 
-  const fetchRestaurants = async () => {
-    setLoading(true);
-    try {
-      let res;
-      if (activeTab === 'nearby') {
-        res = await restaurantService.getNearby(userLocation.lat, userLocation.lng, 250);
-      } else if (activeTab === 'favorites') {
-        try {
-          res = await restaurantService.getMyFavorites();
-        } catch {
-          const all = await restaurantService.getAll();
-          res = all.data?.restaurants || all || [];
-          res = res.slice(0, 2).map((r: any) => ({ ...r, isFavorite: true }));
-        }
-      } else {
-        res = await restaurantService.getAll();
-      }
-
-      const list = Array.isArray(res) ? res : res.data?.restaurants || res.restaurants || [];
-      
-      // Compute distances using user current location on the fly
-      const verifiedList = list.map((rest: any) => {
-        const dist = getDistance(
-          userLocation.lat,
-          userLocation.lng,
-          rest.latitude || 40.7854,
-          rest.longitude || 31.3021
-        );
-        return {
-          ...rest,
-          distanceKm: dist,
-          eta: Math.round(dist * 1.2 + 5)
-        };
-      });
-
-      // Sort closest first
-      verifiedList.sort((a: any, b: any) => a.distanceKm - b.distanceKm);
-
-      setRestaurants(verifiedList);
-    } catch (err) {
-      console.log('Error fetching restaurants:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleSearchSubmit = async () => {
     if (!searchQuery) {
@@ -273,10 +223,10 @@ export default function RestaurantsScreen({ navigation }: any) {
       });
 
       verifiedList.sort((a: any, b: any) => a.distanceKm - b.distanceKm);
-      setRestaurants(verifiedList);
+      restaurantsQuery.refetch();
       setIsSearched(true);
     } catch (err) {
-      console.log('Error searching restaurants:', err);
+      console.error('Error searching restaurants:', err);
     } finally {
       setLoading(false);
     }
@@ -292,11 +242,11 @@ export default function RestaurantsScreen({ navigation }: any) {
     try {
       await restaurantService.toggleFavorite(rest.id, !rest.isFavorite);
       rest.isFavorite = !rest.isFavorite;
-      setRestaurants([...restaurants]);
+      restaurantsQuery.refetch();
       Alert.alert('Başarılı', rest.isFavorite ? 'Tesis favorilere eklendi!' : 'Tesis favorilerden çıkarıldı!');
     } catch {
       rest.isFavorite = !rest.isFavorite;
-      setRestaurants([...restaurants]);
+      restaurantsQuery.refetch();
       Alert.alert('Başarılı', rest.isFavorite ? 'Tesis favorilere eklendi (Simüle edildi)!' : 'Tesis favorilerden çıkarıldı!');
     }
   };
@@ -368,7 +318,7 @@ export default function RestaurantsScreen({ navigation }: any) {
       Alert.alert('Tebrikler!', 'Yorumunuz başarıyla gönderildi.');
       setReviewModalVisible(false);
       setComment('');
-      fetchRestaurants();
+      restaurantsQuery.refetch();
     } catch {
       Alert.alert('Tebrikler!', 'Yorumunuz başarıyla gönderildi (Simüle edildi).');
       setReviewModalVisible(false);
@@ -406,7 +356,7 @@ export default function RestaurantsScreen({ navigation }: any) {
         Alert.alert('Görsel Eklendi', 'Tesis fotoğrafı optimize edilerek eklendi (<2MB).');
       }
     } catch (err) {
-      console.log('Error picking image:', err);
+      console.error('Error picking image:', err);
       Alert.alert('Hata', 'Görsel seçilirken veya optimize edilirken hata oluştu.');
     }
   };
@@ -555,9 +505,9 @@ export default function RestaurantsScreen({ navigation }: any) {
         Alert.alert('Başarılı', 'Yeni tesis başarıyla eklendi.');
       }
       setEditModalVisible(false);
-      fetchRestaurants();
+      restaurantsQuery.refetch();
     } catch (err) {
-      console.log('Error saving restaurant:', err);
+      console.error('Error saving restaurant:', err);
       // Fallback local simulation if server connectivity drops
       Alert.alert('İşlem Tamamlandı', 'Tesis başarıyla kaydedildi (Simüle edildi).');
       setEditModalVisible(false);
@@ -574,7 +524,7 @@ export default function RestaurantsScreen({ navigation }: any) {
           try {
             await restaurantService.delete(restId);
             Alert.alert('Başarılı', 'Tesis silindi.');
-            fetchRestaurants();
+            restaurantsQuery.refetch();
           } catch {
             Alert.alert('Başarılı', 'Tesis başarıyla silindi (Simüle edildi).');
             setRestaurants(restaurants.filter(r => r.id !== restId));
@@ -689,27 +639,15 @@ export default function RestaurantsScreen({ navigation }: any) {
       )}
 
       {/* Loading Indicator */}
-      {loading ? (
-        <ScrollView style={styles.listScroll} contentContainerStyle={{ paddingBottom: spacing['2xl'] }}>
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i} style={{ marginBottom: spacing.md, padding: spacing.md }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <SkeletonLoader width={64} height={64} borderRadius={radius.md} />
-                <View style={{ flex: 1, marginLeft: spacing.md }}>
-                  <SkeletonLoader width="80%" height={24} borderRadius={radius.sm} style={{ marginBottom: spacing.xs }} />
-                  <SkeletonLoader width="50%" height={16} borderRadius={radius.sm} />
-                </View>
-              </View>
-            </Card>
-          ))}
-        </ScrollView>
+      {restaurantsQuery.isError ? (
+        <ErrorState message="Restoranlar yüklenirken bir hata oluştu." onRetry={() => restaurantsQuery.refetch()} />
+      ) : loading ? (
+        <View style={styles.listScroll}><ListSkeleton count={4} /></View>
+      ) : restaurants.length === 0 ? (
+        <EmptyState emoji="🍽️" message="Yakınınızda restoran bulunamadı." />
       ) : (
         <ScrollView style={styles.listScroll} contentContainerStyle={{ paddingBottom: spacing['2xl'] }}>
-          {restaurants.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={{ fontSize: 48 }}>🍽️</Text>
-              <Text style={[typography.h3, { color: colors.text, marginTop: spacing.md }]}>Tesis Bulunamadı</Text>
-            </View>
+          {/* restaurants list - kept as ScrollView because items have complex expandable content */}
           ) : (
             restaurants.map((rest, index) => {
               const isExpanded = expandedRestId === rest.id;

@@ -8,6 +8,7 @@
 import * as Location from 'expo-location';
 import * as TaskManager from 'expo-task-manager';
 import { apiClient } from './api';
+import { queueRequest } from './offlineQueue';
 
 const BACKGROUND_TASK_NAME = 'kaptan-location-poll';
 
@@ -123,7 +124,7 @@ function updatePollingInterval(speed: number): void {
       clearInterval(state.intervalId);
       state.intervalId = setInterval(pollLocation, newInterval);
     }
-    console.log(`[LocationPoller] Interval: ${newInterval / 1000}s (${state.isMoving ? 'hareket' : 'park'})`);
+
   }
 }
 
@@ -143,8 +144,6 @@ async function sendLocationToServer(
       timestamp: new Date().toISOString(),
     });
   } catch {
-    // Offline → offlineQueue'ya yazilir
-    const { queueRequest } = require('./offlineQueue');
     await queueRequest('/tracking', 'POST', {
       loadId: state.shipmentId,
       latitude: lat,

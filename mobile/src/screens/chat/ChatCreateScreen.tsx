@@ -98,7 +98,7 @@ export default function ChatCreateScreen() {
       // Navigate to ChatRoom Screen
       navigation.replace('ChatRoom', { roomId });
     } catch (err) {
-      console.log('Error creating chat:', err);
+      console.error('Error creating chat:', err);
       Alert.alert('Hata', 'Sohbet başlatılırken bir sorun oluştu.');
     }
   };

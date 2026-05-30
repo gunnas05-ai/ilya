@@ -3,6 +3,9 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Alert,
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, radius, typography } from '../../theme';
 import { apiClient } from '../../services/api';
+import { handleError } from '../../services/errorService';
+import ErrorState from '../../components/shared/ErrorState';
+import EmptyState from '../../components/shared/EmptyState';
 import { hapticLight, hapticMedium } from '../../utils/haptic';
 import Card from '../../components/shared/Card';
 
@@ -11,19 +14,24 @@ export default function PartOffersScreen({ navigation }: any) {
   const [received, setReceived] = useState<any[]>([]);
   const [sent, setSent] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'received' | 'sent'>('received');
   const [counterId, setCounterId] = useState<string | null>(null);
   const [counterAmount, setCounterAmount] = useState('');
 
   const fetchData = useCallback(async () => {
     try {
+      setError(null);
       const [rRes, sRes] = await Promise.all([
         apiClient.get('/part-market/favorites/my').catch(() => ({ data: { data: [] } })),
         apiClient.get('/part-market/offers/my'),
       ]);
       setSent(sRes.data?.data || []);
-      setReceived([]); // Seller's received offers need a different endpoint
-    } catch {} finally { setLoading(false); }
+      setReceived([]);
+    } catch (e) {
+      handleError(e, { screen: 'PartOffers', action: 'fetchData' });
+      setError('Teklifler yüklenirken bir hata oluştu.');
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
@@ -31,7 +39,7 @@ export default function PartOffersScreen({ navigation }: any) {
   const handleAccept = async (offerId: string) => {
     hapticMedium();
     try { await apiClient.put(`/part-market/offers/${offerId}/accept`); Alert.alert('✅', 'Teklif kabul edildi.'); fetchData(); }
-    catch { Alert.alert('Hata', 'İşlem başarısız.'); }
+    catch (e) { handleError(e, { screen: 'PartOffers', action: 'accept' }); }
   };
 
   const handleReject = async (offerId: string) => {

@@ -21,6 +21,8 @@ import SignaturePad from '../components/shared/SignaturePad';
 import Card from '../components/shared/Card';
 import { Ionicons } from '@expo/vector-icons';
 import { podService } from '../services/podService';
+import { apiClient } from '../services/api';
+import { getSocket } from '../services/websocket';
 import { hapticLight, hapticMedium } from '../utils/haptic';
 
 // ── Types ──────────────────────────────────
@@ -138,8 +140,7 @@ const DeliveryProofScreen = () => {
 
       // Backend'e teslimat doğrulaması gönder → otomatik backhaul tetiklenir
       try {
-        const api = require('../services/api').apiClient;
-        await api.post(`/tracking/${loadId}/verify-delivery`, {
+        await apiClient.post(`/tracking/${loadId}/verify-delivery`, {
           driverId: 'current-user',
           method: 'photo',
           metadata: {
@@ -157,7 +158,6 @@ const DeliveryProofScreen = () => {
       // WebSocket AUTOMATED_RELOAD event'ini dinle (3 saniye timeout)
       let backhaulTimeout: any;
       try {
-        const { getSocket } = require('../services/websocket');
         const socket = getSocket();
         if (socket) {
           const handler = (data: any) => {

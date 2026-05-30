@@ -5,21 +5,25 @@ import {
   Text,
   StyleSheet,
   ScrollView,
+  FlatList,
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
   Alert,
-  Modal, 
-  KeyboardAvoidingView, 
+  Modal,
+  KeyboardAvoidingView,
   Platform,
   Image
 } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, radius, typography } from '../theme';
 import Card from '../components/shared/Card';
-import SkeletonLoader from '../components/shared/SkeletonLoader';
+import ListSkeleton from '../components/shared/ListSkeleton';
+import ErrorState from '../components/shared/ErrorState';
+import EmptyState from '../components/shared/EmptyState';
 import FuelPriceHistoryChart from '../components/FuelPriceHistoryChart';
 import { fuelStationService } from '../services/fuelStationService';
+import { useNearbyFuelStations } from '../hooks/query';
 import { useAuthStore } from '../store/authStore';
 import * as ImagePicker from 'expo-image-picker';
 import * as ImageManipulator from 'expo-image-manipulator';
@@ -63,13 +67,16 @@ export default function FuelStationsScreen({ navigation }: any) {
   };
 
   // States
-  const [stations, setStations] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [expandedStationId, setExpandedStationId] = useState<string | null>(null);
-  
+
   // Location States
   const [userLat, setUserLat] = useState(40.7854); // Default to Düzce/Kaynaşlı
   const [userLng, setUserLng] = useState(31.3021);
+
+  // React Query: auto-fetch + cache + retry
+  const stationsQuery = useNearbyFuelStations(userLat, userLng, 50);
+  const stations = stationsQuery.data || [];
+  const loading = stationsQuery.isLoading;
 
   // Price report & review states
   const [priceModalVisible, setPriceModalVisible] = useState(false);
@@ -180,41 +187,17 @@ export default function FuelStationsScreen({ navigation }: any) {
           setUserLng(loc.coords.longitude);
         }
       } catch (e) {
-        console.log('Error getting location, using default Düzce coordinates:', e);
+        console.error('Error getting location:', e);
       }
     })();
   }, []);
 
   useEffect(() => {
-    fetchStations();
     // EX-010: Fetch EPDK reference prices
     fuelStationService.getEpdkReference().then((res: any) => {
       setEpdkData(res.data || res);
     }).catch(() => {});
-  }, [userLat, userLng]);
-
-  const fetchStations = async () => {
-    setLoading(true);
-    try {
-      const res = await fuelStationService.getAll();
-      const rawStations = res.data?.stations || res.stations || res || [];
-      
-      // Calculate distances & sort by distance ASC
-      const mapped = rawStations.map((s: any) => {
-        const dist = getDistance(userLat, userLng, s.latitude || 40.7854, s.longitude || 31.3021);
-        return {
-          ...s,
-          distanceKm: dist
-        };
-      });
-      mapped.sort((a: any, b: any) => a.distanceKm - b.distanceKm);
-      setStations(mapped);
-    } catch (err) {
-      console.log('Error fetching fuel stations:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, []);
 
   const handleSearchSubmit = async () => {
     if (!searchQuery) {
@@ -239,7 +222,7 @@ export default function FuelStationsScreen({ navigation }: any) {
       setStations(mapped);
       setIsSearched(true);
     } catch (err) {
-      console.log('Error searching fuel stations:', err);
+      console.error('Error searching fuel stations:', err);
     } finally {
       setLoading(false);
     }
@@ -276,7 +259,7 @@ export default function FuelStationsScreen({ navigation }: any) {
         `${data.imported || data.total || prices.length} fiyat güncellendi.${data.errors ? `\n${data.errors.length} hata oluştu.` : ''}`,
       );
       setShowBulkImport(false);
-      fetchStations();
+      stationsQuery.refetch();
     } catch (err: any) {
       Alert.alert('Hata', err.response?.data?.message || 'Toplu güncelleme başarısız.');
     }
@@ -315,7 +298,7 @@ export default function FuelStationsScreen({ navigation }: any) {
         setFormPhotoUri(manipResult.uri);
         setFormPhotoBase64(`data:image/jpeg;base64,${manipResult.base64}`);
       } catch (error) {
-        console.log('Error manipulating/compressing image:', error);
+        console.error('Error manipulating/compressing image:', error);
         setFormPhotoUri(asset.uri);
       }
     }
@@ -432,10 +415,10 @@ export default function FuelStationsScreen({ navigation }: any) {
         Alert.alert('Başarılı', 'Yeni istasyon başarıyla eklendi.');
       }
       setEditModalVisible(false);
-      fetchStations();
+      stationsQuery.refetch();
     } catch (err) {
       Alert.alert('Hata', 'İstasyon kaydedilirken bir hata oluştu.');
-      console.log(err);
+      console.error(err);
     }
   };
 
@@ -453,7 +436,7 @@ export default function FuelStationsScreen({ navigation }: any) {
               await fuelStationService.delete(s.id);
               Alert.alert('Başarılı', 'İstasyon başarıyla silindi.');
               setExpandedStationId(null);
-              fetchStations();
+              stationsQuery.refetch();
             } catch (err) {
               Alert.alert('Hata', 'İstasyon silinirken bir hata oluştu.');
             }
@@ -476,7 +459,7 @@ export default function FuelStationsScreen({ navigation }: any) {
       Alert.alert('Teşekkürler!', 'Fiyat güncellemesi başarıyla kaydedildi.');
       setPriceModalVisible(false);
       setNewPrice('');
-      fetchStations();
+      stationsQuery.refetch();
     } catch (err) {
       Alert.alert('Hata', 'Fiyat bildirilemedi.');
     }
@@ -492,7 +475,7 @@ export default function FuelStationsScreen({ navigation }: any) {
       Alert.alert('Başarılı', 'Yorumunuz başarıyla kaydedildi.');
       setReviewModalVisible(false);
       setComment('');
-      fetchStations();
+      stationsQuery.refetch();
     } catch (err) {
       Alert.alert('Hata', 'Yorum kaydedilemedi.');
     }
@@ -558,24 +541,118 @@ export default function FuelStationsScreen({ navigation }: any) {
         </View>
       )}
 
-      {/* Loading Indicator */}
-      {loading ? (
-        <ScrollView style={styles.listScroll} contentContainerStyle={{ paddingBottom: spacing['2xl'] }}>
-          {[1, 2, 3, 4].map((i) => (
-            <Card key={i} style={{ marginBottom: spacing.md, padding: spacing.md }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-                <SkeletonLoader width={48} height={48} borderRadius={radius.md} />
-                <View style={{ flex: 1, marginLeft: spacing.md }}>
-                  <SkeletonLoader width="70%" height={20} borderRadius={radius.sm} style={{ marginBottom: spacing.xs }} />
-                  <SkeletonLoader width="40%" height={14} borderRadius={radius.sm} />
-                </View>
-                <SkeletonLoader width={40} height={20} borderRadius={radius.sm} />
-              </View>
-            </Card>
-          ))}
-        </ScrollView>
+      {/* Loading / Error / Empty States */}
+      {stationsQuery.isError ? (
+        <ErrorState message="Akaryakıt istasyonları yüklenirken bir hata oluştu." onRetry={() => stationsQuery.refetch()} />
+      ) : loading ? (
+        <View style={styles.listScroll}><ListSkeleton count={4} /></View>
+      ) : stations.length === 0 ? (
+        <EmptyState emoji="⛽" message="Yakınınızda akaryakıt istasyonu bulunamadı." />
       ) : (
-        <ScrollView style={styles.listScroll} contentContainerStyle={{ paddingBottom: spacing['2xl'] }}>
+        <FlatList
+          style={styles.listScroll}
+          data={stations}
+          keyExtractor={(item: any) => item.id || item._id}
+          renderItem={({ item: s }: any) => {
+            const dist = getDistance(userLat, userLng, s.latitude || 40.7854, s.longitude || 31.3021);
+            s.distanceKm = s.distanceKm || dist;
+            return (
+              <View style={{ paddingHorizontal: spacing.lg }}>
+                {/* EPDK card rendered before first item */}
+                {stations.indexOf(s) === 0 && epdkData?.epdk && (
+                  <Card accentColor={colors.info} style={{ marginBottom: spacing.md }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: spacing.sm }}>
+                      <Text style={[typography.label, { color: colors.text, fontWeight: '700' }]}>⛽ EPDK Referans Fiyatları</Text>
+                      <Text style={[typography.small, { color: colors.textTertiary }]}>
+                        {new Date(epdkData.epdk.updatedAt).toLocaleDateString('tr-TR')}
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                      {[
+                        { label: 'Motorin', key: 'motorin', val: epdkData.epdk.motorin },
+                        { label: 'Benzin', key: 'kursunsuz', val: epdkData.epdk.benzin },
+                        { label: 'LPG', key: 'lpg', val: epdkData.epdk.lpg },
+                      ].map(f => (
+                        <View key={f.key} style={{ flex: 1, alignItems: 'center', backgroundColor: colors.surface, borderRadius: radius.md, padding: spacing.sm }}>
+                          <Text style={[typography.small, { color: colors.textTertiary }]}>{f.label}</Text>
+                          <Text style={[typography.h3, { color: colors.info, fontWeight: '800' }]}>{f.val} ₺</Text>
+                        </View>
+                      ))}
+                    </View>
+                  </Card>
+                )}
+                <Card key={s.id || s._id} style={{ marginBottom: spacing.md }}>
+                  {/* Station card content */}
+                  <TouchableOpacity onPress={() => setExpandedStationId(expandedStationId === s.id ? null : s.id)} activeOpacity={0.8}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                      {s.photoUrl ? (
+                        <Image source={{ uri: s.photoUrl }} style={styles.thumbnail} />
+                      ) : (
+                        <View style={[styles.thumbnail, { backgroundColor: colors.border, alignItems: 'center', justifyContent: 'center' }]}>
+                          <Text style={{ fontSize: 24 }}>⛽</Text>
+                        </View>
+                      )}
+                      <View style={{ flex: 1, marginLeft: spacing.md }}>
+                        <Text style={[typography.body, { color: colors.text, fontWeight: '700' }]}>{s.name}</Text>
+                        <Text style={[typography.small, { color: colors.textSecondary }]}>{s.brand} • {s.address}</Text>
+                      </View>
+                      <View style={{ alignItems: 'flex-end' }}>
+                        <Text style={[typography.body, { color: colors.primary, fontWeight: '800' }]}>{s.distanceKm?.toFixed(1) || '?'} km</Text>
+                        <Text style={[typography.small, { color: colors.textTertiary }]}>{s.workingHours || '7/24'}</Text>
+                      </View>
+                    </View>
+                  </TouchableOpacity>
+                  {/* Expanded details */}
+                  {expandedStationId === s.id && (
+                    <View style={{ marginTop: spacing.md, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: spacing.md }}>
+                      <Text style={[typography.label, { color: colors.text, fontWeight: '700', marginBottom: spacing.sm }]}>⛽ Güncel Fiyatlar</Text>
+                      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, marginBottom: spacing.md }}>
+                        {['motorin', 'kursunsuz', 'lpg', 'adblue'].map(ft => {
+                          const price = s.prices?.[ft];
+                          if (!price && ft !== 'motorin') return null;
+                          return (
+                            <View key={ft} style={{ backgroundColor: colors.surface, paddingHorizontal: spacing.md, paddingVertical: spacing.xs, borderRadius: radius.md }}>
+                              <Text style={[typography.small, { color: colors.textTertiary }]}>{ft === 'motorin' ? 'Motorin' : ft === 'kursunsuz' ? 'Benzin' : ft.toUpperCase()}</Text>
+                              <Text style={[typography.body, { color: colors.info, fontWeight: '800' }]}>{price || '--'} ₺</Text>
+                            </View>
+                          );
+                        })}
+                      </View>
+                      {s.services?.length > 0 && (
+                        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs, marginBottom: spacing.md }}>
+                          {s.services.map((svc: any) => (
+                            <View key={svc.id || svc} style={{ backgroundColor: colors.success + '15', paddingHorizontal: spacing.sm, paddingVertical: 2, borderRadius: radius.pill }}>
+                              <Text style={[typography.small, { color: colors.success }]}>{svc.name || svc}</Text>
+                            </View>
+                          ))}
+                        </View>
+                      )}
+                      <View style={{ flexDirection: 'row', gap: spacing.sm }}>
+                        <TouchableOpacity style={[styles.actionBtn, { borderColor: colors.primary }]} onPress={() => handleGuestGuard(() => { setSelectedStationForPrice(s); setPriceModalVisible(true); })}>
+                          <Text style={[typography.small, { color: colors.primary, fontWeight: '600' }]}>💰 Fiyat Bildir</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.actionBtn, { borderColor: colors.warning }]} onPress={() => handleGuestGuard(() => { setSelectedStationForReview(s); setReviewModalVisible(true); })}>
+                          <Text style={[typography.small, { color: colors.warning, fontWeight: '600' }]}>⭐ Yorum Yap</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={[styles.actionBtn, { borderColor: '#0ea5e9' }]} onPress={() => { setSelectedStationForMap(s); setMapModalVisible(true); }}>
+                          <Text style={[typography.small, { color: '#0ea5e9', fontWeight: '600' }]}>🗺️ Harita</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
+                </Card>
+              </View>
+            );
+          }}
+          contentContainerStyle={{ paddingBottom: spacing['2xl'] }}
+          refreshing={stationsQuery.isRefetching}
+          onRefresh={() => stationsQuery.refetch()}
+        />
+      )}
+
+      {/* Legacy content after the list - keep for backward compat */}
+      {!loading && !stationsQuery.isError && stations.length > 0 && (
+        <>>
           {/* EX-010: EPDK Reference Prices Card */}
           {epdkData?.epdk && (
             <Card accentColor={colors.info} style={{ marginBottom: spacing.md, marginHorizontal: spacing.lg }}>

@@ -1,6 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, RefreshControl, ActivityIndicator } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
+import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { useTheme } from '../../hooks/useTheme';
+import type { RootStackParamList } from '../../navigation/types';
+
+type NavProp = NativeStackNavigationProp<RootStackParamList>;
 import { spacing, radius, typography } from '../../theme';
 import { loadService } from '../../services/loadService';
 import { calculateDistance } from '../../services/trackingService';
@@ -8,39 +13,41 @@ import { getCurrentLocation } from '../../services/locationService';
 import { hapticLight } from '../../utils/haptic';
 import { ProfileRequiredScreen } from '../../components/ProfileStatusBanner';
 import { apiClient } from '../../services/api';
+import { useAuthStore } from '../../store/authStore';
+import { handleError } from '../../services/errorService';
+import ErrorState from '../../components/shared/ErrorState';
+import EmptyState from '../../components/shared/EmptyState';
+import ListSkeleton from '../../components/shared/ListSkeleton';
 import LoadCard from '../../components/LoadCard';
 
 const LOAD_TYPE_LABELS: Record<string, string> = { tam_yuk: 'Tam Yük', kismi_yuk: 'Kısmi', evden_eve: 'Evden Eve', sehir_ici: 'Şehir İçi' };
 
-export default function LoadAcceptScreen({ navigation }: any) {
+export default function LoadAcceptScreen() {
+  const navigation = useNavigation<NavProp>();
   const { colors } = useTheme();
   const [profileVerified, setProfileVerified] = useState<boolean | null>(null);
   const [loads, setLoads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [search, setSearch] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(true);
 
-  const DEMO_LOADS = [
-    { id: 'demo-1', title: 'Tekstil Ürünleri — 18 Palet', fromCity: 'İstanbul', toCity: 'Ankara', status: 'beklemede', weight: '18 ton', vehicleType: 'Tenteli TIR', totalPrice: 28500, loadType: 'tam_yuk', pickupLat: 41.0, pickupLng: 28.9, pickupDate: '2026-06-01' },
-    { id: 'demo-2', title: 'Demir Çelik Sac Rulo', fromCity: 'Kocaeli', toCity: 'İzmir', status: 'beklemede', weight: '24 ton', vehicleType: 'Çekici (TIR)', totalPrice: 31000, loadType: 'tam_yuk', pickupLat: 40.7, pickupLng: 29.9, pickupDate: '2026-06-03' },
-    { id: 'demo-3', title: 'Gıda Kolileri — 12 Palet', fromCity: 'Mersin', toCity: 'Sivas', status: 'beklemede', weight: '12 ton', vehicleType: 'Frigorifik Araç', totalPrice: 18500, loadType: 'kismi_yuk', pickupLat: 36.8, pickupLng: 34.6, pickupDate: '2026-06-02' },
-    { id: 'demo-4', title: 'Beyaz Eşya — 6 Adet', fromCity: 'İstanbul', toCity: 'Bursa', status: 'yolda', weight: '8 ton', vehicleType: 'Kamyon', totalPrice: 8500, loadType: 'evden_eve', pickupLat: 41.0, pickupLng: 28.9, pickupDate: '2026-05-28' },
-    { id: 'demo-5', title: 'Elektronik Malzeme', fromCity: 'Ankara', toCity: 'Antalya', status: 'beklemede', weight: '5 ton', vehicleType: 'Panelvan', totalPrice: 12500, loadType: 'sehir_ici', pickupLat: 39.9, pickupLng: 32.8, pickupDate: '2026-06-05' },
-  ];
-
   const fetchLoads = useCallback(async () => {
     try {
+      setError(null);
       const data = await loadService.getAll({ limit: 50 });
       const list = Array.isArray(data?.loads) ? data.loads : Array.isArray(data) ? data : [];
-      setLoads(list.length > 0 ? list : DEMO_LOADS);
-    } catch { setLoads(DEMO_LOADS); } finally { setLoading(false); setRefreshing(false); }
+      setLoads(list);
+    } catch (e) {
+      handleError(e, { screen: 'LoadAcceptScreen', action: 'fetchLoads' });
+      setError('Yükler yüklenirken bir hata oluştu.');
+    } finally { setLoading(false); setRefreshing(false); }
   }, []);
 
   useEffect(() => {
-    // Profil dogrulama kontrolu — super admin her zaman yetkili
-    const role = require('../../store/authStore').useAuthStore.getState().user?.role;
+    const role = useAuthStore.getState().user?.role;
     if (role === 'super_admin') {
       setProfileVerified(true);
       return;
@@ -111,13 +118,12 @@ export default function LoadAcceptScreen({ navigation }: any) {
       </View>
 
       {/* Yük Listesi */}
-      {loading ? (
-        <ActivityIndicator color={colors.primary} style={{ marginTop: spacing.xl }} />
+      {loading && !error ? (
+        <ListSkeleton count={4} />
+      ) : error ? (
+        <ErrorState message={error} onRetry={fetchLoads} />
       ) : filtered.length === 0 ? (
-        <View style={{ paddingVertical: spacing['3xl'], alignItems: 'center' }}>
-          <Text style={{ fontSize: 48, marginBottom: spacing.md }}>📦</Text>
-          <Text style={[typography.body, { color: colors.textTertiary }]}>Uygun yük bulunamadı.</Text>
-        </View>
+        <EmptyState emoji="📦" message="Uygun yük bulunamadı." />
       ) : (
         filtered.map((load: any) => (
           <LoadCard

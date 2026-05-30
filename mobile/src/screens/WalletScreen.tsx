@@ -7,6 +7,8 @@ import { useTheme } from '../hooks/useTheme';
 import { useAuthStore } from '../store/authStore';
 import { spacing, radius, typography } from '../theme';
 import { apiClient } from '../services/api';
+import { handleError } from '../services/errorService';
+import ErrorState from '../components/shared/ErrorState';
 import { hapticLight, hapticMedium } from '../utils/haptic';
 import Card from '../components/shared/Card';
 
@@ -47,19 +49,22 @@ export default function WalletScreen({ navigation }: any) {
   const [wallet, setWallet] = useState<WalletData | null>(null);
   const [transactions, setTransactions] = useState<WalletTransaction[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [withdrawing, setWithdrawing] = useState(false);
 
   const fetchWallet = useCallback(async () => {
     try {
+      setError(null);
       const [walletRes, txRes] = await Promise.all([
         apiClient.get('/escrow/wallet'),
         apiClient.get('/escrow/wallet/transactions?limit=20'),
       ]);
       setWallet(walletRes.data?.data || walletRes.data);
       setTransactions(txRes.data?.data || txRes.data || []);
-    } catch {
-      // Wallet yoksa bos goster
+    } catch (e) {
+      handleError(e, { screen: 'Wallet', action: 'fetchWallet' });
+      setError('Cüzdan bilgileri yüklenirken bir hata oluştu.');
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -109,6 +114,14 @@ export default function WalletScreen({ navigation }: any) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }, styles.center]}>
         <ActivityIndicator color={colors.primary} size="large" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ErrorState message={error} onRetry={fetchWallet} />
       </View>
     );
   }

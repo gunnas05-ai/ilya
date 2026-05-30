@@ -2,32 +2,43 @@ import React, { useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, Alert, Image } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
+import { useAppNavigation } from '../../hooks/useAppNavigation';
 import { spacing, radius, typography } from '../../theme';
 import { vehicleService } from '../../services/vehicleService';
+import { handleError } from '../../services/errorService';
 import { hapticLight, hapticMedium } from '../../utils/haptic';
 import Card from '../../components/shared/Card';
 import ListSkeleton from '../../components/shared/ListSkeleton';
 import EmptyState from '../../components/shared/EmptyState';
+import ErrorState from '../../components/shared/ErrorState';
 import OfflineBar from '../../components/shared/OfflineBar';
 
 const FUEL_LABELS: Record<string, string> = { benzin: 'Benzin', dizel: 'Dizel', lpg: 'LPG', elektrik: 'Elektrik', hibrit: 'Hibrit' };
 const TRANS_LABELS: Record<string, string> = { manuel: 'Manuel', otomatik: 'Otomatik', yari_otomatik: 'Yarı Otomatik' };
 
-export default function MyVehiclesScreen({ navigation }: any) {
+export default function MyVehiclesScreen() {
+  const navigation = useAppNavigation();
   const { colors } = useTheme();
   const [vehicles, setVehicles] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
   const fetch = useCallback(async () => {
-    try { const data = await vehicleService.getMyVehicles(); setVehicles(Array.isArray(data) ? data : []); } catch {}
+    try {
+      setError(null);
+      const data = await vehicleService.getMyVehicles();
+      setVehicles(Array.isArray(data) ? data : []);
+    } catch (e) {
+      handleError(e, { screen: 'MyVehicles', action: 'fetch' });
+      setError('Araçlarınız yüklenirken bir hata oluştu.');
+    }
     finally { setLoading(false); setRefreshing(false); }
   }, []);
   useFocusEffect(useCallback(() => { fetch(); }, []));
 
   const handleSaleAction = async (vehicle: any) => {
     hapticMedium();
-    // Check if vehicle already has an active listing — if so, go to manage
     if (vehicle.status === 'active' || vehicle.hasActiveListing) {
       navigation.navigate('ListingsBrowse');
       return;
@@ -42,7 +53,10 @@ export default function MyVehiclesScreen({ navigation }: any) {
         return;
       }
       navigation.navigate('VehicleSale', { vehicle: JSON.stringify(vehicle) });
-    } catch { navigation.navigate('VehicleSale', { vehicle: JSON.stringify(vehicle) }); }
+    } catch (e) {
+      handleError(e, { screen: 'MyVehicles', action: 'checkSaleCriteria' });
+      navigation.navigate('VehicleSale', { vehicle: JSON.stringify(vehicle) });
+    }
   };
 
   const handleDelete = (vehicle: any) => {
@@ -52,6 +66,8 @@ export default function MyVehiclesScreen({ navigation }: any) {
       { text: 'Sil', style: 'destructive', onPress: async () => { await vehicleService.delete(vehicle.id); fetch(); } },
     ]);
   };
+
+  if (error) return <View style={{ flex: 1, backgroundColor: colors.background }}><ErrorState message={error} onRetry={fetch} /></View>;
 
   if (loading) return <View style={{ flex:1, backgroundColor:colors.background }}><OfflineBar /><ListSkeleton /></View>;
 

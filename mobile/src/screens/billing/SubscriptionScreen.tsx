@@ -4,8 +4,11 @@ import {
   Alert, RefreshControl, ActivityIndicator,
 } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { useAppNavigation } from '../../hooks/useAppNavigation';
 import { spacing, radius, typography } from '../../theme';
 import { apiClient } from '../../services/api';
+import { handleError } from '../../services/errorService';
+import ErrorState from '../../components/shared/ErrorState';
 import { hapticLight, hapticMedium } from '../../utils/haptic';
 import Card from '../../components/shared/Card';
 
@@ -36,16 +39,19 @@ interface SavedCard {
   isDefault: boolean;
 }
 
-export default function SubscriptionScreen({ navigation }: any) {
+export default function SubscriptionScreen() {
+  const navigation = useAppNavigation();
   const { colors } = useTheme();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [subscription, setSubscription] = useState<Subscription | null>(null);
   const [cards, setCards] = useState<SavedCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [purchasing, setPurchasing] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
+      setError(null);
       const [plansRes, subRes, cardsRes] = await Promise.all([
         apiClient.get('/billing/plans'),
         apiClient.get('/billing/subscription'),
@@ -55,7 +61,10 @@ export default function SubscriptionScreen({ navigation }: any) {
       const subData = subRes.data?.data || subRes.data;
       setSubscription(subData?.id ? subData : null);
       setCards(cardsRes.data?.data || cardsRes.data || []);
-    } catch { /* ignore */ }
+    } catch (e) {
+      handleError(e, { screen: 'Subscription', action: 'fetchData' });
+      setError('Abonelik bilgileri yüklenirken bir hata oluştu.');
+    }
     finally { setLoading(false); }
   }, []);
 
@@ -125,6 +134,14 @@ export default function SubscriptionScreen({ navigation }: any) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }, styles.center]}>
         <ActivityIndicator color={colors.primary} size="large" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ErrorState message={error} onRetry={fetchData} />
       </View>
     );
   }

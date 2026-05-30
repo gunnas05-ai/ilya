@@ -3,6 +3,9 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, Activi
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, radius, typography } from '../../theme';
 import { apiClient } from '../../services/api';
+import { handleError } from '../../services/errorService';
+import ErrorState from '../../components/shared/ErrorState';
+import EmptyState from '../../components/shared/EmptyState';
 import { hapticLight } from '../../utils/haptic';
 
 export default function PartMarketSearchScreen({ navigation, route }: any) {
@@ -10,16 +13,21 @@ export default function PartMarketSearchScreen({ navigation, route }: any) {
   const { query, category, categoryName } = route.params || {};
   const [results, setResults] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState(query || '');
 
   const doSearch = async () => {
     setLoading(true);
     try {
+      setError(null);
       const params: any = { limit: 30 };
       if (search) params.search = search;
       const res = await apiClient.get('/part-market/listings', { params });
       setResults(res.data?.data?.items || res.data?.data || []);
-    } catch {} finally { setLoading(false); }
+    } catch (e) {
+      handleError(e, { screen: 'PartMarketSearch', action: 'doSearch' });
+      setError('Arama sonuçları yüklenirken bir hata oluştu.');
+    } finally { setLoading(false); }
   };
 
   useEffect(() => { doSearch(); }, [category]);

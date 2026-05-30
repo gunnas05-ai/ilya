@@ -4,7 +4,7 @@ import { financeService } from '../../services/financeService';
 import * as ImagePicker from 'expo-image-picker';
 import { PremiumButton } from '../../components/PremiumButton';
 import BottomSheet from '../../components/shared/BottomSheet';
-import { ToastService } from '../../utils/ToastService';
+import { showToast } from '../../utils/toast';
 import { financeValidation } from '../../validations/financeValidation';
 import { Input } from '../../components/shared';
 import OcrResultCard from '../../components/shared/OcrResultCard';
@@ -26,7 +26,7 @@ export default function AddExpenseScreen({ navigation }: any) {
   const handlePickImage = async () => {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     if (status !== 'granted') {
-      return ToastService.showError('Hata', tr.finance.cameraPermission);
+      return showToast(tr.finance.cameraPermission, 'error');
     }
 
     const result = await ImagePicker.launchCameraAsync({
@@ -50,12 +50,12 @@ export default function AddExpenseScreen({ navigation }: any) {
       if (response.parsedData?.amount) {
         setAmount(response.parsedData.amount.toString());
         setErrors({});
-        ToastService.showSuccess('Başarılı', tr.finance.ocrSuccess);
+        showToast(tr.finance.ocrSuccess, 'success');
       } else {
-        ToastService.showError('Bilgi', 'Fiş okundu ancak tutar tespit edilemedi. Lütfen manuel giriniz.');
+        showToast('Fiş okundu ancak tutar tespit edilemedi. Lütfen manuel giriniz.', 'info');
       }
     } catch (e) {
-      ToastService.showError('Hata', tr.finance.ocrError);
+      showToast(tr.finance.ocrError, 'error');
     } finally {
       setLoading(false);
     }
@@ -72,7 +72,7 @@ export default function AddExpenseScreen({ navigation }: any) {
     const validation = financeValidation.validateExpense(amount);
     if (!validation.valid) {
       setErrors({ amount: validation.error || tr.finance.amountRequired });
-      return ToastService.showError('Uyarı', validation.error || tr.finance.amountRequired);
+      return showToast(validation.error || tr.finance.amountRequired, 'warning');
     }
     
     setLoading(true);
@@ -82,11 +82,11 @@ export default function AddExpenseScreen({ navigation }: any) {
         description,
         date: new Date().toISOString()
       });
-      ToastService.showSuccess('İşlem Başarılı', tr.finance.successSave);
+      showToast(tr.finance.successSave, 'success');
       setSheetVisible(false);
       setTimeout(() => navigation.goBack(), 300);
     } catch (e) {
-      ToastService.showError('Hata', tr.finance.errorSave);
+      showToast(tr.finance.errorSave, 'error');
     } finally {
       setLoading(false);
     }

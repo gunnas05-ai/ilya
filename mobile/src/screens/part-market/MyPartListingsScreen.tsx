@@ -3,6 +3,9 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, RefreshControl, A
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, radius, typography } from '../../theme';
 import { apiClient } from '../../services/api';
+import { handleError } from '../../services/errorService';
+import ErrorState from '../../components/shared/ErrorState';
+import EmptyState from '../../components/shared/EmptyState';
 import { hapticLight } from '../../utils/haptic';
 import Card from '../../components/shared/Card';
 
@@ -11,22 +14,29 @@ export default function MyPartListingsScreen({ navigation }: any) {
   const [listings, setListings] = useState<any[]>([]);
   const [offers, setOffers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<'listings' | 'offers'>('listings');
 
   const fetchData = useCallback(async () => {
     try {
+      setError(null);
       const [lRes, oRes] = await Promise.all([
         apiClient.get('/part-market/listings?my=true&limit=50'),
         apiClient.get('/part-market/favorites/my'),
       ]);
       setListings(lRes.data?.data?.items || lRes.data?.data || []);
       setOffers(oRes.data?.data || []);
-    } catch {} finally { setLoading(false); }
+    } catch (e) {
+      handleError(e, { screen: 'MyPartListings', action: 'fetchData' });
+      setError('İlanlarınız yüklenirken bir hata oluştu.');
+    } finally { setLoading(false); }
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
 
   if (loading) return <View style={[styles.container, { backgroundColor: colors.background }, styles.center]}><ActivityIndicator color={colors.primary} size="large" /></View>;
+
+  if (error) return <View style={[styles.container, { backgroundColor: colors.background }]}><ErrorState message={error} onRetry={fetchData} /></View>;
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing['2xl'] }} refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchData} />}>

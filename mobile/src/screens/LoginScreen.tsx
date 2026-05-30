@@ -1,14 +1,22 @@
 import { useState, useRef } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   View, Text, TextInput, TouchableOpacity, StyleSheet,
-  ScrollView, KeyboardAvoidingView, Platform, Alert, ActivityIndicator, Image,
+  ScrollView, KeyboardAvoidingView, Platform, ActivityIndicator, Image,
 } from 'react-native';
 import { useAuthStore, UIRole } from '../store/authStore';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, radius, typography } from '../theme';
 import { hapticLight, hapticSuccess, hapticError } from '../utils/haptic';
+import { showToast } from '../utils/toast';
 import BottomSheet from '../components/shared/BottomSheet';
 import { PhoneInput, isValidPhone, formatPhone } from '../components/shared/PhoneInput';
+import {
+  loginSchema, step1Schema, step2Schema, otpSchema,
+  step3FirmaSchema, step3TasiyiciSchema, step3IsletmeSchema,
+  type LoginFormData, type Step2FormData,
+} from '../validations/authSchema';
 
 interface RoleCardData {
   id: UIRole;
@@ -19,1077 +27,396 @@ interface RoleCardData {
 }
 
 const ROLE_CARDS: RoleCardData[] = [
-  {
-    id: 'FIRMA',
-    icon: '🏢',
-    title: 'Firma / Yük Sahibi',
-    description: 'Yük oluşturabilen, taşıma talebi yayınlayabilen kurumsal kullanıcı.',
-    authoritySummary: 'Yük ilanı • Teklif alma • E-İrsaliye • Escrow • QR teslim',
-  },
-  {
-    id: 'TASIYICI',
-    icon: '🚛',
-    title: 'Taşıyıcı / Sürücü',
-    description: 'Yük taşıyan, taşıma operasyonunu gerçekleştiren sürücü veya nakliyeci.',
-    authoritySummary: 'Yük bulma • Teklif verme • GPS takip • E-Fatura • Cüzdan',
-  },
-  {
-    id: 'ISLETME',
-    icon: '🏪',
-    title: 'İşletme Sahibi',
-    description: 'Lokanta, akaryakıt istasyonu veya yol üzeri ticari nokta kaydı yapan işletme.',
-    authoritySummary: 'İşletme yönetimi • Fiyat güncelleme • Kampanya • Yorumlar',
-  },
-  {
-    id: 'GENEL',
-    icon: '👤',
-    title: 'Genel Kullanıcı',
-    description: 'Platformu genel kullanan, alış/satış yapan, ilan yayınlayan standart üye.',
-    authoritySummary: 'Marketplace • Finans • Harita • İlan verme • Escrow',
-  },
+  { id: 'FIRMA', icon: '🏢', title: 'Firma / Yük Sahibi', description: 'Yük oluşturabilen, taşıma talebi yayınlayabilen kurumsal kullanıcı.', authoritySummary: 'Yük ilanı • Teklif alma • E-İrsaliye • Escrow • QR teslim' },
+  { id: 'TASIYICI', icon: '🚛', title: 'Taşıyıcı / Sürücü', description: 'Yük taşıyan, taşıma operasyonunu gerçekleştiren sürücü veya nakliyeci.', authoritySummary: 'Yük bulma • Teklif verme • GPS takip • E-Fatura • Cüzdan' },
+  { id: 'ISLETME', icon: '🏪', title: 'İşletme Sahibi', description: 'Lokanta, akaryakıt istasyonu veya yol üzeri ticari nokta kaydı yapan işletme.', authoritySummary: 'İşletme yönetimi • Fiyat güncelleme • Kampanya • Yorumlar' },
+  { id: 'GENEL', icon: '👤', title: 'Genel Kullanıcı', description: 'Platformu genel kullanan, alış/satış yapan, ilan yayınlayan standart üye.', authoritySummary: 'Marketplace • Finans • Harita • İlan verme • Escrow' },
 ];
 
 const STEP_LABELS = ['Rol Seçimi', 'Bilgiler', 'Rol Detayı', 'Doğrulama'];
 
-export default function LoginScreen() {
+// ── Login Form ──────────────────────────────────────────
+
+function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => void }) {
   const { colors, isDark } = useTheme();
-  const { login, register, verifyOtp, resendOtp, kvkkText, continueAsGuest } = useAuthStore();
-
-  // Tab state
-  const [isRegister, setIsRegister] = useState(false);
-
-  // Registration step
-  const [step, setStep] = useState(1);
-  const [selectedRole, setSelectedRole] = useState<UIRole | null>(null);
-  const [fullName, setFullName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [kvkkAccepted, setKvkkAccepted] = useState(false);
-  const [showKvkkSheet, setShowKvkkSheet] = useState(false);
-
-  // Step 3 - Role-specific fields
-  const [companyTitle, setCompanyTitle] = useState('');
-  const [taxNo, setTaxNo] = useState('');
-  const [taxOfficeName, setTaxOfficeName] = useState('');
-  const [authorizedPerson, setAuthorizedPerson] = useState('');
-  const [licenseType, setLicenseType] = useState('');
-  const [vehicleType, setVehicleType] = useState('');
-  const [plateNumber, setPlateNumber] = useState('');
-  const [srcBelgesi, setSrcBelgesi] = useState('');
-  const [businessType, setBusinessType] = useState('');
-  const [businessAddress, setBusinessAddress] = useState('');
-  const [inviteCode, setInviteCode] = useState('');
-
-  // OTP
-  const [otpCode, setOtpCode] = useState('');
-  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
-
-  // Loading
-  const [loading, setLoading] = useState(false);
+  const { login, continueAsGuest } = useAuthStore();
   const [authLoading, setAuthLoading] = useState(false);
 
-  const scrollRef = useRef<ScrollView>(null);
-  const otpRef = useRef<TextInput>(null);
+  const { control, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+  });
 
-  const shadowStyle = {
-    shadowColor: isDark ? '#FFFFFF' : '#000000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: isDark ? 0.35 : 0.20,
-    shadowRadius: 3.5,
-    elevation: 4,
-  };
-
-  const activeGlowStyle = {
-    shadowColor: colors.primary,
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.45,
-    shadowRadius: 6,
-    elevation: 8,
-  };
-
-  // Reset registration state
-  const resetRegister = () => {
-    setStep(1);
-    setSelectedRole(null);
-    setFullName('');
-    setPhone('');
-    setEmail('');
-    setPassword('');
-    setKvkkAccepted(false);
-    setCompanyTitle('');
-    setTaxNo('');
-    setTaxOfficeName('');
-    setAuthorizedPerson('');
-    setLicenseType('');
-    setVehicleType('');
-    setPlateNumber('');
-    setSrcBelgesi('');
-    setBusinessType('');
-    setBusinessAddress('');
-    setInviteCode('');
-    setOtpCode('');
-    setPendingUserId(null);
-  };
-
-  const handleLogin = async () => {
-    if (!email.trim()) {
-      hapticError();
-      Alert.alert('Hata', 'Lütfen e-posta adresinizi girin.');
-      return;
-    }
-    if (!password) {
-      hapticError();
-      Alert.alert('Hata', 'Lütfen şifrenizi girin.');
-      return;
-    }
+  const onSubmit = async (data: LoginFormData) => {
+    hapticLight();
     setAuthLoading(true);
     try {
-      await login(email.trim(), password);
+      await login(data.email.trim(), data.password);
       hapticSuccess();
     } catch (err: any) {
       hapticError();
-      const msg = err.response?.data?.message || err.message || 'Giriş yapılırken bir hata oluştu.';
-      Alert.alert('Hata', msg);
-    } finally {
-      setAuthLoading(false);
+      showToast(err.response?.data?.message || err.message || 'Giriş yapılırken bir hata oluştu.', 'error');
+    } finally { setAuthLoading(false); }
+  };
+
+  return (
+    <View>
+      <Text style={[typography.h2, { color: colors.text, fontWeight: '800', marginBottom: spacing.lg, textAlign: 'center' }]}>Giriş Yap</Text>
+
+      <Controller control={control} name="email" render={({ field: { onChange, onBlur, value } }) => (
+        <View style={styles.inputGroup}>
+          <Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>E-posta</Text>
+          <TextInput style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: errors.email ? colors.danger : colors.border }]} placeholder="ornek@mail.com" placeholderTextColor={colors.textTertiary} keyboardType="email-address" autoCapitalize="none" onBlur={onBlur} onChangeText={onChange} value={value} />
+          {errors.email && <Text style={styles.fieldError}>{errors.email.message}</Text>}
+        </View>
+      )} />
+
+      <Controller control={control} name="password" render={({ field: { onChange, onBlur, value } }) => (
+        <View style={styles.inputGroup}>
+          <Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Şifre</Text>
+          <TextInput style={[styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: errors.password ? colors.danger : colors.border }]} placeholder="••••••" placeholderTextColor={colors.textTertiary} secureTextEntry onBlur={onBlur} onChangeText={onChange} value={value} />
+          {errors.password && <Text style={styles.fieldError}>{errors.password.message}</Text>}
+        </View>
+      )} />
+
+      <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: colors.primary, opacity: authLoading ? 0.7 : 1 }]} onPress={handleSubmit(onSubmit)} disabled={authLoading} activeOpacity={0.85}>
+        {authLoading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.primaryBtnText}>Giriş Yap</Text>}
+      </TouchableOpacity>
+
+      <View style={{ flexDirection: 'row', justifyContent: 'center', gap: spacing.lg, marginTop: spacing.lg }}>
+        <TouchableOpacity onPress={onSwitchToRegister}><Text style={[typography.body, { color: colors.primary, fontWeight: '700' }]}>Kayıt Ol</Text></TouchableOpacity>
+        <TouchableOpacity onPress={continueAsGuest}><Text style={[typography.body, { color: colors.textTertiary, fontWeight: '600' }]}>Misafir Olarak Devam Et</Text></TouchableOpacity>
+      </View>
+    </View>
+  );
+}
+
+// ── Register Wizard ─────────────────────────────────────
+
+function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
+  const { colors, isDark } = useTheme();
+  const { register, verifyOtp, resendOtp, kvkkText } = useAuthStore();
+  const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [authLoading, setAuthLoading] = useState(false);
+  const [pendingUserId, setPendingUserId] = useState<string | null>(null);
+  const [showKvkkSheet, setShowKvkkSheet] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const otpRef = useRef<TextInput>(null);
+
+  // Step 1: Role selection
+  const { control: c1, watch: w1, formState: { errors: e1 } } = useForm({ resolver: zodResolver(step1Schema), defaultValues: { selectedRole: undefined as UIRole | undefined } });
+  const selectedRole = w1('selectedRole');
+
+  // Step 2: Common info
+  const { control: c2, handleSubmit: hs2, formState: { errors: e2 } } = useForm<Step2FormData>({
+    resolver: zodResolver(step2Schema),
+    defaultValues: { fullName: '', phone: '', email: '', password: '', kvkkAccepted: false as any },
+  });
+
+  // Step 3 role-specific fields
+  const firmaForm = useForm({ resolver: zodResolver(step3FirmaSchema), defaultValues: { companyTitle: '', taxNo: '', taxOfficeName: '', authorizedPerson: '' } });
+  const tasiyiciForm = useForm({ resolver: zodResolver(step3TasiyiciSchema), defaultValues: { licenseType: '', vehicleType: '', plateNumber: '', srcBelgesi: '' } });
+  const isletmeForm = useForm({ resolver: zodResolver(step3IsletmeSchema), defaultValues: { businessType: '', businessAddress: '' } });
+  const genelForm = useForm({ defaultValues: { inviteCode: '' } });
+
+  // OTP
+  const { control: otpControl, handleSubmit: hsOtp, formState: { errors: otpErrors } } = useForm({ resolver: zodResolver(otpSchema), defaultValues: { otpCode: '' } });
+
+  const goToStep = (target: number) => {
+    if (target === 2 && selectedRole) { hapticLight(); setStep(2); scrollRef.current?.scrollTo({ y: 0, animated: true }); }
+    else if (target === 3) {
+      hs2((data) => { hapticLight(); setStep(3); scrollRef.current?.scrollTo({ y: 0, animated: true }); })();
     }
   };
 
-  const validateStep1 = (): boolean => {
-    if (!selectedRole) {
-      hapticError();
-      Alert.alert('Rol Seçimi', 'Lütfen bir kullanıcı rolü seçin.');
-      return false;
-    }
-    return true;
-  };
+  const handleRegister = async () => {
+    // Build payload from all steps
+    const s2 = hs2;
+    const s2Data: any = {};
+    // We need to collect all form data. Since useForm doesn't expose values easily across forms,
+    // we use a combined approach: validate step 2, then manually collect step 3 fields.
 
-  const validateStep2 = (): boolean => {
-    if (!fullName.trim()) {
-      hapticError();
-      Alert.alert('Eksik Bilgi', 'Lütfen ad soyad girin.');
-      return false;
-    }
-    if (!isValidPhone(phone)) {
-      hapticError();
-      Alert.alert('Geçersiz Telefon', 'Telefon numarası 0(5xx) xxx xx xx formatında olmalıdır.');
-      return false;
-    }
-    if (!email.trim() || !email.includes('@')) {
-      hapticError();
-      Alert.alert('Eksik Bilgi', 'Lütfen geçerli bir e-posta adresi girin.');
-      return false;
-    }
-    if (!password.trim() || password.length < 3) {
-      hapticError();
-      Alert.alert('Eksik Bilgi', 'Lütfen en az 3 karakterli bir şifre belirleyin.');
-      return false;
-    }
-    if (!kvkkAccepted) {
-      hapticError();
-      Alert.alert('KVKK Onayı', 'Devam etmek için KVKK ve Gizlilik Sözleşmesi\'ni onaylamanız gerekmektedir.');
-      return false;
-    }
-    return true;
-  };
+    // Validate step 2
+    let step2Valid = false;
+    let step2Data: any = {};
+    await hs2((d) => { step2Valid = true; step2Data = d; })();
+    if (!step2Valid) return;
 
-  const validateStep3 = (): boolean => {
+    // Validate step 3 based on role
+    let step3Data: any = {};
     if (selectedRole === 'FIRMA') {
-      if (!companyTitle.trim()) {
-        hapticError();
-        Alert.alert('Eksik Bilgi', 'Lütfen firma unvanı girin.');
-        return false;
-      }
+      const { control: _, ...rest } = firmaForm;
+      let valid = false;
+      await firmaForm.handleSubmit((d) => { valid = true; step3Data = d; })();
+      if (!valid) return;
+    } else if (selectedRole === 'TASIYICI') {
+      let valid = false;
+      await tasiyiciForm.handleSubmit((d) => { valid = true; step3Data = d; })();
+      if (!valid) return;
+    } else if (selectedRole === 'ISLETME') {
+      let valid = false;
+      await isletmeForm.handleSubmit((d) => { valid = true; step3Data = d; })();
+      if (!valid) return;
+    } else {
+      step3Data = genelForm.getValues();
     }
-    if (selectedRole === 'TASIYICI') {
-      if (!plateNumber.trim()) {
-        hapticError();
-        Alert.alert('Eksik Bilgi', 'Lütfen plaka numarası girin.');
-        return false;
-      }
-    }
-    if (selectedRole === 'ISLETME') {
-      if (!businessType.trim()) {
-        hapticError();
-        Alert.alert('Eksik Bilgi', 'Lütfen işletme tipi seçin.');
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const handleRegisterSubmit = async () => {
-    if (!validateStep3()) return;
 
     setLoading(true);
     try {
       const result = await register({
-        email: email.trim(),
-        phone: phone.trim(),
-        password,
-        fullName: fullName.trim(),
+        email: step2Data.email.trim().toLowerCase(),
+        phone: step2Data.phone,
+        password: step2Data.password,
+        fullName: step2Data.fullName,
         uiRole: selectedRole!,
-        kvkkAccepted,
+        kvkkAccepted: true,
         termsAccepted: true,
-        // FIRMA
-        companyTitle: companyTitle.trim() || undefined,
-        taxNo: taxNo.trim() || undefined,
-        taxOfficeName: taxOfficeName.trim() || undefined,
-        authorizedPerson: authorizedPerson.trim() || undefined,
-        // TASIYICI
-        licenseType: licenseType.trim() || undefined,
-        vehicleType: vehicleType.trim() || undefined,
-        plateNumber: plateNumber.trim() || undefined,
-        srcBelgesi: srcBelgesi.trim() || undefined,
-        // ISLETME
-        businessType: businessType.trim() || undefined,
-        businessAddress: businessAddress.trim() || undefined,
-        // GENEL
-        inviteCode: selectedRole === 'GENEL' ? inviteCode.trim() || undefined : undefined,
+        ...step3Data,
       });
-
       hapticSuccess();
       setPendingUserId(result.userId);
       setStep(4);
       setTimeout(() => otpRef.current?.focus(), 400);
     } catch (err: any) {
       hapticError();
-      const msg = err.response?.data?.message || err.message || 'Kayıt oluşturulurken bir hata oluştu.';
-      Alert.alert('Hata', msg);
-    } finally {
-      setLoading(false);
-    }
+      showToast(err.response?.data?.message || err.message || 'Kayıt oluşturulurken bir hata oluştu.', 'error');
+    } finally { setLoading(false); }
   };
 
   const handleVerifyOtp = async () => {
-    if (!otpCode.trim() || otpCode.length < 4) {
-      hapticError();
-      Alert.alert('Eksik Kod', 'Lütfen telefonunuza gelen doğrulama kodunu girin.');
-      return;
-    }
-    if (!pendingUserId) return;
+    let otpData: any = {};
+    let valid = false;
+    await hsOtp((d) => { valid = true; otpData = d; })();
+    if (!valid || !pendingUserId) return;
 
     setAuthLoading(true);
     try {
-      await verifyOtp(pendingUserId, otpCode.trim());
+      await verifyOtp(pendingUserId, otpData.otpCode.trim());
       hapticSuccess();
-      // User is now authenticated — navigation will auto-switch to MainTabs
     } catch (err: any) {
       hapticError();
-      const msg = err.response?.data?.message || err.message || 'Doğrulama kodu hatalı.';
-      Alert.alert('Hata', msg);
-    } finally {
-      setAuthLoading(false);
-    }
+      showToast(err.response?.data?.message || err.message || 'Doğrulama kodu hatalı.', 'error');
+    } finally { setAuthLoading(false); }
   };
 
-  const handleResendOtp = async () => {
+  const handleResend = async () => {
     if (!pendingUserId) return;
-    try {
-      await resendOtp(pendingUserId);
-      hapticLight();
-      Alert.alert('Başarılı', 'Doğrulama kodu tekrar gönderildi.');
-    } catch {
-      hapticError();
-      Alert.alert('Hata', 'Kod gönderilemedi. Lütfen daha sonra tekrar deneyin.');
-    }
+    try { await resendOtp(pendingUserId); hapticLight(); showToast('Doğrulama kodu tekrar gönderildi.', 'success'); }
+    catch { hapticError(); showToast('Kod gönderilemedi.', 'error'); }
   };
 
-  const goToStep = (targetStep: number) => {
-    if (targetStep < step) {
-      setStep(targetStep);
-      return;
-    }
-    if (targetStep === 2 && validateStep1()) {
-      hapticLight();
-      setStep(2);
-      scrollRef.current?.scrollTo({ y: 0, animated: true });
-    } else if (targetStep === 3 && validateStep2()) {
-      hapticLight();
-      setStep(3);
-      scrollRef.current?.scrollTo({ y: 0, animated: true });
-    }
-  };
+  // ── Render ──
+  const inputStyle = (hasError: boolean) => [styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: hasError ? colors.danger : colors.border }] as const;
 
-  const switchToRegister = (val: boolean) => {
-    hapticLight();
-    setIsRegister(val);
-    resetRegister();
-  };
-
-  const renderStepIndicator = () => {
-    if (!isRegister) return null;
-    return (
+  return (
+    <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      {/* Step Indicator */}
       <View style={styles.stepIndicator}>
         {STEP_LABELS.map((label, i) => {
-          const stepNum = i + 1;
-          const isActive = step === stepNum;
-          const isCompleted = step > stepNum;
-          const isClickable = stepNum < step;
+          const s = i + 1;
+          const active = step === s;
           return (
-            <TouchableOpacity
-              key={i}
-              onPress={() => isClickable && goToStep(stepNum)}
-              style={styles.stepItem}
-              activeOpacity={isClickable ? 0.7 : 1}
-              disabled={!isClickable}
-            >
-              <View style={[
-                styles.stepDot,
-                {
-                  backgroundColor: isActive ? colors.primary : isCompleted ? colors.primary : colors.border,
-                  borderColor: isActive ? colors.primary : colors.border,
-                  opacity: stepNum > step + 1 ? 0.4 : 1,
-                },
-              ]}>
-                {isCompleted ? (
-                  <Text style={styles.stepCheck}>✓</Text>
-                ) : (
-                  <Text style={[styles.stepNum, { color: isActive ? '#FFF' : colors.textTertiary }]}>
-                    {stepNum}
-                  </Text>
-                )}
+            <TouchableOpacity key={i} onPress={() => s < step && goToStep(s)} style={styles.stepItem} disabled={s >= step}>
+              <View style={[styles.stepDot, { backgroundColor: active ? colors.primary : step > s ? colors.primary : colors.border, opacity: s > step + 1 ? 0.4 : 1 }]}>
+                {step > s ? <Text style={styles.stepCheck}>✓</Text> : <Text style={[styles.stepNum, { color: active ? '#FFF' : colors.textTertiary }]}>{s}</Text>}
               </View>
-              <Text style={[
-                styles.stepLabel,
-                { color: isActive ? colors.primary : colors.textTertiary },
-              ]}>
-                {label}
-              </Text>
-              {i < STEP_LABELS.length - 1 && (
-                <View style={[styles.stepLine, { backgroundColor: isCompleted ? colors.primary : colors.border }]} />
-              )}
+              <Text style={[typography.small, { color: active ? colors.primary : colors.textTertiary, fontWeight: active ? '700' : '500', marginTop: 4, fontSize: 10 }]}>{label}</Text>
             </TouchableOpacity>
           );
         })}
       </View>
-    );
-  };
 
-  const renderRoleCard = (role: RoleCardData) => {
-    const isActive = selectedRole === role.id;
-    return (
-      <TouchableOpacity
-        key={role.id}
-        onPress={() => { hapticLight(); setSelectedRole(role.id); }}
-        activeOpacity={0.8}
-        style={[
-          styles.roleCard,
-          {
-            backgroundColor: colors.card,
-            borderColor: isActive ? colors.primary : colors.border,
-          },
-          shadowStyle,
-          isActive && activeGlowStyle,
-          isActive && { backgroundColor: colors.card },
-        ]}
-      >
-        <View style={styles.roleCardInner}>
-          {/* Left accent bar for active role */}
-          {isActive && <View style={[styles.roleAccent, { backgroundColor: colors.primary }]} />}
-
-          <View style={[styles.roleCardContent, isActive && { paddingLeft: spacing.md }]}>
-            <View style={styles.roleCardHeader}>
-              <Text style={styles.roleIcon}>{role.icon}</Text>
-              <View style={styles.roleCardTitleArea}>
-                <Text style={[typography.h3, { color: colors.text, fontWeight: '700', fontSize: 15 }]}>
-                  {role.title}
-                </Text>
-                <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 2, lineHeight: 16 }]}>
-                  {role.description}
-                </Text>
-              </View>
-              {isActive && (
-                <View style={styles.roleCheck}>
-                  <Text style={styles.roleCheckIcon}>✓</Text>
+      {/* Step 1: Role */}
+      {step === 1 && (
+        <View>
+          <Text style={[typography.h2, { color: colors.text, fontWeight: '800', marginBottom: spacing.sm, textAlign: 'center' }]}>Rolünüzü Seçin</Text>
+          {e1.selectedRole && <Text style={styles.fieldErrorCenter}>{e1.selectedRole.message}</Text>}
+          {ROLE_CARDS.map((card) => {
+            const isActive = selectedRole === card.id;
+            const ctrl = c1;
+            return (
+              <TouchableOpacity key={card.id} style={[styles.roleCard, { backgroundColor: colors.card, borderColor: isActive ? colors.primary : colors.border }]} onPress={() => ctrl._form.setValue('selectedRole', card.id, { shouldValidate: true })} activeOpacity={0.85}>
+                <Text style={styles.roleIcon}>{card.icon}</Text>
+                <View style={{ flex: 1 }}>
+                  <Text style={[typography.body, { color: colors.text, fontWeight: '700' }]}>{card.title}</Text>
+                  <Text style={[typography.small, { color: colors.textSecondary, marginTop: 2 }]}>{card.description}</Text>
+                  <Text style={[typography.small, { color: colors.primary, marginTop: 4, fontWeight: '600' }]}>{card.authoritySummary}</Text>
                 </View>
-              )}
-            </View>
+                <View style={[styles.radio, { borderColor: isActive ? colors.primary : colors.border }]}>{isActive && <View style={[styles.radioInner, { backgroundColor: colors.primary }]} />}</View>
+              </TouchableOpacity>
+            );
+          })}
+          <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: colors.primary, opacity: selectedRole ? 1 : 0.5 }]} onPress={() => goToStep(2)} disabled={!selectedRole}>
+            <Text style={styles.primaryBtnText}>Devam Et</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
-            {isActive && (
-              <View style={[styles.roleBadgeRow, { backgroundColor: colors.primary + '12' }]}>
-                <Text style={[typography.small, { color: colors.primary, fontWeight: '600', fontSize: 11 }]}>
-                  {role.authoritySummary}
-                </Text>
+      {/* Step 2: Common Info */}
+      {step === 2 && (
+        <View>
+          <Text style={[typography.h2, { color: colors.text, fontWeight: '800', marginBottom: spacing.lg, textAlign: 'center' }]}>Bilgileriniz</Text>
+          <Controller control={c2} name="fullName" render={({ field }) => (
+            <View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Ad Soyad</Text><TextInput style={inputStyle(!!e2.fullName)} placeholder="Ad Soyad" placeholderTextColor={colors.textTertiary} onChangeText={field.onChange} value={field.value} />
+            {e2.fullName && <Text style={styles.fieldError}>{e2.fullName.message}</Text>}</View>
+          )} />
+          <Controller control={c2} name="phone" render={({ field }) => (
+            <View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Telefon</Text><PhoneInput value={field.value} onChangeText={field.onChange} />
+            {e2.phone && <Text style={styles.fieldError}>{e2.phone.message}</Text>}</View>
+          )} />
+          <Controller control={c2} name="email" render={({ field }) => (
+            <View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>E-posta</Text><TextInput style={inputStyle(!!e2.email)} placeholder="ornek@mail.com" placeholderTextColor={colors.textTertiary} keyboardType="email-address" autoCapitalize="none" onChangeText={field.onChange} value={field.value} />
+            {e2.email && <Text style={styles.fieldError}>{e2.email.message}</Text>}</View>
+          )} />
+          <Controller control={c2} name="password" render={({ field }) => (
+            <View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Şifre</Text><TextInput style={inputStyle(!!e2.password)} placeholder="En az 3 karakter" placeholderTextColor={colors.textTertiary} secureTextEntry onChangeText={field.onChange} value={field.value} />
+            {e2.password && <Text style={styles.fieldError}>{e2.password.message}</Text>}</View>
+          )} />
+          <Controller control={c2} name="kvkkAccepted" render={({ field }) => (
+            <TouchableOpacity style={styles.kvkkRow} onPress={() => setShowKvkkSheet(true)}>
+              <View style={[styles.checkbox, { borderColor: e2.kvkkAccepted ? colors.danger : colors.border, backgroundColor: field.value ? colors.primary : 'transparent' }]}>
+                {field.value && <Text style={{ color: '#FFF', fontSize: 12 }}>✓</Text>}
               </View>
-            )}
+              <Text style={[typography.small, { color: colors.textSecondary, flex: 1 }]}>KVKK ve Gizlilik Sözleşmesini okudum, onaylıyorum.</Text>
+            </TouchableOpacity>
+          )} />
+          {e2.kvkkAccepted && <Text style={styles.fieldError}>{e2.kvkkAccepted.message}</Text>}
+          <View style={{ flexDirection: 'row', gap: spacing.md }}>
+            <TouchableOpacity style={[styles.secondaryBtn, { borderColor: colors.border }]} onPress={() => setStep(1)}><Text style={[typography.body, { color: colors.textSecondary }]}>Geri</Text></TouchableOpacity>
+            <TouchableOpacity style={[styles.primaryBtn, { flex: 1, backgroundColor: colors.primary }]} onPress={() => goToStep(3)}><Text style={styles.primaryBtnText}>Devam Et</Text></TouchableOpacity>
           </View>
         </View>
-      </TouchableOpacity>
-    );
-  };
+      )}
 
-  const renderLoginTab = () => (
-    <>
-      <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs }]}>
-        E-Posta Adresi
-      </Text>
-      <TextInput
-        style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-        placeholder="ornek@email.com"
-        placeholderTextColor={colors.textTertiary}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-
-      <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs, marginTop: spacing.md }]}>
-        Şifre
-      </Text>
-      <TextInput
-        style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-        placeholder="******"
-        placeholderTextColor={colors.textTertiary}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      <TouchableOpacity
-        style={[styles.submitBtn, { backgroundColor: colors.primary }]}
-        onPress={handleLogin}
-        disabled={authLoading}
-      >
-        {authLoading ? (
-          <ActivityIndicator color="#FFF" size="small" />
-        ) : (
-          <Text style={[typography.label, { color: colors.white, fontWeight: '800' }]}>Giriş Yap</Text>
-        )}
-      </TouchableOpacity>
-    </>
-  );
-
-  const renderStep1 = () => (
-    <>
-      <Text style={[typography.caption, { color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.md }]}>
-        Hesap türünüzü seçerek platform deneyiminizi kişiselleştirin.
-      </Text>
-      {ROLE_CARDS.map(renderRoleCard)}
-      <TouchableOpacity
-        style={[styles.submitBtn, { backgroundColor: colors.primary, marginTop: spacing.lg }]}
-        onPress={() => goToStep(2)}
-      >
-        <Text style={[typography.label, { color: '#FFF', fontWeight: '800' }]}>Devam Et →</Text>
-      </TouchableOpacity>
-    </>
-  );
-
-  const renderStep2 = () => (
-    <>
-      <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.md }]}>
-        {ROLE_CARDS.find(r => r.id === selectedRole)?.icon}{' '}
-        <Text style={{ color: colors.primary, fontWeight: '700' }}>
-          {ROLE_CARDS.find(r => r.id === selectedRole)?.title}
-        </Text>
-        {' '}— Temel bilgilerinizi girin.
-      </Text>
-
-      <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs }]}>Ad Soyad</Text>
-      <TextInput
-        style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-        placeholder="Ad Soyad"
-        placeholderTextColor={colors.textTertiary}
-        value={fullName}
-        onChangeText={setFullName}
-        autoCapitalize="words"
-      />
-
-      <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs, marginTop: spacing.md }]}>Telefon Numarası</Text>
-      <PhoneInput
-        value={phone}
-        onChangeText={setPhone}
-      />
-
-      <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs, marginTop: spacing.md }]}>E-Posta Adresi</Text>
-      <TextInput
-        style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-        placeholder="ornek@email.com"
-        placeholderTextColor={colors.textTertiary}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-
-      <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs, marginTop: spacing.md }]}>Şifre</Text>
-      <TextInput
-        style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-        placeholder="En az 3 karakter"
-        placeholderTextColor={colors.textTertiary}
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-
-      {/* KVKK */}
-      <View style={styles.kvkkRow}>
-        <TouchableOpacity
-          style={[styles.checkbox, { borderColor: colors.border, backgroundColor: kvkkAccepted ? colors.primary : 'transparent' }]}
-          onPress={() => { hapticLight(); setKvkkAccepted(!kvkkAccepted); }}
-        >
-          {kvkkAccepted && <Text style={{ color: colors.white, fontSize: 10, fontWeight: '900' }}>✓</Text>}
-        </TouchableOpacity>
-        <Text style={[typography.caption, { color: colors.text, flex: 1, marginLeft: spacing.sm }]}>
-          Kullanıcı kaydı oluşturarak{' '}
-          <Text style={{ color: colors.primary, textDecorationLine: 'underline', fontWeight: '700' }} onPress={() => setShowKvkkSheet(true)}>
-            KVKK ve Gizlilik Sözleşmesi
-          </Text>
-          'ni okuduğumu ve onayladığımı kabul ediyorum.
-        </Text>
-      </View>
-
-      <View style={styles.stepNavRow}>
-        <TouchableOpacity
-          style={[styles.secondaryBtn, { borderColor: colors.border }]}
-          onPress={() => goToStep(1)}
-        >
-          <Text style={[typography.label, { color: colors.text, fontWeight: '700' }]}>← Geri</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.submitBtn, { backgroundColor: colors.primary, flex: 2 }]}
-          onPress={() => goToStep(3)}
-        >
-          <Text style={[typography.label, { color: '#FFF', fontWeight: '800' }]}>Devam Et →</Text>
-        </TouchableOpacity>
-      </View>
-    </>
-  );
-
-  const renderStep3 = () => {
-    if (!selectedRole) return null;
-
-    return (
-      <>
-        <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.md }]}>
-          Rolünüze özel ek bilgileri tamamlayın.
-        </Text>
-
-        {/* FIRMA-specific fields */}
-        {selectedRole === 'FIRMA' && (
-          <>
-            <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs }]}>Firma Unvanı *</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-              placeholder="Firma unvanı"
-              placeholderTextColor={colors.textTertiary}
-              value={companyTitle}
-              onChangeText={setCompanyTitle}
-            />
-            <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs, marginTop: spacing.md }]}>Vergi Numarası</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-              placeholder="Vergi no"
-              placeholderTextColor={colors.textTertiary}
-              value={taxNo}
-              onChangeText={setTaxNo}
-              keyboardType="number-pad"
-            />
-            <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>
-              <View style={{ flex: 1 }}>
-                <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs }]}>Vergi Dairesi</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-                  placeholder="Vergi dairesi"
-                  placeholderTextColor={colors.textTertiary}
-                  value={taxOfficeName}
-                  onChangeText={setTaxOfficeName}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs }]}>Yetkili Kişi</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-                  placeholder="Yetkili ad soyad"
-                  placeholderTextColor={colors.textTertiary}
-                  value={authorizedPerson}
-                  onChangeText={setAuthorizedPerson}
-                />
-              </View>
-            </View>
-          </>
-        )}
-
-        {/* TASIYICI-specific fields */}
-        {selectedRole === 'TASIYICI' && (
-          <>
-            <View style={{ flexDirection: 'row', gap: spacing.sm }}>
-              <View style={{ flex: 1 }}>
-                <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs }]}>Ehliyet Tipi</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-                  placeholder="B, C, E"
-                  placeholderTextColor={colors.textTertiary}
-                  value={licenseType}
-                  onChangeText={setLicenseType}
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs }]}>Araç Tipi</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-                  placeholder="Tır, kamyon"
-                  placeholderTextColor={colors.textTertiary}
-                  value={vehicleType}
-                  onChangeText={setVehicleType}
-                />
-              </View>
-            </View>
-            <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.md }}>
-              <View style={{ flex: 1 }}>
-                <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs }]}>Plaka *</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-                  placeholder="34 ABC 123"
-                  placeholderTextColor={colors.textTertiary}
-                  value={plateNumber}
-                  onChangeText={setPlateNumber}
-                  autoCapitalize="characters"
-                />
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs }]}>SRC Belgesi</Text>
-                <TextInput
-                  style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-                  placeholder="SRC no"
-                  placeholderTextColor={colors.textTertiary}
-                  value={srcBelgesi}
-                  onChangeText={setSrcBelgesi}
-                />
-              </View>
-            </View>
-          </>
-        )}
-
-        {/* ISLETME-specific fields */}
-        {selectedRole === 'ISLETME' && (
-          <>
-            <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs }]}>İşletme Tipi *</Text>
-            <View style={styles.businessTypeRow}>
-              {['Lokanta', 'Akaryakıt', 'Kafe', 'Motel', 'Lastikçi', 'Servis', 'Market', 'Diger'].map((type) => (
-                <TouchableOpacity
-                  key={type}
-                  style={[
-                    styles.businessTypeChip,
-                    { borderColor: colors.border },
-                    businessType === type && { backgroundColor: colors.primary + '20', borderColor: colors.primary },
-                  ]}
-                  onPress={() => { hapticLight(); setBusinessType(businessType === type ? '' : type); }}
-                >
-                  <Text style={[typography.small, { color: businessType === type ? colors.primary : colors.text, fontWeight: businessType === type ? '700' : '500' }]}>
-                    {type}
-                  </Text>
-                </TouchableOpacity>
-              ))}
-            </View>
-            <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs, marginTop: spacing.md }]}>İşletme Adresi</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.border }]}
-              placeholder="İl/ilçe, açık adres"
-              placeholderTextColor={colors.textTertiary}
-              value={businessAddress}
-              onChangeText={setBusinessAddress}
-            />
-          </>
-        )}
-
-        {/* GENEL-specific fields */}
-        {selectedRole === 'GENEL' && (
-          <>
-            <Text style={[typography.caption, { color: colors.textSecondary, marginBottom: spacing.xs }]}>Davet Kodu (varsa)</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.primary, borderStyle: 'dashed' }]}
-              placeholder="Örn: KPTN100"
-              placeholderTextColor={colors.textTertiary}
-              value={inviteCode}
-              onChangeText={setInviteCode}
-              autoCapitalize="characters"
-            />
-            <Text style={[typography.caption, { color: colors.textTertiary, marginTop: 4 }]}>
-              Davet kodu girerek bütçe ve analiz modülünü anında ücretsiz kullanabilirsiniz.
-            </Text>
-          </>
-        )}
-
-        <View style={styles.stepNavRow}>
-          <TouchableOpacity
-            style={[styles.secondaryBtn, { borderColor: colors.border }]}
-            onPress={() => goToStep(2)}
-          >
-            <Text style={[typography.label, { color: colors.text, fontWeight: '700' }]}>← Geri</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.submitBtn, { backgroundColor: colors.primary, flex: 2 }]}
-            onPress={handleRegisterSubmit}
-            disabled={loading}
-          >
-            {loading ? (
-              <ActivityIndicator color="#FFF" size="small" />
-            ) : (
-              <Text style={[typography.label, { color: '#FFF', fontWeight: '800' }]}>Kayıt Ol</Text>
-            )}
-          </TouchableOpacity>
-        </View>
-      </>
-    );
-  };
-
-  const renderStep4 = () => (
-    <>
-      <View style={styles.otpContainer}>
-        <Text style={[typography.h3, { color: colors.primary, fontWeight: '800', textAlign: 'center', marginBottom: spacing.sm }]}>
-          📱 Telefon Doğrulama
-        </Text>
-        <Text style={[typography.caption, { color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.lg }]}>
-          <Text style={{ fontWeight: '700', color: colors.text }}>{formatPhone(phone)}</Text> adresine gönderilen{'\n'}doğrulama kodunu girin.
-        </Text>
-
-        <TextInput
-          ref={otpRef}
-          style={[styles.otpInput, { backgroundColor: colors.surface, color: colors.text, borderColor: colors.primary }]}
-          placeholder="000000"
-          placeholderTextColor={colors.textTertiary}
-          value={otpCode}
-          onChangeText={setOtpCode}
-          keyboardType="number-pad"
-          maxLength={6}
-        />
-
-        <TouchableOpacity
-          style={[styles.submitBtn, { backgroundColor: colors.primary }]}
-          onPress={handleVerifyOtp}
-          disabled={authLoading}
-        >
-          {authLoading ? (
-            <ActivityIndicator color="#FFF" size="small" />
-          ) : (
-            <Text style={[typography.label, { color: '#FFF', fontWeight: '800' }]}>Doğrula</Text>
+      {/* Step 3: Role-specific */}
+      {step === 3 && (
+        <View>
+          <Text style={[typography.h2, { color: colors.text, fontWeight: '800', marginBottom: spacing.lg, textAlign: 'center' }]}>{ROLE_CARDS.find(r => r.id === selectedRole)?.title} — Detaylar</Text>
+          {selectedRole === 'FIRMA' && (
+            <>
+              <Controller control={firmaForm.control} name="companyTitle" render={({ field }) => (<View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Firma Unvanı</Text><TextInput style={inputStyle(!!firmaForm.formState.errors.companyTitle)} placeholder="Şirket unvanı" placeholderTextColor={colors.textTertiary} onChangeText={field.onChange} value={field.value} />{firmaForm.formState.errors.companyTitle && <Text style={styles.fieldError}>{firmaForm.formState.errors.companyTitle.message}</Text>}</View>)} />
+              <Controller control={firmaForm.control} name="taxNo" render={({ field }) => (<View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Vergi No</Text><TextInput style={inputStyle(!!firmaForm.formState.errors.taxNo)} placeholder="Vergi numarası" placeholderTextColor={colors.textTertiary} onChangeText={field.onChange} value={field.value} />{firmaForm.formState.errors.taxNo && <Text style={styles.fieldError}>{firmaForm.formState.errors.taxNo.message}</Text>}</View>)} />
+              <Controller control={firmaForm.control} name="taxOfficeName" render={({ field }) => (<View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Vergi Dairesi</Text><TextInput style={inputStyle(!!firmaForm.formState.errors.taxOfficeName)} placeholder="Vergi dairesi adı" placeholderTextColor={colors.textTertiary} onChangeText={field.onChange} value={field.value} />{firmaForm.formState.errors.taxOfficeName && <Text style={styles.fieldError}>{firmaForm.formState.errors.taxOfficeName.message}</Text>}</View>)} />
+              <Controller control={firmaForm.control} name="authorizedPerson" render={({ field }) => (<View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Yetkili Kişi (opsiyonel)</Text><TextInput style={inputStyle(false)} placeholder="Yetkili kişi adı" placeholderTextColor={colors.textTertiary} onChangeText={field.onChange} value={field.value} /></View>)} />
+            </>
           )}
-        </TouchableOpacity>
+          {selectedRole === 'TASIYICI' && (
+            <>
+              <Controller control={tasiyiciForm.control} name="licenseType" render={({ field }) => (<View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Ehliyet Tipi</Text><TextInput style={inputStyle(!!tasiyiciForm.formState.errors.licenseType)} placeholder="örn: E Sınıfı" placeholderTextColor={colors.textTertiary} onChangeText={field.onChange} value={field.value} />{tasiyiciForm.formState.errors.licenseType && <Text style={styles.fieldError}>{tasiyiciForm.formState.errors.licenseType.message}</Text>}</View>)} />
+              <Controller control={tasiyiciForm.control} name="vehicleType" render={({ field }) => (<View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Araç Tipi</Text><TextInput style={inputStyle(!!tasiyiciForm.formState.errors.vehicleType)} placeholder="örn: TIR, Kamyon" placeholderTextColor={colors.textTertiary} onChangeText={field.onChange} value={field.value} />{tasiyiciForm.formState.errors.vehicleType && <Text style={styles.fieldError}>{tasiyiciForm.formState.errors.vehicleType.message}</Text>}</View>)} />
+              <Controller control={tasiyiciForm.control} name="plateNumber" render={({ field }) => (<View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Plaka</Text><TextInput style={inputStyle(!!tasiyiciForm.formState.errors.plateNumber)} placeholder="örn: 34 ABC 123" placeholderTextColor={colors.textTertiary} onChangeText={field.onChange} value={field.value} />{tasiyiciForm.formState.errors.plateNumber && <Text style={styles.fieldError}>{tasiyiciForm.formState.errors.plateNumber.message}</Text>}</View>)} />
+              <Controller control={tasiyiciForm.control} name="srcBelgesi" render={({ field }) => (<View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>SRC Belgesi (opsiyonel)</Text><TextInput style={inputStyle(false)} placeholder="SRC belge no" placeholderTextColor={colors.textTertiary} onChangeText={field.onChange} value={field.value} /></View>)} />
+            </>
+          )}
+          {selectedRole === 'ISLETME' && (
+            <>
+              <Controller control={isletmeForm.control} name="businessType" render={({ field }) => (<View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>İşletme Türü</Text><TextInput style={inputStyle(!!isletmeForm.formState.errors.businessType)} placeholder="örn: Lokanta, Akaryakıt" placeholderTextColor={colors.textTertiary} onChangeText={field.onChange} value={field.value} />{isletmeForm.formState.errors.businessType && <Text style={styles.fieldError}>{isletmeForm.formState.errors.businessType.message}</Text>}</View>)} />
+              <Controller control={isletmeForm.control} name="businessAddress" render={({ field }) => (<View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Adres</Text><TextInput style={inputStyle(!!isletmeForm.formState.errors.businessAddress)} placeholder="İşletme adresi" placeholderTextColor={colors.textTertiary} onChangeText={field.onChange} value={field.value} />{isletmeForm.formState.errors.businessAddress && <Text style={styles.fieldError}>{isletmeForm.formState.errors.businessAddress.message}</Text>}</View>)} />
+            </>
+          )}
+          {selectedRole === 'GENEL' && (
+            <Controller control={genelForm.control} name="inviteCode" render={({ field }) => (<View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Davet Kodu (opsiyonel)</Text><TextInput style={inputStyle(false)} placeholder="Davet kodunuz varsa girin" placeholderTextColor={colors.textTertiary} onChangeText={field.onChange} value={field.value} /></View>)} />
+          )}
+          <View style={{ flexDirection: 'row', gap: spacing.md }}>
+            <TouchableOpacity style={[styles.secondaryBtn, { borderColor: colors.border }]} onPress={() => setStep(2)}><Text style={[typography.body, { color: colors.textSecondary }]}>Geri</Text></TouchableOpacity>
+            <TouchableOpacity style={[styles.primaryBtn, { flex: 1, backgroundColor: colors.primary, opacity: loading ? 0.7 : 1 }]} onPress={handleRegister} disabled={loading}>
+              {loading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.primaryBtnText}>Kayıt Ol</Text>}
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
-        <TouchableOpacity
-          style={{ marginTop: spacing.md, alignItems: 'center', paddingVertical: spacing.sm, minHeight: 44, justifyContent: 'center' }}
-          onPress={handleResendOtp}
-        >
-          <Text style={[typography.caption, { color: colors.primary, fontWeight: '600' }]}>
-            Kod gelmedi mi? Yeniden gönder
-          </Text>
+      {/* Step 4: OTP */}
+      {step === 4 && (
+        <View>
+          <Text style={[typography.h2, { color: colors.text, fontWeight: '800', marginBottom: spacing.sm, textAlign: 'center' }]}>Doğrulama</Text>
+          <Text style={[typography.caption, { color: colors.textSecondary, textAlign: 'center', marginBottom: spacing.lg }]}>Telefonunuza gönderilen 6 haneli kodu girin</Text>
+          <Controller control={otpControl} name="otpCode" render={({ field }) => (
+            <View style={styles.inputGroup}><TextInput ref={otpRef} style={[styles.otpInput, { backgroundColor: colors.card, color: colors.text, borderColor: otpErrors.otpCode ? colors.danger : colors.border }]} placeholder="000000" placeholderTextColor={colors.textTertiary} keyboardType="number-pad" maxLength={6} onChangeText={field.onChange} value={field.value} />
+            {otpErrors.otpCode && <Text style={styles.fieldError}>{otpErrors.otpCode.message}</Text>}</View>
+          )} />
+          <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: colors.primary, opacity: authLoading ? 0.7 : 1 }]} onPress={handleVerifyOtp} disabled={authLoading}>
+            {authLoading ? <ActivityIndicator color="#FFF" /> : <Text style={styles.primaryBtnText}>Doğrula</Text>}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={handleResend} style={{ marginTop: spacing.md, alignItems: 'center' }}><Text style={[typography.body, { color: colors.primary, fontWeight: '600' }]}>Kodu Tekrar Gönder</Text></TouchableOpacity>
+        </View>
+      )}
+
+      {/* KVKK BottomSheet */}
+      <BottomSheet visible={showKvkkSheet} onClose={() => setShowKvkkSheet(false)}>
+        <Text style={[typography.h3, { color: colors.text, fontWeight: '800', marginBottom: spacing.md }]}>KVKK Aydınlatma Metni</Text>
+        <ScrollView style={{ maxHeight: 300, marginBottom: spacing.md }}><Text style={[typography.body, { color: colors.textSecondary, lineHeight: 22 }]}>{kvkkText}</Text></ScrollView>
+        <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: colors.primary }]} onPress={() => { c2._form.setValue('kvkkAccepted', true as any, { shouldValidate: true }); setShowKvkkSheet(false); }}>
+          <Text style={styles.primaryBtnText}>Onaylıyorum</Text>
         </TouchableOpacity>
-      </View>
-    </>
+      </BottomSheet>
+    </ScrollView>
   );
+}
 
-  const renderRegisterForm = () => {
-    switch (step) {
-      case 1: return renderStep1();
-      case 2: return renderStep2();
-      case 3: return renderStep3();
-      case 4: return renderStep4();
-      default: return null;
-    }
-  };
+// ── Main Screen ─────────────────────────────────────────
+
+export default function LoginScreen() {
+  const { colors, isDark } = useTheme();
+  const [isRegister, setIsRegister] = useState(false);
+  const { continueAsGuest } = useAuthStore();
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      style={[styles.container, { backgroundColor: colors.background }]}
-    >
-      <ScrollView
-        ref={scrollRef}
-        contentContainerStyle={styles.scrollContent}
-        showsVerticalScrollIndicator={false}
-        keyboardShouldPersistTaps="handled"
-      >
-        {/* Logo */}
-        <View style={styles.logoSection}>
-          <Text style={[typography.display, { color: colors.primary, textAlign: 'center', fontWeight: '800', fontSize: 30 }]}>
-            KAPTAN
-          </Text>
-          <Image
-            source={require('../../assets/icon.png')}
-            style={styles.logoImage}
-            resizeMode="contain"
-          />
-          <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.xs }]}>
-            Lojistik & Taşıyıcı Platformu
-          </Text>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: colors.background }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+        <View style={{ alignItems: 'center', marginBottom: spacing.xl }}>
+          <Image source={require('../../assets/icon.png')} style={{ width: 80, height: 80, borderRadius: 20, marginBottom: spacing.md }} />
+          <Text style={[typography.display, { color: colors.text, fontWeight: '900', letterSpacing: 3, fontSize: 36 }]}>KAPTAN</Text>
+          <Text style={[typography.caption, { color: colors.primary, fontWeight: '700', letterSpacing: 2, marginTop: 4 }]}>AKILLI LOJİSTİK PORTALI</Text>
         </View>
 
-        <View style={[styles.card, shadowStyle, { backgroundColor: colors.card, borderColor: colors.border }]}>
-          {/* Tabs */}
-          <View style={[styles.tabRow, { borderBottomColor: colors.border }]}>
-            <TouchableOpacity
-              style={[styles.tabBtn, !isRegister && { borderBottomColor: colors.primary, borderBottomWidth: 3 }]}
-              onPress={() => switchToRegister(false)}
-            >
-              <Text style={[typography.h3, { color: !isRegister ? colors.primary : colors.textTertiary, fontWeight: '700' }]}>
-                Giriş Yap
-              </Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.tabBtn, isRegister && { borderBottomColor: colors.primary, borderBottomWidth: 3 }]}
-              onPress={() => switchToRegister(true)}
-            >
-              <Text style={[typography.h3, { color: isRegister ? colors.primary : colors.textTertiary, fontWeight: '700' }]}>
-                Kayıt Ol
-              </Text>
-            </TouchableOpacity>
-          </View>
+        {/* Tab Switcher */}
+        <View style={[styles.tabRow, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <TouchableOpacity style={[styles.tab, { backgroundColor: !isRegister ? colors.primary : 'transparent' }]} onPress={() => setIsRegister(false)}>
+            <Text style={[typography.body, { color: !isRegister ? '#FFF' : colors.text, fontWeight: '700' }]}>Giriş</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={[styles.tab, { backgroundColor: isRegister ? colors.primary : 'transparent' }]} onPress={() => setIsRegister(true)}>
+            <Text style={[typography.body, { color: isRegister ? '#FFF' : colors.text, fontWeight: '700' }]}>Kayıt</Text>
+          </TouchableOpacity>
+        </View>
 
-          {/* Step Indicator (register only) */}
-          {renderStepIndicator()}
-
-          {/* Form content */}
-          <View style={styles.form}>
-            {!isRegister ? renderLoginTab() : renderRegisterForm()}
-          </View>
-
-          {/* Guest button — only show on login tab or step 1 of register */}
-          {(!isRegister || (isRegister && step === 1)) && (
-            <TouchableOpacity
-              style={[styles.guestBtn, { borderColor: colors.primary }]}
-              onPress={() => { hapticLight(); continueAsGuest(); }}
-              activeOpacity={0.8}
-            >
-              <Text style={[typography.label, { color: colors.primary, fontWeight: '800' }]}>
-                Misafir Olarak Devam Et
-              </Text>
-            </TouchableOpacity>
+        <View style={styles.formContainer}>
+          {isRegister ? (
+            <RegisterWizard onSwitchToLogin={() => setIsRegister(false)} />
+          ) : (
+            <LoginForm onSwitchToRegister={() => setIsRegister(true)} />
           )}
         </View>
       </ScrollView>
-
-      {/* KVKK Bottom Sheet */}
-      <BottomSheet visible={showKvkkSheet} onClose={() => setShowKvkkSheet(false)}>
-        <Text style={[typography.h2, { color: colors.text, marginBottom: spacing.md, fontWeight: '800' }]}>
-          KVKK ve Gizlilik Sözleşmesi
-        </Text>
-        <ScrollView style={styles.sheetScroll} showsVerticalScrollIndicator={true}>
-          <Text style={[typography.body, { color: colors.text, paddingBottom: spacing.xl, lineHeight: 22 }]}>
-            {kvkkText}
-          </Text>
-        </ScrollView>
-      </BottomSheet>
     </KeyboardAvoidingView>
   );
 }
 
+// ── Styles ──────────────────────────────────────────────
+
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  scrollContent: {
-    padding: spacing.xl,
-    justifyContent: 'center',
-    flexGrow: 1,
-  },
-  logoSection: {
-    marginBottom: spacing.xl,
-    alignItems: 'center',
-  },
-  logoImage: {
-    width: 80,
-    height: 80,
-    marginTop: spacing.md,
-    marginBottom: spacing.xs,
-  },
-  card: {
-    borderRadius: radius.lg,
-    borderWidth: 1,
-    padding: spacing.lg,
-  },
-  tabRow: {
-    flexDirection: 'row',
-    borderBottomWidth: 1,
-    marginBottom: spacing.lg,
-  },
-  tabBtn: {
-    flex: 1,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-  },
-
-  // Step Indicator
-  stepIndicator: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: spacing.xl,
-    paddingHorizontal: spacing.xs,
-  },
-  stepItem: {
-    alignItems: 'center',
-    flex: 1,
-    position: 'relative',
-  },
-  stepDot: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    borderWidth: 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 4,
-  },
-  stepCheck: {
-    color: '#FFF',
-    fontSize: 12,
-    fontWeight: '900',
-  },
-  stepNum: {
-    fontSize: 12,
-    fontWeight: '700',
-  },
-  stepLabel: {
-    fontSize: 9,
-    fontWeight: '600',
-    textAlign: 'center',
-  },
-  stepLine: {
-    position: 'absolute',
-    top: 14,
-    right: -8,
-    width: '100%',
-    height: 2,
-    zIndex: -1,
-  },
-
-  // Role Cards
-  roleCard: {
-    borderRadius: radius.lg,
-    borderWidth: 1.5,
-    marginBottom: spacing.sm,
-    overflow: 'hidden',
-  },
-  roleCardInner: {
-    flexDirection: 'row',
-  },
-  roleAccent: {
-    width: 4,
-  },
-  roleCardContent: {
-    flex: 1,
-    padding: spacing.md,
-  },
-  roleCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: spacing.sm,
-  },
-  roleIcon: {
-    fontSize: 28,
-    marginTop: 2,
-  },
-  roleCardTitleArea: {
-    flex: 1,
-  },
-  roleCheck: {
-    width: 22,
-    height: 22,
-    borderRadius: 11,
-    backgroundColor: '#FF6B00',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  roleCheckIcon: {
-    color: '#FFF',
-    fontSize: 11,
-    fontWeight: '900',
-  },
-  roleBadgeRow: {
-    marginTop: spacing.sm,
-    paddingHorizontal: spacing.sm,
-    paddingVertical: 4,
-    borderRadius: radius.sm,
-  },
-
-  // Form
-  form: {
-    gap: spacing.xs,
-  },
-  input: {
-    borderRadius: radius.md,
-    borderWidth: 1,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    fontSize: 15,
-    minHeight: 44,
-  },
-  kvkkRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: spacing.md,
-    marginBottom: spacing.sm,
-  },
-  checkbox: {
-    width: 20,
-    height: 20,
-    borderRadius: radius.sm,
-    borderWidth: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  submitBtn: {
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-    marginTop: spacing.md,
-  },
-  secondaryBtn: {
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 48,
-    borderWidth: 1.5,
-    flex: 1,
-  },
-  stepNavRow: {
-    flexDirection: 'row',
-    gap: spacing.sm,
-    marginTop: spacing.md,
-    alignItems: 'center',
-  },
-  guestBtn: {
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginTop: spacing.md,
-    minHeight: 48,
-    borderWidth: 1.5,
-  },
-  sheetScroll: { maxHeight: 400, paddingVertical: spacing.md },
-
-  // Business type chips
-  businessTypeRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: spacing.xs,
-  },
-  businessTypeChip: {
-    borderWidth: 1,
-    borderRadius: radius.pill || 20,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    minHeight: 36,
-    justifyContent: 'center',
-  },
-
-  // OTP
-  otpContainer: {
-    paddingVertical: spacing.md,
-  },
-  otpInput: {
-    borderRadius: radius.md,
-    borderWidth: 1.5,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
-    fontSize: 24,
-    minHeight: 56,
-    textAlign: 'center',
-    letterSpacing: 8,
-    fontWeight: '700',
-  },
+  container: { padding: spacing.lg, paddingTop: spacing['2xl'], paddingBottom: spacing['3xl'] },
+  tabRow: { flexDirection: 'row', borderRadius: radius.lg, borderWidth: 1, overflow: 'hidden', marginBottom: spacing.lg },
+  tab: { flex: 1, paddingVertical: spacing.md, alignItems: 'center', borderRadius: radius.lg },
+  formContainer: { paddingHorizontal: spacing.xs },
+  inputGroup: { marginBottom: spacing.md },
+  input: { borderWidth: 1.5, borderRadius: radius.md, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, fontSize: 15, minHeight: 48 },
+  fieldError: { color: '#EF4444', fontSize: 12, marginTop: 4, fontWeight: '500' },
+  fieldErrorCenter: { color: '#EF4444', fontSize: 13, textAlign: 'center', marginBottom: spacing.sm, fontWeight: '600' },
+  primaryBtn: { paddingVertical: spacing.md, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', minHeight: 50, marginTop: spacing.md },
+  primaryBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  secondaryBtn: { paddingVertical: spacing.md, paddingHorizontal: spacing.lg, borderRadius: radius.md, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', minHeight: 50, marginTop: spacing.md },
+  roleCard: { flexDirection: 'row', alignItems: 'center', padding: spacing.md, borderRadius: radius.lg, borderWidth: 2, marginBottom: spacing.sm },
+  roleIcon: { fontSize: 32, marginRight: spacing.md },
+  radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  radioInner: { width: 12, height: 12, borderRadius: 6 },
+  stepIndicator: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: spacing.xl, paddingHorizontal: spacing.sm },
+  stepItem: { alignItems: 'center', flex: 1 },
+  stepDot: { width: 32, height: 32, borderRadius: 16, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  stepCheck: { color: '#FFF', fontSize: 14, fontWeight: '800' },
+  stepNum: { fontSize: 13, fontWeight: '700' },
+  kvkkRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
+  checkbox: { width: 22, height: 22, borderRadius: 4, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginRight: spacing.sm },
+  otpInput: { borderWidth: 2, borderRadius: radius.lg, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, fontSize: 28, minHeight: 60, textAlign: 'center', letterSpacing: 8, fontWeight: '800' },
 });

@@ -3,6 +3,8 @@ import { View, Text, ScrollView, StyleSheet, RefreshControl, ActivityIndicator }
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, radius, typography } from '../../theme';
 import { apiClient } from '../../services/api';
+import { handleError } from '../../services/errorService';
+import ErrorState from '../../components/shared/ErrorState';
 import Card from '../../components/shared/Card';
 
 interface Transaction {
@@ -31,11 +33,13 @@ export default function BillingHistoryScreen() {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [creditTxs, setCreditTxs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<'payments' | 'credits'>('payments');
 
   const fetchData = useCallback(async () => {
     try {
+      setError(null);
       const [payRes, creditRes] = await Promise.all([
         apiClient.get('/payment/transactions'),
         apiClient.get('/billing/credits/transactions'),
@@ -43,11 +47,22 @@ export default function BillingHistoryScreen() {
       const payData = payRes.data?.data;
       setTransactions(payData?.transactions || payData || []);
       setCreditTxs(creditRes.data?.data || []);
-    } catch { /* ignore */ }
+    } catch (e) {
+      handleError(e, { screen: 'BillingHistory', action: 'fetchData' });
+      setError('Ödeme geçmişi yüklenirken bir hata oluştu.');
+    }
     finally { setLoading(false); setRefreshing(false); }
   }, []);
 
   useEffect(() => { fetchData(); }, [fetchData]);
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ErrorState message={error} onRetry={fetchData} />
+      </View>
+    );
+  }
 
   const getTypeStyle = (type: string) => TYPE_LABELS[type] || { label: type, icon: '💳', color: colors.textTertiary };
 

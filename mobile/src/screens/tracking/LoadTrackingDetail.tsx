@@ -6,6 +6,8 @@ import {
   TouchableOpacity,
   StyleSheet,
   Alert,
+  Share,
+  Linking,
 } from 'react-native';
 import MapView, { Marker, Polyline, Callout } from 'react-native-maps';
 import DocumentStatusCard from '../../components/DocumentStatusCard';
@@ -13,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, radius, typography } from '../../theme';
 import { useTrackingStore } from '../../store/trackingStore';
+import { apiClient } from '../../services/api';
 import { usePoiStore } from '../../store/poiStore';
 import { simulateLoadProgress, calculateDistance, formatDistance, estimateTravelTime, calculateSmartETA } from '../../services/trackingService';
 
@@ -62,8 +65,6 @@ export default function LoadTrackingDetail({ navigation, route }: Props) {
   // UX-004: Share tracking link via WhatsApp/SMS/etc (Enhanced E-22)
   const handleShareTracking = async () => {
     try {
-      const { Share, Linking } = require('react-native');
-      const { apiClient } = require('../../services/api');
       const res = await apiClient.post(`/tracking/${tracking.id}/share`);
       const shareUrl = res.data?.data?.shareUrl || res.data?.shareUrl || `https://kaptan.app/track/${tracking.id}`;
 

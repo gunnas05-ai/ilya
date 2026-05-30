@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, Text, StyleSheet } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useNetwork } from '../../hooks/useNetwork';
 import { useTheme } from '../../hooks/useTheme';
 import { typography, spacing } from '../../theme';
@@ -7,6 +8,7 @@ import { typography, spacing } from '../../theme';
 export default function OfflineBar() {
   const { isConnected } = useNetwork();
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const translateY = useRef(new Animated.Value(-100)).current;
 
   useEffect(() => {
@@ -29,8 +31,11 @@ export default function OfflineBar() {
         },
       ]}
     >
-      <Text style={[typography.caption, { color: colors.white, fontWeight: '600' }]}>
-        İnternet bağlantınız yok
+      <Text style={[typography.caption, { color: colors.white, fontWeight: '600', textAlign: 'center' }]}>
+        {t('common.offline')}
+      </Text>
+      <Text style={[typography.small, { color: 'rgba(255,255,255,0.75)', marginTop: 2, fontSize: 10, textAlign: 'center' }]}>
+        {t('common.offline_desc')}
       </Text>
     </Animated.View>
   );

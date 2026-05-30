@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, radius, typography } from '../../theme';
 import { integrationService, WebhookData } from '../../services/integrationService';
+import { handleError } from '../../services/errorService';
+import ErrorState from '../../components/shared/ErrorState';
 import { hapticLight, hapticSuccess, hapticError } from '../../utils/haptic';
 import OfflineBar from '../../components/shared/OfflineBar';
 import ListSkeleton from '../../components/shared/ListSkeleton';
@@ -18,6 +20,7 @@ export default function WebhookManagementScreen() {
   const { colors } = useTheme();
   const [webhooks, setWebhooks] = useState<WebhookData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formName, setFormName] = useState('');
@@ -30,9 +33,13 @@ export default function WebhookManagementScreen() {
   const fetchWebhooks = async () => {
     setLoading(true);
     try {
+      setError(null);
       const data = await integrationService.listWebhooks();
       setWebhooks(Array.isArray(data) ? data : []);
-    } catch { setWebhooks([]); }
+    } catch (e) {
+      handleError(e, { screen: 'WebhookManagement', action: 'fetch' });
+      setError('Webhook\'lar yüklenirken bir hata oluştu.');
+    }
     finally { setLoading(false); }
   };
 
@@ -79,12 +86,14 @@ export default function WebhookManagementScreen() {
     Alert.alert('Sil', `"${wh.name}" webhook'unu silmek istediğinize emin misiniz?`, [
       { text: 'Vazgeç', style: 'cancel' },
       { text: 'Sil', style: 'destructive', onPress: async () => {
-        try { await integrationService.deleteWebhook(wh.id!); fetchWebhooks(); } catch {}
+        try { await integrationService.deleteWebhook(wh.id!); fetchWebhooks(); } catch (e) { handleError(e, { screen: 'WebhookManagement', action: 'delete' }); }
       }},
     ]);
   };
 
   if (loading) return <View style={{ flex:1, backgroundColor:colors.background }}><OfflineBar /><ListSkeleton /></View>;
+
+  if (error) return <View style={{ flex: 1, backgroundColor: colors.background }}><ErrorState message={error} onRetry={fetchWebhooks} /></View>;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

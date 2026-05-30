@@ -14,8 +14,11 @@ import {
 import { useTheme } from '../hooks/useTheme';
 import { spacing, radius, typography } from '../theme';
 import { announcementService } from '../services/announcementService';
+import { handleError } from '../services/errorService';
+import ErrorState from '../components/shared/ErrorState';
 import OfflineBar from '../components/shared/OfflineBar';
 import { hapticLight, hapticSuccess } from '../utils/haptic';
+import { showToast } from '../utils/toast';
 
 interface Props {
   navigation: any;
@@ -25,19 +28,20 @@ export default function DuyuruYonetimScreen({ navigation }: Props) {
   const { colors, isDark } = useTheme();
   const [content, setContent] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  // Fetch the latest announcement on mount
   const fetchAnnouncement = async () => {
     setLoading(true);
     try {
+      setError(null);
       const data = await announcementService.getLatest();
       if (data) {
         setContent(data.content);
       }
     } catch (err) {
-      console.log('Failed to fetch announcement', err);
-      Alert.alert('Hata', 'Duyuru yüklenirken bir sorun oluştu.');
+      handleError(err, { screen: 'DuyuruYonetim', action: 'fetchAnnouncement' });
+      setError('Duyuru yüklenirken bir hata oluştu.');
     } finally {
       setLoading(false);
     }
@@ -53,12 +57,11 @@ export default function DuyuruYonetimScreen({ navigation }: Props) {
     try {
       await announcementService.save(content);
       hapticSuccess();
-      Alert.alert('Başarılı', 'Sistem duyurusu başarıyla güncellendi.', [
-        { text: 'Tamam', onPress: () => navigation.goBack() }
-      ]);
+      showToast('Sistem duyurusu başarıyla güncellendi.', 'success');
+      navigation.goBack();
     } catch (err) {
-      console.log('Failed to save announcement', err);
-      Alert.alert('Hata', 'Duyuru kaydedilirken bir hata oluştu.');
+      handleError(err, { screen: 'DuyuruYonetim', action: 'save' });
+      showToast('Duyuru kaydedilirken bir hata oluştu.', 'error');
     } finally {
       setSaving(false);
     }
@@ -71,6 +74,14 @@ export default function DuyuruYonetimScreen({ navigation }: Props) {
         <Text style={[typography.caption, { color: colors.textSecondary, marginTop: spacing.md }]}>
           Duyuru yükleniyor...
         </Text>
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <ErrorState message={error} onRetry={fetchAnnouncement} />
       </View>
     );
   }

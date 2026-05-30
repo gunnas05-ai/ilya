@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import * as Speech from 'expo-speech';
+import * as Location from 'expo-location';
 import { useTheme } from '../hooks/useTheme';
 import { useSpeechToText } from '../hooks/useSpeechToText';
 import { spacing, radius, typography } from '../theme';
@@ -286,7 +287,6 @@ export default function HeyKaptan() {
     if (btn.type === 'navigate' && btn.route) {
       if (btn.route === 'ReturnLoad') {
         try {
-          const Location = require('expo-location');
           const { status } = await Location.requestForegroundPermissionsAsync();
           if (status === 'granted') {
             const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });

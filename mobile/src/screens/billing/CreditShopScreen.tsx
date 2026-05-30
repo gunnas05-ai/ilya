@@ -1,8 +1,11 @@
 import { useEffect, useState, useCallback } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
+import { useAppNavigation } from '../../hooks/useAppNavigation';
 import { spacing, radius, typography } from '../../theme';
 import { apiClient } from '../../services/api';
+import { handleError } from '../../services/errorService';
+import ErrorState from '../../components/shared/ErrorState';
 import { hapticMedium } from '../../utils/haptic';
 import Card from '../../components/shared/Card';
 
@@ -21,16 +24,19 @@ interface SavedCard {
   isDefault: boolean;
 }
 
-export default function CreditShopScreen({ navigation }: any) {
+export default function CreditShopScreen() {
+  const navigation = useAppNavigation();
   const { colors } = useTheme();
   const [packages, setPackages] = useState<CreditPackage[]>([]);
   const [balance, setBalance] = useState<any>(null);
   const [cards, setCards] = useState<SavedCard[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [purchasing, setPurchasing] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
     try {
+      setError(null);
       const [pkgsRes, balRes, cardsRes] = await Promise.all([
         apiClient.get('/billing/credits/packages'),
         apiClient.get('/billing/credits/balance'),
@@ -39,7 +45,10 @@ export default function CreditShopScreen({ navigation }: any) {
       setPackages(pkgsRes.data?.data || []);
       setBalance(balRes.data?.data || { balance: 0 });
       setCards(cardsRes.data?.data || []);
-    } catch { /* ignore */ }
+    } catch (e) {
+      handleError(e, { screen: 'CreditShop', action: 'fetchData' });
+      setError('Kontör paketleri yüklenirken bir hata oluştu.');
+    }
     finally { setLoading(false); }
   }, []);
 
@@ -83,6 +92,14 @@ export default function CreditShopScreen({ navigation }: any) {
     return (
       <View style={[styles.container, { backgroundColor: colors.background }, styles.center]}>
         <ActivityIndicator color={colors.primary} size="large" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <ErrorState message={error} onRetry={fetchData} />
       </View>
     );
   }

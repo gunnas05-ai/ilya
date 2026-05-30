@@ -3,7 +3,10 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, Platform, Touchable
 import { financeService } from '../../services/financeService';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
 import { KPIWidget } from '../../components/shared';
+import ErrorState from '../../components/shared/ErrorState';
+import EmptyState from '../../components/shared/EmptyState';
 import { useTheme } from '../../hooks/useTheme';
+import { handleError } from '../../services/errorService';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme';
 import { tr } from '../../i18n/tr';
@@ -14,16 +17,21 @@ export default function FinanceDashboardScreen({ navigation }: any) {
   const { colors } = useTheme();
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchDashboard = async () => {
-    setLoading(true);
+    if (!refreshing) setLoading(true);
     try {
+      setError(null);
       const summary = await financeService.getDashboardSummary();
       setData(summary);
     } catch (e) {
-      console.log('Dashboard fetch error', e);
+      handleError(e, { screen: 'FinanceDashboard', action: 'fetchDashboard' });
+      setError('Finansal veriler yüklenirken bir hata oluştu.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
@@ -31,15 +39,28 @@ export default function FinanceDashboardScreen({ navigation }: any) {
     fetchDashboard();
   }, []);
 
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchDashboard();
+  };
+
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-
-
-      <ScrollView 
+      <ScrollView
         contentContainerStyle={styles.scrollContent}
-        refreshControl={<RefreshControl refreshing={loading} onRefresh={fetchDashboard} tintColor={colors.primary} />}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={handleRefresh} tintColor={colors.primary} />}
       >
-        {data ? (
+        {error ? (
+          <ErrorState message={error} onRetry={fetchDashboard} />
+        ) : loading && !data ? (
+          <View style={styles.cards}>
+            <SkeletonLoader width="100%" height={120} borderRadius={spacing.radius.xl} />
+            <View style={styles.rowCards}>
+               <SkeletonLoader width="47%" height={100} borderRadius={spacing.radius.xl} />
+               <SkeletonLoader width="47%" height={100} borderRadius={spacing.radius.xl} />
+            </View>
+          </View>
+        ) : data ? (
           <View style={styles.cards}>
             <KPIWidget
               title={tr.finance.netProfit}
@@ -98,13 +119,7 @@ export default function FinanceDashboardScreen({ navigation }: any) {
             </View>
           </View>
         ) : (
-          <View style={styles.cards}>
-            <SkeletonLoader width="100%" height={120} borderRadius={spacing.radius.xl} />
-            <View style={styles.rowCards}>
-               <SkeletonLoader width="47%" height={100} borderRadius={spacing.radius.xl} />
-               <SkeletonLoader width="47%" height={100} borderRadius={spacing.radius.xl} />
-            </View>
-          </View>
+          <EmptyState emoji="💰" message="Finansal veri bulunamadı." />
         )}
       </ScrollView>
     </View>

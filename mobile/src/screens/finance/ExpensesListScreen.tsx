@@ -3,6 +3,9 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Platform } from 're
 import { financeService } from '../../services/financeService';
 import { SkeletonLoader } from '../../components/SkeletonLoader';
 import { useTheme } from '../../hooks/useTheme';
+import { handleError } from '../../services/errorService';
+import ErrorState from '../../components/shared/ErrorState';
+import EmptyState from '../../components/shared/EmptyState';
 import { spacing } from '../../theme/spacing';
 import { typography } from '../../theme';
 
@@ -15,22 +18,32 @@ export default function ExpensesListScreen({ navigation }: any) {
   const { colors } = useTheme();
   const [expenses, setExpenses] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const fetchExpenses = async () => {
-    setLoading(true);
+    if (!refreshing) setLoading(true);
     try {
+      setError(null);
       const data = await financeService.getExpenses();
       setExpenses(data || []);
     } catch (e) {
-      console.log('Error fetching expenses', e);
+      handleError(e, { screen: 'ExpensesList', action: 'fetchExpenses' });
+      setError('Giderler yüklenirken bir hata oluştu.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
     fetchExpenses();
   }, []);
+
+  const handleRefresh = () => {
+    setRefreshing(true);
+    fetchExpenses();
+  };
 
   const renderItem = ({ item }: any) => (
     <Card accentColor={colors.danger}>
@@ -45,21 +58,23 @@ export default function ExpensesListScreen({ navigation }: any) {
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
-
-
-      {loading && expenses.length === 0 ? (
+      {error ? (
+        <ErrorState message={error} onRetry={fetchExpenses} />
+      ) : loading && expenses.length === 0 ? (
         <View style={styles.list}>
           {[1, 2, 3, 4, 5].map(i => (
             <SkeletonLoader key={i} width="100%" height={80} borderRadius={spacing.radius.lg} />
           ))}
         </View>
+      ) : expenses.length === 0 ? (
+        <EmptyState emoji="📋" message="Henüz gider kaydı bulunmamaktadır." />
       ) : (
         <FlatList
           data={expenses}
           renderItem={renderItem}
           keyExtractor={(item: any) => item.id}
-          refreshing={loading}
-          onRefresh={fetchExpenses}
+          refreshing={refreshing}
+          onRefresh={handleRefresh}
           contentContainerStyle={styles.list}
         />
       )}

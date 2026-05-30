@@ -3,6 +3,8 @@ import { useState, useEffect } from 'react';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, radius, typography } from '../../theme';
 import { integrationService, ApiKeyData } from '../../services/integrationService';
+import { handleError } from '../../services/errorService';
+import ErrorState from '../../components/shared/ErrorState';
 import { hapticLight, hapticSuccess } from '../../utils/haptic';
 import OfflineBar from '../../components/shared/OfflineBar';
 import ListSkeleton from '../../components/shared/ListSkeleton';
@@ -20,6 +22,7 @@ export default function ApiKeyManagementScreen() {
   const { colors } = useTheme();
   const [keys, setKeys] = useState<ApiKeyData[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
   const [formName, setFormName] = useState('');
   const [formPerms, setFormPerms] = useState<string[]>(['loads:read']);
@@ -30,8 +33,14 @@ export default function ApiKeyManagementScreen() {
 
   const fetchKeys = async () => {
     setLoading(true);
-    try { const data = await integrationService.listApiKeys(); setKeys(Array.isArray(data) ? data : []); }
-    catch { setKeys([]); }
+    try {
+      setError(null);
+      const data = await integrationService.listApiKeys();
+      setKeys(Array.isArray(data) ? data : []);
+    } catch (e) {
+      handleError(e, { screen: 'ApiKeyManagement', action: 'fetch' });
+      setError('API anahtarları yüklenirken bir hata oluştu.');
+    }
     finally { setLoading(false); }
   };
 
@@ -54,7 +63,7 @@ export default function ApiKeyManagementScreen() {
     Alert.alert('İptal Et', `"${key.name}" anahtarını iptal etmek istediğinize emin misiniz?`, [
       { text: 'Vazgeç', style: 'cancel' },
       { text: 'İptal Et', style: 'destructive', onPress: async () => {
-        try { await integrationService.revokeApiKey(key.id!); fetchKeys(); } catch {}
+        try { await integrationService.revokeApiKey(key.id!); fetchKeys(); } catch (e) { handleError(e, { screen: 'ApiKeyManagement', action: 'revoke' }); }
       }},
     ]);
   };
@@ -66,6 +75,8 @@ export default function ApiKeyManagementScreen() {
   };
 
   if (loading) return <View style={{ flex:1, backgroundColor:colors.background }}><OfflineBar /><ListSkeleton /></View>;
+
+  if (error) return <View style={{ flex: 1, backgroundColor: colors.background }}><ErrorState message={error} onRetry={fetchKeys} /></View>;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>

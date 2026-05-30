@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, StyleProp, ViewStyle } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { typography, spacing } from '../../theme';
 import { PremiumButton } from '../PremiumButton';
@@ -7,13 +7,14 @@ interface ErrorStateProps {
   message?: string;
   onRetry?: () => void;
   retryLoading?: boolean;
+  style?: StyleProp<ViewStyle>;
 }
 
-export default function ErrorState({ message, onRetry, retryLoading = false }: ErrorStateProps) {
+export default function ErrorState({ message, onRetry, retryLoading = false, style }: ErrorStateProps) {
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }, style]}>
       <Text style={styles.emoji}>⚠️</Text>
       <Text style={[typography.h3, { color: colors.text, marginTop: spacing.md, textAlign: 'center' }]}>
         Bir hata oluştu

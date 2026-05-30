@@ -141,8 +141,6 @@ export default function LoadCreateWizard({ onClose }: LoadCreateWizardProps) {
         null                  // receiver will be set when load is accepted (Module 02)
       );
       await addTrackedLoad(tracking);
-
-      console.log('Yük kaydedildi:', { id, formData });
     } catch (error) {
       console.error('Yük kaydetme hatası:', error);
       Alert.alert('Hata', 'Yük kaydedilirken bir hata oluştu. Lütfen tekrar deneyin.');

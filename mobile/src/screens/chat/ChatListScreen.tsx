@@ -1,10 +1,11 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, Platform } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
 import { useChatStore } from '../../store/chatStore';
 import { spacing, radius, typography } from '../../theme';
 import { hapticLight } from '../../utils/haptic';
+import EmptyState from '../../components/shared/EmptyState';
 
 type ChatFilter = 'all' | 'groups' | 'direct' | 'unread';
 
@@ -67,87 +68,35 @@ export default function ChatListScreen() {
       </View>
 
       {/* ── Sohbet Listesi ── */}
-      <ScrollView
-        contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing.lg }}
-        style={{ flex: 1 }}
-      >
-        {roomsList.length === 0 ? (
-          <View style={{ alignItems: 'center', justifyContent: 'center', marginTop: 80 }}>
-            <Text style={{ fontSize: 64, marginBottom: spacing.md }}>
-              {activeFilter === 'unread' ? '✅' : '💬'}
-            </Text>
-            <Text style={[typography.h3, { color: colors.text, fontWeight: '700', textAlign: 'center' }]}>
-              {activeFilter === 'unread'
-                ? 'Okunmamış Mesaj Yok'
-                : activeFilter === 'groups'
-                  ? 'Grup Sohbeti Bulunmuyor'
-                  : activeFilter === 'direct'
-                    ? 'Birebir Sohbet Bulunmuyor'
-                    : 'Henüz Sohbet Bulunmuyor'}
-            </Text>
-            <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.sm, paddingHorizontal: spacing.xl }]}>
-              Yeni bir sohbet başlatmak için yukarıdaki + butonuna tıklayın.
-            </Text>
-          </View>
-        ) : (
-          roomsList.map((room) => {
-            const lastMessage = room.messages[room.messages.length - 1];
-            const hasUnread = (room.unreadCount || 0) > 0;
-
-            return (
-              <TouchableOpacity
-                key={room.id}
-                onPress={() => navigation.navigate('ChatRoom', { roomId: room.id })}
-                activeOpacity={0.7}
-                style={[styles.roomCard, {
-                  backgroundColor: colors.card,
-                  borderColor: colors.border,
-                  shadowColor: isDark ? '#FFFFFF' : '#000000',
-                }]}
-              >
-                {/* 00standart.txt — Sol Dikey Durum Göstergesi */}
-                <View style={{
-                  width: 6,
-                  backgroundColor: hasUnread ? '#FF6B00' : colors.border,
-                  borderTopLeftRadius: radius.md,
-                  borderBottomLeftRadius: radius.md,
-                }} />
-
-                <View style={{ flex: 1, padding: spacing.md }}>
-                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Text style={[typography.label, { color: colors.text, fontWeight: '800' }]} numberOfLines={1}>
-                      {room.isGroup ? '👥 ' : '👤 '}{room.name}
-                    </Text>
-                    {hasUnread && (
-                      <View style={styles.unreadBadge}>
-                        <Text style={{ color: '#FFF', fontSize: 10, fontWeight: '800' }}>
-                          {room.unreadCount}
-                        </Text>
-                      </View>
-                    )}
-                  </View>
-
-                  <Text style={[typography.caption, {
-                    color: colors.textSecondary,
-                    marginTop: 4,
-                    fontStyle: lastMessage ? 'normal' : 'italic',
-                  }]} numberOfLines={1}>
-                    {lastMessage
-                      ? `${lastMessage.senderName}: ${lastMessage.text}`
-                      : 'Henüz mesaj gönderilmedi.'}
-                  </Text>
-
-                  {lastMessage && (
-                    <Text style={{ alignSelf: 'flex-end', fontSize: 10, color: colors.textTertiary, marginTop: 4 }}>
-                      {new Date(lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </Text>
-                  )}
+      <FlatList
+        data={roomsList}
+        keyExtractor={(item: any) => item.id}
+        contentContainerStyle={{ padding: spacing.lg, paddingBottom: 100 }}
+        ListEmptyComponent={
+          <EmptyState emoji={activeFilter === 'unread' ? '✅' : '💬'} message={activeFilter === 'unread' ? 'Okunmamış Mesaj Yok' : activeFilter === 'groups' ? 'Grup Sohbeti Bulunmuyor' : activeFilter === 'direct' ? 'Birebir Sohbet Bulunmuyor' : 'Henüz Sohbet Bulunmuyor'} description="Yeni bir sohbet başlatmak için + butonuna tıklayın." />
+        }
+        renderItem={({ item: room }) => {
+          const lastMessage = room.messages?.[room.messages.length - 1];
+          const hasUnread = (room.unreadCount || 0) > 0;
+          return (
+            <TouchableOpacity
+              onPress={() => navigation.navigate('ChatRoom', { roomId: room.id })}
+              activeOpacity={0.7}
+              style={[styles.roomCard, { backgroundColor: colors.card, borderColor: colors.border, shadowColor: isDark ? '#FFFFFF' : '#000000' }]}
+            >
+              <View style={{ width: 6, backgroundColor: hasUnread ? '#FF6B00' : colors.border, borderTopLeftRadius: radius.md, borderBottomLeftRadius: radius.md }} />
+              <View style={{ flex: 1, padding: spacing.md }}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Text style={[typography.label, { color: colors.text, fontWeight: '800' }]} numberOfLines={1}>{room.isGroup ? '👥 ' : '👤 '}{room.name}</Text>
+                  {hasUnread && (<View style={styles.unreadBadge}><Text style={{ color: '#FFF', fontSize: 10, fontWeight: '800' }}>{room.unreadCount}</Text></View>)}
                 </View>
-              </TouchableOpacity>
-            );
-          })
-        )}
-      </ScrollView>
+                <Text style={[typography.caption, { color: colors.textSecondary, marginTop: 4, fontStyle: lastMessage ? 'normal' : 'italic' }]} numberOfLines={1}>{lastMessage ? `${lastMessage.senderName}: ${lastMessage.text}` : 'Henüz mesaj gönderilmedi.'}</Text>
+                {lastMessage && (<Text style={{ alignSelf: 'flex-end', fontSize: 10, color: colors.textTertiary, marginTop: 4 }}>{new Date(lastMessage.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>)}
+              </View>
+            </TouchableOpacity>
+          );
+        }}
+      />
 
       {/* ── ALT TAB BAR: Filtreleme Sekmeleri ── */}
       <View style={[styles.bottomTabBar, {

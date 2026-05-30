@@ -4,7 +4,9 @@ import * as ImagePicker from 'expo-image-picker';
 import { useTheme } from '../../hooks/useTheme';
 import { spacing, radius, typography } from '../../theme';
 import { vehicleService } from '../../services/vehicleService';
+import { handleError } from '../../services/errorService';
 import { hapticLight } from '../../utils/haptic';
+import { showToast } from '../../utils/toast';
 import Card from '../../components/shared/Card';
 import OfflineBar from '../../components/shared/OfflineBar';
 
@@ -37,7 +39,7 @@ export default function VehicleFormScreen({ navigation, route }: any) {
         const resp = await vehicleService.uploadPhoto(existingVehicle.id, result.assets[0].uri, 'image/jpeg');
         if (resp?.url) setPhotos([...photos, resp]);
         else setPhotos([...photos, { url: result.assets[0].uri, id: Date.now().toString(), vehicleId: existingVehicle.id }]);
-      } catch { setPhotos([...photos, { url: result.assets[0].uri, id: Date.now().toString() }]); }
+      } catch (e) { handleError(e, { screen: 'VehicleForm', action: 'uploadPhoto' }); setPhotos([...photos, { url: result.assets[0].uri, id: Date.now().toString() }]); }
     } else {
       setPhotos([...photos, { url: result.assets[0].uri, id: `local_${Date.now()}`, vehicleId: null }]);
     }
@@ -56,11 +58,15 @@ export default function VehicleFormScreen({ navigation, route }: any) {
         // Upload pending photos for new vehicle
         const pendingPhotos = photos.filter((p: any) => !p.vehicleId || p.id?.toString().startsWith('local_'));
         for (const p of pendingPhotos) {
-          try { await vehicleService.uploadPhoto(saved.id, p.url, 'image/jpeg'); } catch {}
+          try { await vehicleService.uploadPhoto(saved.id, p.url, 'image/jpeg'); } catch (e) { handleError(e, { screen: 'VehicleForm', action: 'savePhoto', severity: 'silent' }); }
         }
       }
-      Alert.alert('Basarili', editMode ? 'Arac guncellendi.' : 'Arac eklendi.', [{ text: 'Tamam', onPress: () => navigation.goBack() }]);
-    } catch { Alert.alert('Hata', 'Kaydedilemedi.'); }
+      showToast(editMode ? 'Araç güncellendi.' : 'Araç eklendi.', 'success');
+      setTimeout(() => navigation.goBack(), 500);
+    } catch (e) {
+      handleError(e, { screen: 'VehicleForm', action: 'save' });
+      showToast('Araç kaydedilemedi.', 'error');
+    }
     finally { setSaving(false); }
   };
 

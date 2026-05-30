@@ -9,3 +9,5 @@ export { PhoneInput, formatPhone, isValidPhone, getRawPhone } from './PhoneInput
 export { TCInput, isValidTC } from './TCInput';
 export { StatusBadge } from './StatusBadge';
 export { KPIWidget } from './KPIWidget';
+export { ErrorBoundary, withErrorBoundary } from './ErrorBoundary';
+export { default as CachedImage } from './CachedImage';

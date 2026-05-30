@@ -66,7 +66,7 @@ export const useChatStore = create<ChatState>((set, get) => ({
         get().receiveNewChatRoom(payload);
       });
     } catch (err) {
-      console.log('Error initializing chat store:', err);
+      console.error('Error initializing chat store:', err);
       set({ isLoading: false });
     }
   },

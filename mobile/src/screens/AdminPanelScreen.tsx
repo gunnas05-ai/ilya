@@ -4,6 +4,8 @@ import { useAuthStore } from '../store/authStore';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, radius, typography } from '../theme';
 import { hapticLight } from '../utils/haptic';
+import { apiClient } from '../services/api';
+import { vehicleService } from '../services/vehicleService';
 import OfflineBar from '../components/shared/OfflineBar';
 import Card from '../components/shared/Card';
 
@@ -169,8 +171,7 @@ export default function AdminPanelScreen({ navigation }: any) {
       );
     } else if (parentKey === 'disputes') {
       hapticLight();
-      const { apiClient } = require('../services/api');
-      if (child.key === 'dispute_active') {
+            if (child.key === 'dispute_active') {
         apiClient.get('/escrow/admin/withdrawals/pending').then((r: any) => {
           const list = r.data?.data || r.data || [];
           Alert.alert('Aktif İtirazlar', `${list.length || 0} adet bekleyen işlem bulunuyor.\n\nAdmin paneli üzerinden yönetebilirsiniz.`);
@@ -190,24 +191,21 @@ export default function AdminPanelScreen({ navigation }: any) {
       setPrivacyText('Yükleniyor...');
       setShowKvkk(true);
       // Fetch privacy agreement from backend
-      const { apiClient } = require('../services/api');
-      apiClient.get('/sozlesmeler/gizlilik').then((r: any) => {
+            apiClient.get('/sozlesmeler/gizlilik').then((r: any) => {
         setPrivacyText(r.data?.text || r.data || '');
       }).catch(() => setPrivacyText(''));
     } else if (child.key === 'settings_language') {
       hapticLight();
       setLanguageLoading(true);
       setShowLanguage(true);
-      const { apiClient } = require('../services/api');
-      apiClient.get('/language/admin/settings').then((r: any) => {
+            apiClient.get('/language/admin/settings').then((r: any) => {
         setLanguageEnabled(r.data?.data?.multiLanguageEnabled || r.data?.multiLanguageEnabled || false);
       }).catch(() => {}).finally(() => setLanguageLoading(false));
     } else if (child.key === 'settings_escrow') {
       hapticLight();
       setEscrowLoading(true);
       setShowEscrow(true);
-      const { vehicleService } = require('../services/vehicleService');
-      vehicleService.getEscrowStatus().then((r: any) => {
+            vehicleService.getEscrowStatus().then((r: any) => {
         setEscrowEnabled(r?.data?.escrowEnabled || r?.escrowEnabled || false);
       }).catch(() => {}).finally(() => setEscrowLoading(false));
     } else if (parentKey === 'payment') {
@@ -467,8 +465,7 @@ export default function AdminPanelScreen({ navigation }: any) {
                 updateKVKKText(kvkkText);
                 // Save privacy text to backend
                 try {
-                  const { apiClient } = require('../services/api');
-                  await apiClient.post('/sozlesmeler/admin/update', { key: 'privacy_agreement_text', text: privacyText });
+                                    await apiClient.post('/sozlesmeler/admin/update', { key: 'privacy_agreement_text', text: privacyText });
                 } catch {}
                 hapticLight();
                 setShowKvkk(false);
@@ -507,8 +504,7 @@ export default function AdminPanelScreen({ navigation }: any) {
                   onPress={async () => {
                     setLanguageLoading(true);
                     try {
-                      const { apiClient } = require('../services/api');
-                      const res = await apiClient.post('/language/admin/toggle', { enabled: !languageEnabled });
+                                            const res = await apiClient.post('/language/admin/toggle', { enabled: !languageEnabled });
                       const newState = res.data?.data?.enabled || res.data?.enabled || false;
                       setLanguageEnabled(newState);
                       Alert.alert('✅ Başarılı', newState ? 'Çoklu dil desteği AKTİF. Kullanıcılar dil değiştirebilir.' : 'Çoklu dil desteği PASİF. Tüm kullanıcılar Türkçe kullanacak.');
@@ -552,8 +548,7 @@ export default function AdminPanelScreen({ navigation }: any) {
                   onPress={async () => {
                     setEscrowLoading(true);
                     try {
-                      const { vehicleService } = require('../services/vehicleService');
-                      const result = await vehicleService.toggleEscrow();
+                                            const result = await vehicleService.toggleEscrow();
                       const newState = result?.data?.escrowEnabled || result?.escrowEnabled || false;
                       setEscrowEnabled(newState);
                       Alert.alert('✅ Başarılı', newState ? 'Güvenli ödeme AKTİF edildi.' : 'Güvenli ödeme PASİF edildi.');

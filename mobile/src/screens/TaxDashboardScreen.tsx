@@ -3,6 +3,8 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, ActivityIndicator,
 import { useTheme } from '../hooks/useTheme';
 import { spacing, radius, typography } from '../theme';
 import { apiClient } from '../services/api';
+import { handleError } from '../services/errorService';
+import ErrorState from '../components/shared/ErrorState';
 import Card from '../components/shared/Card';
 
 const MONTHS = ['', 'Ocak', 'Subat', 'Mart', 'Nisan', 'Mayis', 'Haziran', 'Temmuz', 'Agustos', 'Eylul', 'Ekim', 'Kasim', 'Aralik'];
@@ -32,6 +34,7 @@ function BarChart(props: { data: { label: string; value: number }[]; maxVal: num
 export default function TaxDashboardScreen() {
   const { colors } = useTheme();
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<any>(null);
   const [anomalies, setAnomalies] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
@@ -46,7 +49,13 @@ export default function TaxDashboardScreen() {
   useEffect(() => { loadData(); loadAnomalies(); }, []);
 
   const loadData = async () => {
-    try { const res = await apiClient.get('/tax/dashboard'); setData(res.data.data || res.data); } catch {} finally { setLoading(false); }
+    try {
+      const res = await apiClient.get('/tax/dashboard');
+      setData(res.data.data || res.data);
+    } catch (e) {
+      handleError(e, { screen: 'TaxDashboard', action: 'loadData' });
+      setError('Vergi verileri yüklenirken bir hata oluştu.');
+    } finally { setLoading(false); }
   };
 
   const loadAnomalies = async () => {
@@ -61,23 +70,34 @@ export default function TaxDashboardScreen() {
         ],
       });
       setAnomalies(res.data);
-    } catch {}
+    } catch (e) {
+      handleError(e, { screen: 'TaxDashboard', action: 'loadAnomalies', severity: 'silent' });
+    }
   };
 
   const handleSgkCalc = async () => {
     if (!sgkGross) return;
     setSgkCalcLoading(true);
-    try { const res = await apiClient.post('/tax/sgk/calculate', { grossSalary: parseFloat(sgkGross) }); setSgkResult(res.data); } catch {} finally { setSgkCalcLoading(false); }
+    try {
+      const res = await apiClient.post('/tax/sgk/calculate', { grossSalary: parseFloat(sgkGross) });
+      setSgkResult(res.data);
+    } catch (e) {
+      handleError(e, { screen: 'TaxDashboard', action: 'sgkCalc' });
+    } finally { setSgkCalcLoading(false); }
   };
 
   const handleTevkifatCheck = useCallback(async () => {
     try {
       const res = await apiClient.post('/tax/quick/withholding', { amount: parseFloat(tevkifatAmount), serviceType: tevkifatService, isPublicSector: tevkifatPublic });
       setTevkifatResult(res.data);
-    } catch {}
+    } catch (e) {
+      handleError(e, { screen: 'TaxDashboard', action: 'tevkifatCheck' });
+    }
   }, [tevkifatAmount, tevkifatService, tevkifatPublic]);
 
   if (loading) return <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}><ActivityIndicator size="large" color={colors.primary} /></View>;
+
+  if (error) return <View style={{ flex: 1, backgroundColor: colors.background }}><ErrorState message={error} onRetry={loadData} /></View>;
 
   const d = data;
   const TABS = [
