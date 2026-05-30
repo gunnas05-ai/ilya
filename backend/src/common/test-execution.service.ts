@@ -74,7 +74,7 @@ export class TestExecutionService {
           module: tc.module,
           status: result.passed ? 'passed' : 'failed',
           durationMs: result.durationMs,
-          errorMessage: result.errorMessage || null,
+          errorMessage: result.errorMessage || undefined,
         });
         await this.resultRepo.save(tr);
         if (result.passed) passed++; else failed++;

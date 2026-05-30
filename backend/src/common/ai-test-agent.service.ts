@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { TestResult, SystemHealthLog } from './test-run.entity';
 
-interface AnomalyReport {
+export interface AnomalyReport {
   hasAnomalies: boolean;
   anomalies: string[];
   riskLevel: 'low' | 'medium' | 'high';

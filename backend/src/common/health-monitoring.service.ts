@@ -104,8 +104,8 @@ export class HealthMonitoringService {
       this.checkGpsHealth(),
     ]);
     return results
-      .filter((r): r is PromiseFulfilledResult<SystemHealthLog> => r.status === 'fulfilled')
-      .map((r) => r.value);
+      .filter((r: any) => r.status === 'fulfilled')
+      .map((r: any) => r.value);
   }
 
   async getLatestHealth(): Promise<Record<string, SystemHealthLog>> {
@@ -150,7 +150,8 @@ export class HealthMonitoringService {
     responseTimeMs: number,
     errorDetail: string | null,
   ): Promise<SystemHealthLog> {
-    const log = this.healthRepo.create({ service, status, responseTimeMs, errorDetail });
-    return this.healthRepo.save(log);
+    const log = this.healthRepo.create({ service, status, responseTimeMs, errorDetail: errorDetail || undefined } as any);
+    const saved = await this.healthRepo.save(log as any);
+    return Array.isArray(saved) ? saved[0] : saved;
   }
 }

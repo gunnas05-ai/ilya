@@ -72,9 +72,9 @@ export class AdminRoleController {
       if (perm) {
         const rp = this.rpRepo.create({
           role: role?.key || '', roleId: id, permissionId: perm.id,
-          grantedBy: body.grantedBy || null,
-          expiresAt: body.expiresAt ? new Date(body.expiresAt) : null,
-        });
+          grantedBy: body.grantedBy || undefined,
+          expiresAt: body.expiresAt ? new Date(body.expiresAt) : undefined,
+        } as any);
         await this.rpRepo.save(rp);
       }
     }
@@ -93,7 +93,7 @@ export class AdminRoleController {
   }
 
   @Get('permissions')
-  @ApiOperation({ summary: 'Tum permission'lari listele' })
+  @ApiOperation({ summary: 'Tum permissions lari listele' })
   async listPermissions() {
     const perms = await this.permRepo.find({ order: { group: 'ASC', label: 'ASC' } });
     return { success: true, data: perms };
@@ -101,7 +101,7 @@ export class AdminRoleController {
 
   @Post('permissions')
   @ApiOperation({ summary: 'Yeni permission olustur' })
-  async createPermission(@Body() body: { key: string; label: string; group: string }) {
+  async createPermission(@Body() body: any) {
     const perm = this.permRepo.create(body);
     await this.permRepo.save(perm);
     return { success: true, data: perm };
@@ -145,6 +145,6 @@ export class AdminRoleController {
   @ApiOperation({ summary: 'Sablonu role uygula' })
   async applyTemplate(@Body() body: { roleKey: string; templateName: string }) {
     const result = await this.templateService.applyTemplate(body.roleKey, body.templateName);
-    return { success: true, ...result };
+    return { success: true, count: result.count };
   }
 }

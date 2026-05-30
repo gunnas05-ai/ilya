@@ -36,14 +36,14 @@ export class CrashReportController {
 
     const report = this.crashRepo.create({
       errorMessage: body.errorMessage,
-      stackTrace: body.stackTrace || null,
-      screen: body.screen || null,
+      stackTrace: body.stackTrace || undefined,
+      screen: body.screen || undefined,
       platform: body.platform || 'unknown',
-      appVersion: body.appVersion || null,
-      userId: body.userId || null,
-      userEmail: body.userEmail || null,
+      appVersion: body.appVersion || undefined,
+      userId: body.userId || undefined,
+      userEmail: body.userEmail || undefined,
       environment: process.env.NODE_ENV || 'development',
-    });
+    } as any);
 
     await this.crashRepo.save(report);
     return { success: true, data: report };

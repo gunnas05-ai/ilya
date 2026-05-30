@@ -44,6 +44,6 @@ import { VaultConfigService } from './vault/vault.service';
   ],
   controllers: [WhatsAppController, LanguageController, CommunityController, HealthController, AdminTestController, AdminSecurityController, CrashReportController, SystemSettingsController, LoadsV2Controller, LoadsV1DeprecatedController, SozlesmeController],
   providers: [WhatsAppService, RolesGuard, LanguageService, CommunityService, MessageBusService, StructuredLogger, VaultConfigService, TestExecutionService, HealthMonitoringService, ScheduledTestService, AuditService, AiTestAgentService, PermissionTemplatesService],
-  exports: [WhatsAppService, TypeOrmModule, RolesGuard, LanguageService, CommunityService, MessageBusService, StructuredLogger, VaultConfigService, TestExecutionService, HealthMonitoringService],
+  exports: [WhatsAppService, TypeOrmModule, RolesGuard, LanguageService, CommunityService, MessageBusService, StructuredLogger, VaultConfigService, TestExecutionService, HealthMonitoringService, AuditService, AiTestAgentService, PermissionTemplatesService],
 })
 export class CommonModule {}
