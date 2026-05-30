@@ -2051,46 +2051,62 @@ async function seed() {
   const rolePermRepo = app.get(getRepositoryToken(RolePermission));
 
   const permissionDefs: { key: string; label: string; group: string }[] = [
-    // Load
+    // Load / Shipment (7) — mobile uyumlu
     { key: 'load:create', label: 'Yük Oluştur', group: 'Yük' },
+    { key: 'load:view', label: 'Yük Görüntüle', group: 'Yük' },
     { key: 'load:edit', label: 'Yük Düzenle', group: 'Yük' },
     { key: 'load:delete', label: 'Yük Sil', group: 'Yük' },
-    { key: 'load:view', label: 'Yük Görüntüle', group: 'Yük' },
+    { key: 'load:bid', label: 'Yüke Teklif Ver', group: 'Yük' },
+    { key: 'load:accept', label: 'Yük Kabul Et', group: 'Yük' },
     { key: 'load:track', label: 'Yük Takip Et', group: 'Yük' },
-    // Bid
+    // Bid (4)
     { key: 'bid:create', label: 'Teklif Ver', group: 'Teklif' },
     { key: 'bid:accept', label: 'Teklif Kabul Et', group: 'Teklif' },
     { key: 'bid:reject', label: 'Teklif Reddet', group: 'Teklif' },
     { key: 'bid:view', label: 'Teklifleri Gör', group: 'Teklif' },
-    // GIB
+    // GIB / E-Documents (3)
     { key: 'gib:view_invoices', label: 'Faturaları Gör', group: 'E-Belge' },
     { key: 'gib:create_invoice', label: 'Fatura Oluştur', group: 'E-Belge' },
     { key: 'gib:send_gib', label: 'GİB\'e Gönder', group: 'E-Belge' },
-    // Finance
+    // Finance (5) — mobile finance:create_expense, create_income, manage_budget
     { key: 'finance:view', label: 'Finans Görüntüle', group: 'Finans' },
+    { key: 'finance:create_expense', label: 'Gider Ekle', group: 'Finans' },
+    { key: 'finance:create_income', label: 'Gelir Ekle', group: 'Finans' },
+    { key: 'finance:manage_budget', label: 'Bütçe Yönetimi', group: 'Finans' },
     { key: 'finance:view_dashboard', label: 'Finans Paneli', group: 'Finans' },
-    { key: 'finance:add_expense', label: 'Gider Ekle', group: 'Finans' },
-    { key: 'finance:add_income', label: 'Gelir Ekle', group: 'Finans' },
-    // Escrow
+    // Escrow / Payment (3)
     { key: 'escrow:use', label: 'Escrow Kullan', group: 'Ödeme' },
-    { key: 'escrow:view', label: 'Escrow Görüntüle', group: 'Ödeme' },
-    // Roadside
+    { key: 'escrow:dispute', label: 'İhtilaf Aç', group: 'Ödeme' },
+    { key: 'escrow:release', label: 'Escrow Serbest Bırak', group: 'Ödeme' },
+    // Profile / Carrier (3)
+    { key: 'profile:edit', label: 'Profil Düzenle', group: 'Profil' },
+    { key: 'profile:verify_docs', label: 'Belge Doğrulama', group: 'Profil' },
+    { key: 'profile:view_wallet', label: 'Cüzdan Görüntüle', group: 'Profil' },
+    // Marketplace (3) — YENI
+    { key: 'marketplace:view', label: 'Marketplace Görüntüle', group: 'Marketplace' },
+    { key: 'marketplace:create_listing', label: 'İlan Oluştur', group: 'Marketplace' },
+    { key: 'marketplace:buy', label: 'Satın Alma', group: 'Marketplace' },
+    // Roadside Services (4)
     { key: 'roadside:view_fuel', label: 'Yakıt İstasyonları', group: 'Yol Üstü' },
     { key: 'roadside:view_restaurants', label: 'Restoranlar', group: 'Yol Üstü' },
     { key: 'roadside:make_reservation', label: 'Rezervasyon Yap', group: 'Yol Üstü' },
-    // Profile
-    { key: 'profile:edit', label: 'Profil Düzenle', group: 'Profil' },
-    // Chat
-    { key: 'chat:use', label: 'Mesajlaşma', group: 'İletişim' },
-    // Admin
+    { key: 'roadside:write_review', label: 'Yorum Yap', group: 'Yol Üstü' },
+    // Admin / Super Admin (7)
     { key: 'admin:view_panel', label: 'Admin Paneli', group: 'Yönetim' },
     { key: 'admin:manage_users', label: 'Kullanıcı Yönetimi', group: 'Yönetim' },
-    { key: 'admin:integrations', label: 'Entegrasyon Yönetimi', group: 'Yönetim' },
+    { key: 'admin:moderate_listings', label: 'İlan Denetimi', group: 'Yönetim' },
+    { key: 'admin:resolve_disputes', label: 'İhtilaf Çözümü', group: 'Yönetim' },
     { key: 'admin:manage_promotions', label: 'Duyuru Yönetimi', group: 'Yönetim' },
+    { key: 'admin:manage_kvkk', label: 'KVKK Yönetimi', group: 'Yönetim' },
+    { key: 'admin:integrations', label: 'Entegrasyon Yönetimi', group: 'Yönetim' },
     // Analytics
     { key: 'analytics:view', label: 'Analiz Görüntüle', group: 'Analiz' },
-    // AI
+    // Communication (2)
+    { key: 'chat:use', label: 'Mesajlaşma', group: 'İletişim' },
+    { key: 'notifications:view', label: 'Bildirimler', group: 'İletişim' },
+    // AI / Voice (2)
     { key: 'ai:use_dialog', label: 'AI Asistan', group: 'Yapay Zeka' },
+    { key: 'ai:use_voice_commands', label: 'Sesli Komut', group: 'Yapay Zeka' },
     // Drive Mode
     { key: 'drive_mode:use', label: 'Sürüş Modu', group: 'Sürüş' },
   ];
@@ -2105,17 +2121,27 @@ async function seed() {
     }
   }
 
-  // Role-permission mappings
+  const ALL = permissionDefs.map((d) => d.key);
+
+  // Role-permission mappings — mobile ROLE_PERMISSIONS ile senkron
   const rolePermMap: Record<string, string[]> = {
-    super_admin: permissionDefs.map((d) => d.key),
-    admin: permissionDefs.map((d) => d.key),
-    isletme: ['load:create', 'load:edit', 'load:view', 'load:track', 'bid:accept', 'bid:reject', 'bid:view', 'gib:view_invoices', 'gib:create_invoice', 'finance:view', 'finance:view_dashboard', 'escrow:use', 'escrow:view', 'roadside:view_fuel', 'roadside:view_restaurants', 'profile:edit', 'chat:use', 'analytics:view', 'admin:integrations'],
-    yuk_veren: ['load:create', 'load:edit', 'load:delete', 'load:view', 'load:track', 'bid:accept', 'bid:reject', 'bid:view', 'gib:view_invoices', 'gib:create_invoice', 'finance:view', 'escrow:use', 'profile:edit', 'chat:use', 'analytics:view'],
-    tasiyici: ['load:view', 'load:track', 'bid:create', 'bid:view', 'gib:view_invoices', 'finance:view', 'escrow:use', 'escrow:view', 'roadside:view_fuel', 'roadside:view_restaurants', 'roadside:make_reservation', 'profile:edit', 'chat:use', 'drive_mode:use'],
-    sofor: ['load:view', 'load:track', 'bid:view', 'roadside:view_fuel', 'roadside:view_restaurants', 'roadside:make_reservation', 'profile:edit', 'chat:use', 'drive_mode:use'],
-    filo_yoneticisi: ['load:create', 'load:edit', 'load:view', 'load:track', 'bid:create', 'bid:accept', 'bid:reject', 'bid:view', 'gib:view_invoices', 'finance:view_dashboard', 'finance:view', 'escrow:use', 'escrow:view', 'roadside:view_fuel', 'roadside:view_restaurants', 'profile:edit', 'chat:use', 'analytics:view', 'admin:integrations'],
-    muhasebe: ['gib:view_invoices', 'gib:create_invoice', 'gib:send_gib', 'finance:view', 'finance:view_dashboard', 'finance:add_expense', 'finance:add_income', 'escrow:view', 'profile:edit'],
-    genel: ['load:view', 'bid:view', 'roadside:view_fuel', 'roadside:view_restaurants', 'profile:edit'],
+    super_admin: ALL,
+    admin: ALL,
+    isletme: ['load:create', 'load:edit', 'load:view', 'load:track', 'load:bid', 'bid:accept', 'bid:reject', 'bid:view', 'gib:view_invoices', 'gib:create_invoice', 'finance:view', 'finance:view_dashboard', 'finance:create_expense', 'escrow:use', 'escrow:dispute', 'roadside:view_fuel', 'roadside:view_restaurants', 'roadside:write_review', 'profile:edit', 'profile:view_wallet', 'chat:use', 'analytics:view', 'admin:integrations', 'marketplace:view'],
+    yuk_veren: ['load:create', 'load:edit', 'load:delete', 'load:view', 'load:track', 'load:bid', 'bid:accept', 'bid:reject', 'bid:view', 'gib:view_invoices', 'gib:create_invoice', 'finance:view', 'finance:view_dashboard', 'escrow:use', 'profile:edit', 'profile:view_wallet', 'roadside:view_fuel', 'roadside:view_restaurants', 'chat:use', 'analytics:view'],
+    tasiyici: ['load:view', 'load:bid', 'load:accept', 'load:track', 'bid:create', 'bid:view', 'gib:view_invoices', 'gib:create_invoice', 'finance:view', 'finance:create_expense', 'escrow:use', 'escrow:dispute', 'roadside:view_fuel', 'roadside:view_restaurants', 'roadside:make_reservation', 'roadside:write_review', 'profile:edit', 'profile:verify_docs', 'profile:view_wallet', 'analytics:view', 'chat:use', 'notifications:view', 'drive_mode:use'],
+    sofor: ['load:view', 'load:bid', 'load:accept', 'load:track', 'bid:view', 'roadside:view_fuel', 'roadside:view_restaurants', 'roadside:make_reservation', 'profile:edit', 'chat:use', 'drive_mode:use', 'notifications:view'],
+    filo_yoneticisi: ['load:create', 'load:edit', 'load:view', 'load:track', 'load:bid', 'bid:create', 'bid:accept', 'bid:reject', 'bid:view', 'gib:view_invoices', 'finance:view_dashboard', 'finance:view', 'finance:create_expense', 'escrow:use', 'escrow:dispute', 'roadside:view_fuel', 'roadside:view_restaurants', 'roadside:make_reservation', 'profile:edit', 'profile:view_wallet', 'chat:use', 'analytics:view', 'notifications:view', 'admin:integrations'],
+    muhasebe: ['gib:view_invoices', 'gib:create_invoice', 'gib:send_gib', 'finance:view', 'finance:view_dashboard', 'finance:create_expense', 'finance:create_income', 'finance:manage_budget', 'escrow:dispute', 'profile:edit', 'profile:view_wallet', 'notifications:view'],
+    genel: ['load:view', 'load:bid', 'finance:view', 'profile:edit', 'marketplace:view', 'marketplace:buy', 'roadside:view_fuel', 'roadside:view_restaurants', 'roadside:write_review', 'chat:use', 'notifications:view'],
+    // Eksik roller icin mapping eklendi
+    operasyon: ['load:view', 'load:track', 'load:bid', 'load:accept', 'bid:view', 'finance:view', 'profile:edit', 'roadside:view_fuel', 'roadside:view_restaurants', 'chat:use', 'notifications:view', 'analytics:view'],
+    destek: ['load:view', 'bid:view', 'finance:view', 'profile:edit', 'chat:use', 'notifications:view', 'admin:view_panel'],
+    platform_operatoru: ['load:view', 'finance:view', 'profile:edit', 'marketplace:view', 'roadside:view_fuel', 'roadside:view_restaurants', 'chat:use', 'notifications:view', 'analytics:view', 'admin:view_panel', 'admin:moderate_listings'],
+    marketplace_satici: ['load:view', 'finance:view', 'profile:edit', 'marketplace:view', 'marketplace:create_listing', 'chat:use', 'notifications:view'],
+    marketplace_alici: ['load:view', 'finance:view', 'profile:edit', 'marketplace:view', 'marketplace:buy', 'chat:use', 'notifications:view'],
+    dispute_moderator: ['load:view', 'escrow:dispute', 'escrow:release', 'admin:resolve_disputes', 'profile:edit', 'chat:use', 'notifications:view', 'finance:view'],
+    guest: ['load:view', 'roadside:view_fuel', 'roadside:view_restaurants'],
   };
 
   for (const [role, permKeys] of Object.entries(rolePermMap)) {
