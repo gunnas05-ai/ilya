@@ -3,6 +3,11 @@ import NetInfo from '@react-native-community/netinfo';
 import { apiClient } from './api';
 
 const QUEUE_KEY = '@offline_queue';
+
+// Legacy export — mevcut kod bozulmasin diye
+export const offlineQueue = {
+  enqueue: (data: any) => queueRequest(data.url, data.method || 'POST', data),
+};
 const MAX_QUEUE_SIZE = 200;
 const MAX_RETRIES = 5;
 

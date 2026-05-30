@@ -29,7 +29,7 @@ export function usePlaceBid() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: { loadId: string; amount: number; note?: string; deliveryDays?: number }) =>
-      bidService.place(data),
+      bidService.placeBid({ ...data, note: data.note || '', estimatedDeliveryDays: data.deliveryDays || 1, hasReturnLoad: false, validDuration: 24 }),
     onSuccess: (_data, vars) => {
       qc.invalidateQueries({ queryKey: bidKeys.forLoad(vars.loadId) });
       qc.invalidateQueries({ queryKey: bidKeys.my() });
@@ -42,7 +42,7 @@ export function useCounterBid() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ bidId, amount }: { bidId: string; amount: number }) =>
-      bidService.counter(bidId, amount),
+      bidService.counterBid(bidId, amount, ''),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: bidKeys.my() });
     },

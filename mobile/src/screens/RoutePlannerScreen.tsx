@@ -126,7 +126,7 @@ export default function RoutePlannerScreen() {
           { label: 'Cüzdan', icon: '💰', screen: 'Wallet' as const },
           { label: 'Panel', icon: '🚛', screen: 'DriverDashboard' as const },
         ].map(item => (
-          <TouchableOpacity key={item.screen} style={[s2.qBtn, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => navigation.navigate(item.screen)}>
+          <TouchableOpacity key={item.screen} style={[s2.qBtn, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => navigation.navigate(item.screen as any)}>
             <Text style={{ fontSize: 22 }}>{item.icon}</Text>
             <Text style={[typography.small, { color: colors.text, fontWeight: '600', marginTop: 4 }]}>{item.label}</Text>
           </TouchableOpacity>

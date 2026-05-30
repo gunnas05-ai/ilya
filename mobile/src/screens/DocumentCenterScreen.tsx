@@ -42,7 +42,7 @@ export default function DocumentCenterScreen() {
           <TouchableOpacity
             key={i}
             style={[s.card, { backgroundColor: colors.card, borderColor: colors.border }]}
-            onPress={() => cat.screen && navigation.navigate(cat.screen)}
+            onPress={() => cat.screen && navigation.navigate(cat.screen as any)}
             activeOpacity={cat.screen ? 0.7 : 1}
           >
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>

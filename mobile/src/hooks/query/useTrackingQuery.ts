@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { trackingService } from '../../services/trackingService';
+import { apiClient } from '../../services/api';
+import { calculateDistance } from '../../services/trackingService';
 
 export const trackingKeys = {
   all: ['tracking'] as const,
@@ -10,9 +11,12 @@ export const trackingKeys = {
 export function useTrackingDetail(loadId: string) {
   return useQuery({
     queryKey: trackingKeys.detail(loadId),
-    queryFn: () => trackingService.getTracking(loadId),
+    queryFn: async () => {
+      const res = await apiClient.get(`/tracking/${loadId}`);
+      return res.data?.data || res.data;
+    },
     enabled: !!loadId,
-    refetchInterval: 10000, // 10 sn'de bir guncelle (GPS tracking)
+    refetchInterval: 10000,
   });
 }
 
@@ -23,8 +27,8 @@ export function useDistanceCalculation(
 ) {
   return useQuery({
     queryKey: ['tracking', 'distance', origin, dest],
-    queryFn: () => trackingService.calculateDistance(origin!, dest!),
+    queryFn: () => calculateDistance(origin!.lat, origin!.lng, dest!.lat, dest!.lng),
     enabled: !!origin && !!dest,
-    staleTime: 5 * 60 * 1000, // 5dk cache
+    staleTime: 5 * 60 * 1000,
   });
 }

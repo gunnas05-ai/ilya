@@ -109,7 +109,7 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
   const selectedRole = w1('selectedRole');
 
   // Step 2: Common info
-  const { control: c2, handleSubmit: hs2, formState: { errors: e2 } } = useForm<Step2FormData>({
+  const { control: c2, handleSubmit: hs2, setValue: setC2Value, formState: { errors: e2 } } = useForm<Step2FormData>({
     resolver: zodResolver(step2Schema),
     defaultValues: { fullName: '', phone: '', email: '', password: '', kvkkAccepted: false as any },
   });
@@ -347,7 +347,7 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
       <BottomSheet visible={showKvkkSheet} onClose={() => setShowKvkkSheet(false)}>
         <Text style={[typography.h3, { color: colors.text, fontWeight: '800', marginBottom: spacing.md }]}>KVKK Aydınlatma Metni</Text>
         <ScrollView style={{ maxHeight: 300, marginBottom: spacing.md }}><Text style={[typography.body, { color: colors.textSecondary, lineHeight: 22 }]}>{kvkkText}</Text></ScrollView>
-        <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: colors.primary }]} onPress={() => { c2._form.setValue('kvkkAccepted', true as any, { shouldValidate: true }); setShowKvkkSheet(false); }}>
+        <TouchableOpacity style={[styles.primaryBtn, { backgroundColor: colors.primary }]} onPress={() => { setC2Value('kvkkAccepted', true, { shouldValidate: true }); setShowKvkkSheet(false); }}>
           <Text style={styles.primaryBtnText}>Onaylıyorum</Text>
         </TouchableOpacity>
       </BottomSheet>
