@@ -941,8 +941,11 @@ export default function FuelStationsScreen({ navigation }: any) {
               );
             })
           )}
-        </ScrollView>
-      )}
+        />
+
+      {/* Legacy content after the list - keep for backward compat */}
+      {!loading && !stationsQuery.isError && stations.length > 0 && (
+        <>
 
       {/* EX-010: Bulk Import Modal */}
       <Modal visible={showBulkImport} animationType="slide" transparent>
