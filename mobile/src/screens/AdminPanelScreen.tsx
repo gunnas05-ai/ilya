@@ -140,6 +140,7 @@ export default function AdminPanelScreen({ navigation }: any) {
         { key: 'settings_test', label: 'Test Merkezi',          icon: '🧪', route: 'TestCenter' },
         { key: 'settings_audit', label: 'Islem Gecmisi (Audit)', icon: '📋', route: 'AuditLog' },
         { key: 'settings_security', label: 'Guvenlik Merkezi',    icon: '🛡️', route: 'SecurityCenter' },
+        { key: 'settings_system', label: 'Sistem Ayarlari',      icon: '⚙️', route: 'SystemSettings' },
       ],
     },
     {

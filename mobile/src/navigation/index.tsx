@@ -32,6 +32,7 @@ import TestCenterScreen from '../screens/TestCenterScreen';
 import PermissionMatrixScreen from '../screens/PermissionMatrixScreen';
 import AuditLogScreen from '../screens/AuditLogScreen';
 import SecurityCenterScreen from '../screens/SecurityCenterScreen';
+import SystemSettingsScreen from '../screens/SystemSettingsScreen';
 import FuelStationsScreen from '../screens/FuelStationsScreen';
 import RestaurantsScreen from '../screens/RestaurantsScreen';
 import RoutePlannerScreen from '../screens/RoutePlannerScreen';
@@ -100,6 +101,7 @@ const SCREEN_CONFIGS: Omit<ScreenConfig, 'options'>[] = [
   { name: 'PermissionMatrix', component: PermissionMatrixScreen },
   { name: 'AuditLog', component: AuditLogScreen },
   { name: 'SecurityCenter', component: SecurityCenterScreen },
+  { name: 'SystemSettings', component: SystemSettingsScreen },
   { name: 'FuelStations', component: FuelStationsScreen, i18nKey: 'nav.fuelStations' },
   { name: 'Restaurants', component: RestaurantsScreen, i18nKey: 'nav.restaurants' },
   { name: 'RoutePlanner', component: RoutePlannerScreen },
