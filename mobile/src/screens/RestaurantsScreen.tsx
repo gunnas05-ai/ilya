@@ -850,7 +850,7 @@ export default function RestaurantsScreen({ navigation }: any) {
                 </Card>
               );
             })
-          )}
+          }
         </ScrollView>
       )}
 
