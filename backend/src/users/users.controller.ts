@@ -19,6 +19,7 @@ class UpdateProfileDto {
   @IsOptional() @IsString() iban?: string;
   @IsOptional() @IsString() taxNumber?: string;
   @IsOptional() @IsString() taxOffice?: string;
+  @IsOptional() @IsString() tcKimlikNo?: string;
   @IsOptional() @IsBoolean() escrowAccountVerified?: boolean;
 }
 
