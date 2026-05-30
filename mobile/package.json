@@ -12,7 +12,12 @@
     "test": "jest --passWithNoTests",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "lint": "npx tsc --noEmit"
+    "lint": "npx tsc --noEmit",
+    "detox:build:android": "npx expo prebuild && npx detox build --configuration android.debug",
+    "detox:build:ios": "npx expo prebuild && npx detox build --configuration ios.debug",
+    "detox:test:android": "npx detox test --configuration android.debug",
+    "detox:test:ios": "npx detox test --configuration ios.debug",
+    "detox:test:smoke": "npx detox test --configuration android.debug e2e/smoke.test.ts"
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
@@ -64,7 +69,9 @@
     "@types/jest": "^29.5.0",
     "@types/react": "~19.1.0",
     "cross-env": "^7.0.3",
+    "detox": "^20.51.3",
     "jest": "^29.7.0",
+    "jest-circus": "^30.4.2",
     "jest-expo": "^56.0.4",
     "qrcode-terminal": "^0.12.0",
     "react-native-worklets": "^0.9.1",
