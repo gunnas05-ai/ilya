@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, ScrollView, StyleSheet, Alert, Modal, FlatList, ActivityIndicator, TextInput } from 'react-native';
 import { useAuthStore } from '../store/authStore';
 import { useTheme } from '../hooks/useTheme';
+import { usePermission } from '../hooks/usePermission';
 import { spacing, radius, typography } from '../theme';
 import { hapticLight } from '../utils/haptic';
 import { apiClient } from '../services/api';
@@ -33,7 +34,21 @@ const ROLE_LABEL_MAP: Record<string, string> = {
 
 export default function AdminPanelScreen({ navigation }: any) {
   const { colors } = useTheme();
-  const { fetchUsersList, usersList, promotions, updatePromotionSettings, kvkkText: savedKvkk, updateKVKKText } = useAuthStore();
+  const { fetchUsersList, usersList, promotions, updatePromotionSettings, kvkkText: savedKvkk, updateKVKKText, user } = useAuthStore();
+  const { can } = usePermission();
+
+  // Permission gate: sadece admin:view_panel yetkisi olanlar girebilir
+  if (!can('admin:view_panel') && user?.role !== 'SUPER_ADMIN') {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background, padding: spacing.xl }}>
+        <Text style={{ fontSize: 64, marginBottom: spacing.md }}>🔒</Text>
+        <Text style={[typography.h2, { color: colors.text, fontWeight: '800', textAlign: 'center' }]}>Erişim Reddedildi</Text>
+        <Text style={[typography.body, { color: colors.textSecondary, textAlign: 'center', marginTop: spacing.md }]}>
+          Bu sayfayı görüntülemek için admin yetkisine sahip olmanız gerekmektedir.
+        </Text>
+      </View>
+    );
+  }
   const [expanded, setExpanded] = useState<string | null>(null);
   const [showUsers, setShowUsers] = useState(false);
   const [usersLoading, setUsersLoading] = useState(false);
