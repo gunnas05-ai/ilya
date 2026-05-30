@@ -55,6 +55,7 @@ import { Role } from './common/role.entity';
 import { RolePermission } from './common/role-permission.entity';
 import { TestRun, TestResult, SystemHealthLog } from './common/test-run.entity';
 import { AdminAuditLog, SecurityEvent } from './common/admin-audit.entity';
+import { CrashReport } from './common/crash-report.entity';
 import { City } from './common/city.entity';
 import { District } from './common/district.entity';
 import { WhatsAppSettings } from './common/whatsapp-settings.entity';
@@ -103,7 +104,7 @@ export const ALL_ENTITIES = [
   Restaurant, RestaurantImage, Menu, MenuItem, MenuItemReview, RestaurantReview, ReviewReply, RestaurantFavorite, RestaurantReservation, RestaurantTable, RestaurantCapacityConfig,
   Announcement, UetdsTransaction, DeliverySignature, DeliveryPhoto, Webhook, ApiKey,
   Listing, ListingCategory, VehicleDetail, ListingOffer,
-  Permission, Role, RolePermission, TestRun, TestResult, SystemHealthLog, AdminAuditLog, SecurityEvent,
+  Permission, Role, RolePermission, TestRun, TestResult, SystemHealthLog, AdminAuditLog, SecurityEvent, CrashReport,
   City, District,
   WhatsAppSettings, SystemSetting, DriverFeedPost, DriverFeedComment, RoadReport,
   Shipper, ShipmentStatusHistory, Carrier, CarrierStatusHistory, RateAgreement, WebhookDeadLetter,

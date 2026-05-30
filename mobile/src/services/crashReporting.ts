@@ -1,10 +1,10 @@
 /**
  * Crash reporting servisi.
- * Production'da Sentry'ye, development'da console'a raporlar.
- * Sentry DSN config'den gelir — null ise crash reporting kapali.
+ * Production'da Sentry'ye, tum ortamlarda backend'e gonderir.
  */
 import { Platform } from 'react-native';
 import { APP_CONFIG } from '../constants/config';
+import { apiClient } from './api';
 
 interface CrashContext {
   screen?: string;
@@ -14,33 +14,46 @@ interface CrashContext {
 
 let currentUser: { id: string; email: string } | null = null;
 
-/** Sentry benzeri crash reporting. Gercek Sentry SDK kurulana kadar manual. */
 export const crashReporting = {
-  /** Hata raporla */
   reportError(error: Error, context: CrashContext = {}) {
     if (APP_CONFIG.env === 'development') {
       console.error('[CrashReport]', error.message, context);
-      return;
     }
 
-    // Production: sentry DSN varsa gonder
+    // Backend'e gonder
+    this.sendToBackend(error, context);
+
+    // Sentry DSN varsa ek olarak Sentry'ye de gonder
     if (APP_CONFIG.sentryDsn) {
       this.sendToSentry(error, context);
     }
   },
 
-  /** Kullaniciyi tanimla (tum raporlara eklenir) */
   setUser(user: { id: string; email: string } | null) {
     currentUser = user;
   },
 
-  /** Breadcrumb — kullanici aksiyonu log'u */
   leaveBreadcrumb(message: string, category: string = 'manual') {
     if (APP_CONFIG.env === 'development') return;
     console.log(`[Breadcrumb] [${category}] ${message}`);
   },
 
-  /** Sentry API'sine manuel gonderim */
+  async sendToBackend(error: Error, context: CrashContext) {
+    try {
+      await apiClient.post('/admin/crash-reports', {
+        errorMessage: error.message,
+        stackTrace: error.stack?.substring(0, 2000) || null,
+        screen: context.screen || null,
+        platform: Platform.OS,
+        appVersion: null, // expo-constants'tan alinabilir
+        userId: currentUser?.id || context.userId || null,
+        userEmail: currentUser?.email || null,
+      });
+    } catch {
+      // Sessizce devam et
+    }
+  },
+
   async sendToSentry(error: Error, context: CrashContext) {
     if (!APP_CONFIG.sentryDsn) return;
     try {
@@ -55,7 +68,7 @@ export const crashReporting = {
         }),
       });
     } catch {
-      // Crash reporting basarisiz olursa sessizce devam et
+      // Sessizce devam et
     }
   },
 };

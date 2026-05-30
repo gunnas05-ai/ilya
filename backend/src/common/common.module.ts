@@ -5,6 +5,7 @@ import { Role } from './role.entity';
 import { RolePermission } from './role-permission.entity';
 import { TestRun, TestResult, SystemHealthLog } from './test-run.entity';
 import { AdminAuditLog, SecurityEvent } from './admin-audit.entity';
+import { CrashReport } from './crash-report.entity';
 import { City } from './city.entity';
 import { District } from './district.entity';
 import { SystemSetting } from './system-setting.entity';
@@ -22,6 +23,7 @@ import { StructuredLogger } from './structured-logger.service';
 import { HealthController } from './health.controller';
 import { AdminTestController } from './admin-test.controller';
 import { AdminSecurityController } from './admin-security.controller';
+import { CrashReportController } from './crash-report.controller';
 import { TestExecutionService } from './test-execution.service';
 import { AuditService } from './audit.service';
 import { HealthMonitoringService } from './health-monitoring.service';
@@ -36,10 +38,10 @@ import { VaultConfigService } from './vault/vault.service';
 @Global()
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Permission, Role, RolePermission, TestRun, TestResult, SystemHealthLog, AdminAuditLog, SecurityEvent, City, District, WhatsAppSettings, SystemSetting, DriverFeedPost, DriverFeedComment, RoadReport]),
+    TypeOrmModule.forFeature([Permission, Role, RolePermission, TestRun, TestResult, SystemHealthLog, AdminAuditLog, SecurityEvent, CrashReport, City, District, WhatsAppSettings, SystemSetting, DriverFeedPost, DriverFeedComment, RoadReport]),
     KafkaModule.forRootAsync(),
   ],
-  controllers: [WhatsAppController, LanguageController, CommunityController, HealthController, AdminTestController, AdminSecurityController, LoadsV2Controller, LoadsV1DeprecatedController, SozlesmeController],
+  controllers: [WhatsAppController, LanguageController, CommunityController, HealthController, AdminTestController, AdminSecurityController, CrashReportController, LoadsV2Controller, LoadsV1DeprecatedController, SozlesmeController],
   providers: [WhatsAppService, RolesGuard, LanguageService, CommunityService, MessageBusService, StructuredLogger, VaultConfigService, TestExecutionService, HealthMonitoringService, ScheduledTestService, AuditService, AiTestAgentService, PermissionTemplatesService],
   exports: [WhatsAppService, TypeOrmModule, RolesGuard, LanguageService, CommunityService, MessageBusService, StructuredLogger, VaultConfigService, TestExecutionService, HealthMonitoringService],
 })
