@@ -1,0 +1,112 @@
+# Artillery Load Test — KAPTAN Lojistik
+# Kurulum: npm install -g artillery
+# Calistir: artillery run load-test.yml --output report.json && artillery report report.json
+
+config:
+  target: "http://127.0.0.1:3000"
+  phases:
+    - name: "warmup"
+      duration: 30
+      arrivalRate: 5
+    - name: "sustained"
+      duration: 120
+      arrivalRate: 20
+    - name: "peak"
+      duration: 60
+      arrivalRate: 50
+  processor: "./load-test-functions.js"
+  plugins:
+    expect: {}
+    metrics-by-endpoint: {}
+
+scenarios:
+  - name: "Login + Dashboard Flow"
+    weight: 40
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "test@kaptan.com"
+            password: "test123"
+          capture:
+            - json: "$.data.accessToken"
+              as: "token"
+          expect:
+            - statusCode: [200, 201]
+      - get:
+          url: "/api/v1/loads/recommended"
+          headers:
+            Authorization: "Bearer {{ token }}"
+      - get:
+          url: "/api/v1/loads"
+          headers:
+            Authorization: "Bearer {{ token }}"
+      - get:
+          url: "/api/v1/fuel-stations"
+          headers:
+            Authorization: "Bearer {{ token }}"
+
+  - name: "Health Check"
+    weight: 30
+    flow:
+      - get:
+          url: "/api/v1/health"
+          expect:
+            - statusCode: 200
+      - get:
+          url: "/api/v1/admin/tests/health"
+          headers:
+            Authorization: "Bearer {{ token }}"
+
+  - name: "Load Detail + Bid"
+    weight: 20
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "test@kaptan.com"
+            password: "test123"
+          capture:
+            - json: "$.data.accessToken"
+              as: "token"
+      - get:
+          url: "/api/v1/loads/recommended"
+          headers:
+            Authorization: "Bearer {{ token }}"
+      - post:
+          url: "/api/v1/bids"
+          headers:
+            Authorization: "Bearer {{ token }}"
+          json:
+            loadId: "demo-1"
+            amount: 20000
+            note: "Load test bid"
+            estimatedDeliveryDays: 2
+            hasReturnLoad: false
+            validDuration: 24
+          expect:
+            - statusCode: [200, 201, 400, 404]
+
+  - name: "Admin Panel Access"
+    weight: 10
+    flow:
+      - post:
+          url: "/api/v1/auth/login"
+          json:
+            email: "admin@kaptan.com"
+            password: "admin123"
+          capture:
+            - json: "$.data.accessToken"
+              as: "adminToken"
+      - get:
+          url: "/api/v1/admin/roles"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+      - get:
+          url: "/api/v1/admin/tests/stats"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
+      - get:
+          url: "/api/v1/admin/security/audit-logs"
+          headers:
+            Authorization: "Bearer {{ adminToken }}"
