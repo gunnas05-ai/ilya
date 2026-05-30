@@ -6,8 +6,11 @@ try {
   SecureStore = require('expo-secure-store');
 } catch {}
 
-const TOKEN_KEY = '@auth_tokens_secure';
-const USER_KEY = '@auth_user_secure';
+const TOKEN_KEY = 'auth_tokens_secure';
+const USER_KEY = 'auth_user_secure';
+// Eski anahtarlar — geriye donuk uyumluluk
+const OLD_TOKEN_KEY = '@auth_tokens_secure';
+const OLD_USER_KEY = '@auth_user_secure';
 
 function obfuscate(text: string): string {
   let result = '';
@@ -56,15 +59,32 @@ export async function saveUser(user: object): Promise<void> {
 }
 
 export async function getTokens(): Promise<{ accessToken: string; refreshToken: string } | null> {
-  const raw = await getSecureItem(TOKEN_KEY);
+  // Once yeni anahtari dene
+  let raw = await getSecureItem(TOKEN_KEY);
+  // Bulunamazsa eski anahtari dene (geriye donuk uyumluluk)
+  if (!raw) {
+    raw = await getSecureItem(OLD_TOKEN_KEY);
+    if (raw) {
+      // Migrate: eski anahtardan yeni anahtara tasi
+      await setSecureItem(TOKEN_KEY, raw);
+      await removeSecureItem(OLD_TOKEN_KEY);
+    }
+  }
   if (!raw) return null;
-  return JSON.parse(raw);
+  try { return JSON.parse(raw); } catch { return null; }
 }
 
 export async function getUser<T>(): Promise<T | null> {
-  const raw = await getSecureItem(USER_KEY);
+  let raw = await getSecureItem(USER_KEY);
+  if (!raw) {
+    raw = await getSecureItem(OLD_USER_KEY);
+    if (raw) {
+      await setSecureItem(USER_KEY, raw);
+      await removeSecureItem(OLD_USER_KEY);
+    }
+  }
   if (!raw) return null;
-  return JSON.parse(raw) as T;
+  try { return JSON.parse(raw) as T; } catch { return null; }
 }
 
 export async function clearSession(): Promise<void> {
