@@ -12,7 +12,10 @@
     "migration:generate": "typeorm-ts-node-commonjs migration:generate src/migrations/Migration -d ormconfig.ts",
     "migration:run": "typeorm-ts-node-commonjs migration:run -d ormconfig.ts",
     "migration:revert": "typeorm-ts-node-commonjs migration:revert -d ormconfig.ts",
-    "migration:show": "typeorm-ts-node-commonjs migration:show -d ormconfig.ts"
+    "migration:show": "typeorm-ts-node-commonjs migration:show -d ormconfig.ts",
+    "test": "jest --passWithNoTests",
+    "test:watch": "jest --watch",
+    "test:cov": "jest --coverage"
   },
   "dependencies": {
     "@nestjs/axios": "^4.0.1",
@@ -73,6 +76,8 @@
     "@types/passport-jwt": "^4.0.1",
     "@types/qrcode": "^1.5.5",
     "@types/uuid": "^9.0.8",
+    "jest": "^30.4.2",
+    "ts-jest": "^29.4.11",
     "ts-node": "^10.9.2",
     "typescript": "^5.5.0"
   }
