@@ -3,6 +3,7 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
+import { AdminRoleController } from './admin-role.controller';
 import { VerificationController } from './verification.controller';
 import { VerificationService } from './verification.service';
 import { ProfileVerificationController } from './profile-verification.controller';
@@ -12,7 +13,7 @@ import { WebSocketModule } from '../websocket/websocket.module';
 
 @Module({
   imports: [TypeOrmModule.forFeature([User]), WebSocketModule],
-  controllers: [UsersController, VerificationController, ProfileVerificationController],
+  controllers: [UsersController, AdminRoleController, VerificationController, ProfileVerificationController],
   providers: [UsersService, VerificationService, ProfileVerificationService, RequireVerifiedGuard],
   exports: [UsersService, VerificationService, ProfileVerificationService, RequireVerifiedGuard],
 })

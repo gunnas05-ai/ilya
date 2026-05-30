@@ -1,6 +1,7 @@
 import { Global, Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { Permission } from './permission.entity';
+import { Role } from './role.entity';
 import { RolePermission } from './role-permission.entity';
 import { City } from './city.entity';
 import { District } from './district.entity';
@@ -25,7 +26,7 @@ import { VaultConfigService } from './vault/vault.service';
 @Global()
 @Module({
   imports: [
-    TypeOrmModule.forFeature([Permission, RolePermission, City, District, WhatsAppSettings, SystemSetting, DriverFeedPost, DriverFeedComment, RoadReport]),
+    TypeOrmModule.forFeature([Permission, Role, RolePermission, City, District, WhatsAppSettings, SystemSetting, DriverFeedPost, DriverFeedComment, RoadReport]),
     KafkaModule.forRootAsync(),
   ],
   controllers: [WhatsAppController, LanguageController, CommunityController, HealthController, LoadsV2Controller, LoadsV1DeprecatedController, SozlesmeController],

@@ -51,6 +51,7 @@ import { ListingCategory } from './marketplace/listing-category.entity';
 import { VehicleDetail } from './marketplace/vehicle-detail.entity';
 import { ListingOffer } from './marketplace/listing-offer.entity';
 import { Permission } from './common/permission.entity';
+import { Role } from './common/role.entity';
 import { RolePermission } from './common/role-permission.entity';
 import { City } from './common/city.entity';
 import { District } from './common/district.entity';
@@ -100,7 +101,7 @@ export const ALL_ENTITIES = [
   Restaurant, RestaurantImage, Menu, MenuItem, MenuItemReview, RestaurantReview, ReviewReply, RestaurantFavorite, RestaurantReservation, RestaurantTable, RestaurantCapacityConfig,
   Announcement, UetdsTransaction, DeliverySignature, DeliveryPhoto, Webhook, ApiKey,
   Listing, ListingCategory, VehicleDetail, ListingOffer,
-  Permission, RolePermission,
+  Permission, Role, RolePermission,
   City, District,
   WhatsAppSettings, SystemSetting, DriverFeedPost, DriverFeedComment, RoadReport,
   Shipper, ShipmentStatusHistory, Carrier, CarrierStatusHistory, RateAgreement, WebhookDeadLetter,
