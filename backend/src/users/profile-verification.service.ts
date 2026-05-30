@@ -37,14 +37,14 @@ export class ProfileVerificationService {
     const missing = this.checkMissingFields(user);
     const completionPercent = Math.round(((this.REQUIRED_FIELDS.length - missing.length) / this.REQUIRED_FIELDS.length) * 100);
 
-    // Otomatik değerlendirme: tüm alanlar doluysa ve doğrulama bekleyen yoksa VERIFIED
-    if (missing.length === 0 && user.profileStatus === 'PENDING_REVIEW') {
+    // Otomatik değerlendirme: tüm alanlar doluysa otomatik VERIFIED yap
+    if (missing.length === 0 && user.profileStatus !== 'VERIFIED') {
       user.profileStatus = 'VERIFIED';
       user.verifiedAt = new Date();
       user.missingFields = [];
       await this.userRepo.save(user);
       this.wsGateway.sendToUser(userId, 'PROFILE_VERIFIED', { status: 'VERIFIED', verifiedAt: user.verifiedAt });
-      this.logger.log(`Profil onaylandi: ${userId}`);
+      this.logger.log(`Profil otomatik onaylandi: ${userId}`);
     }
 
     return {
