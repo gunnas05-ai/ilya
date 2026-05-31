@@ -40,6 +40,27 @@ export default function AiDialogScreen({ navigation, route }: any) {
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number; city?: string; district?: string } | null>(null);
 
+  // HeyKaptan'dan gelindiyse otomatik dinlemeye başla
+  useEffect(() => {
+    if (initialMsg) {
+      const timer = setTimeout(() => {
+        try {
+          const SpeechRecognition = require('expo-speech-recognition');
+          if (SpeechRecognition?.default) {
+            SpeechRecognition.default.start({ lang: 'tr-TR', interimResults: false }).then((r: any) => {
+              const text = r?.[0]?.transcript || '';
+              if (text.trim()) {
+                setInputText(text);
+                handleSendWithText(text);
+              }
+            }).catch(() => {});
+          }
+        } catch {}
+      }, 2500); // Selamlama konuşması bittikten sonra dinlemeye başla
+      return () => clearTimeout(timer);
+    }
+  }, [initialMsg]);
+
   // GPS konumunu al
   useEffect(() => {
     Location.requestForegroundPermissionsAsync().then(({ status }) => {
@@ -73,11 +94,16 @@ export default function AiDialogScreen({ navigation, route }: any) {
     pickupDate: 'Yükleme tarihi',
   };
 
-  const handleSend = async () => {
+  const handleSend = () => {
     const text = inputText.trim();
+    if (!text) return;
+    setInputText('');
+    handleSendWithText(text);
+  };
+
+  const handleSendWithText = async (text: string) => {
     if (!text || loading) return;
     hapticLight();
-    setInputText('');
 
     addMessage({ id: Date.now().toString(), role: 'user', text });
 
@@ -335,6 +361,28 @@ export default function AiDialogScreen({ navigation, route }: any) {
                   <Text style={[typography.caption, { color: colors.textSecondary, marginLeft: spacing.sm }]}>AI analiz ediyor...</Text>
                 </View>
               )}
+              {/* Hızlı Komutlar */}
+              <View style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.md }}>
+                <Text style={[typography.small, { color: colors.textTertiary, marginBottom: spacing.xs }]}>Hızlı Komutlar:</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  {[
+                    { label: '💰 Gider Yaz', cmd: '500 TL yemek gideri yaz' },
+                    { label: '⛽ Yakıt Kaydet', cmd: 'OPET ten 350 litre mazot aldım' },
+                    { label: '🔍 Yük Ara', cmd: 'En yakın yükleri sırala' },
+                    { label: '🚛 Araç Ara', cmd: '4 milyonluk araç arıyorum' },
+                    { label: '📄 Fatura Kes', cmd: 'ABC Ltd için 5000 TL fatura kes' },
+                    { label: '👤 Profil', cmd: 'Profilimi göster' },
+                  ].map(chip => (
+                    <TouchableOpacity key={chip.label}
+                      style={{ backgroundColor: colors.primary + '15', paddingHorizontal: spacing.sm, paddingVertical: 6, borderRadius: radius.pill }}
+                      onPress={() => { setInputText(chip.cmd); handleSendWithText(chip.cmd); }}
+                    >
+                      <Text style={[typography.small, { color: colors.primary }]}>{chip.label}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
               {hasData && (
                 <View style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.md }}>
                   <TouchableOpacity onPress={handleFormaGit} style={{ backgroundColor: isComplete ? colors.success : colors.primary, padding: spacing.md, borderRadius: radius.md, alignItems: 'center' }}>
