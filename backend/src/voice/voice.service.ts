@@ -94,14 +94,13 @@ export class VoiceService {
   // Process an AI dialog message for load creation
   parseAiDialogMessage(message: string): { success: boolean; extracted: Record<string, any>; response: string } {
     const extracted: Record<string, any> = {};
-    // Encoding fix: HTTP'de İ→i̇(I+combining dot) olarak gelebilir, regex ile hepsini yakala
+    // Encoding fix: HTTP'de İ→i(I+combining dot) olarak gelebilir
     const msg = (message || '')
-      .replace(/İ/gi, 'i').replace(/I/gi, 'i')
-      .replace(/i̇/gi, 'i')
       .normalize('NFD').replace(/[̀-ͯ]/g, '')
+      .replace(/İ/gi, 'i').replace(/I/gi, 'i')
       .normalize('NFC');
 
-    // ===== TURKISH CITY LIST (81 IL + ASCII fallback) =====
+    // ===== TURKISH CITY LIST =====
     const CITIES = [
       'Adana','Adıyaman','Afyonkarahisar','Ağrı','Amasya','Ankara','Antalya','Artvin','Aydın','Balıkesir',
       'Bilecik','Bingöl','Bitlis','Bolu','Burdur','Bursa','Çanakkale','Çankırı','Çorum','Denizli',
@@ -112,57 +111,46 @@ export class VoiceService {
       'Trabzon','Tunceli','Şanlıurfa','Uşak','Van','Yozgat','Zonguldak','Aksaray','Bayburt','Karaman',
       'Kırıkkale','Batman','Şırnak','Bartın','Ardahan','Iğdır','Yalova','Karabük','Kilis','Osmaniye','Düzce',
     ];
-    // ASCII fallback: HTTP encoding sorunları için
-    const CITY_ASCII: Record<string, string> = {
-      'istanbul': 'İstanbul', 'izmir': 'İzmir', 'adana': 'Adana', 'ankara': 'Ankara',
-      'bursa': 'Bursa', 'mersin': 'Mersin', 'konya': 'Konya', 'kayseri': 'Kayseri',
-      'gaziantep': 'Gaziantep', 'antalya': 'Antalya', 'samsun': 'Samsun', 'trabzon': 'Trabzon',
-      'diyarbakir': 'Diyarbakır', 'eskisehir': 'Eskişehir', 'kocaeli': 'Kocaeli',
-      'sakarya': 'Sakarya', 'tekirdag': 'Tekirdağ', 'balikesir': 'Balıkesir',
-      'manisa': 'Manisa', 'aydin': 'Aydın', 'mugla': 'Muğla', 'denizli': 'Denizli',
-      'hatay': 'Hatay', 'malatya': 'Malatya', 'erzurum': 'Erzurum', 'sivas': 'Sivas',
-    };
 
-    // ===== CITY EXTRACTION =====
-    // Türkçe karakterleri normalize et (hem orijinal hem ASCII)
     const turkishToAscii = (s: string) => {
-      return s
-        .replace(/İ/g, 'i').replace(/I/g, 'i')
-        .replace(/Ğ/g, 'g').replace(/Ü/g, 'u')
-        .replace(/Ş/g, 's').replace(/Ö/g, 'o').replace(/Ç/g, 'c')
-        .replace(/ı/g, 'i').replace(/ğ/g, 'g')
-        .replace(/ü/g, 'u').replace(/ş/g, 's')
-        .replace(/ö/g, 'o').replace(/ç/g, 'c')
-        .toLowerCase();
+      return s.replace(/[İI]/gi, 'i').replace(/[ĞÜŞÖÇığüşöç]/g, c => ({ 'Ğ':'g','Ü':'u','Ş':'s','Ö':'o','Ç':'c','ı':'i','ğ':'g','ü':'u','ş':'s','ö':'o','ç':'c' }[c] || c)).toLowerCase();
     };
     const foundCities: string[] = [];
-    const msgAscii = turkishToAscii(msg);
+    const msgLower = turkishToAscii(msg);
     for (const city of CITIES) {
-      if (msgAscii.includes(turkishToAscii(city))) {
+      if (msgLower.includes(turkishToAscii(city))) {
         foundCities.push(city);
       }
     }
-    // ASCII fallback: HTTP encoding'de İstanbul→istanbul olarak gelir
-    for (const [asciiName, realName] of Object.entries(CITY_ASCII)) {
-      if (msgAscii.includes(asciiName) && !foundCities.includes(realName)) {
-        foundCities.push(realName);
-      }
-    }
-    // Şehirleri sırala: "dan/den" eki alan = kalkış, "a/e/ya/ye" eki alan = varış
     const uniqueCities = [...new Set(foundCities)];
+
+    // Şehir sıralaması: "X'den/X'dan" → X=kalkış, "Y'ye/Y'a" → Y=varış
     if (uniqueCities.length >= 2) {
-      // Hangi şehrin yanında "dan/den" var?
-      const origin = uniqueCities.find(c => new RegExp(turkishToAscii(c) + '\\w*[dt][ae]n', 'i').test(msgAscii));
-      const dest = uniqueCities.find(c => c !== origin);
-      extracted.originCity = origin || uniqueCities[0];
-      extracted.destCity = dest || uniqueCities[1];
+      const fromIdx = msgLower.search(/(\w+)\w*['’]*(?:dan|den|ten|tan|nden|ndan)\b/);
+      const toIdx = msgLower.search(/(\w+)\w*['’]*(?:ya|ye|a|e)\b(?!\w*(?:dan|den))/);
+
+      let origin = uniqueCities[0], dest = uniqueCities[1];
+      if (fromIdx >= 0 && toIdx >= 0 && fromIdx < toIdx) {
+        const originCity = uniqueCities.find(c => turkishToAscii(c) === msgLower.slice(fromIdx, fromIdx + turkishToAscii(c).length).replace(/['’].*/, ''));
+        const destCity = uniqueCities.find(c => c !== originCity);
+        if (originCity) origin = originCity;
+        if (destCity) dest = destCity;
+      }
+      // "X'den Y'ye" pattern: ilk şehir kalkış
+      const fromPattern = new RegExp(`(${uniqueCities.map(c => turkishToAscii(c)).join('|')})\\w*['\\u2019]*(?:dan|den|ten|tan)`, 'i');
+      const fromMatch = msgLower.match(fromPattern);
+      if (fromMatch) {
+        const matchedCity = uniqueCities.find(c => turkishToAscii(c) === fromMatch[1]);
+        if (matchedCity) { origin = matchedCity; dest = uniqueCities.find(c => c !== matchedCity) || dest; }
+      }
+      extracted.originCity = origin;
+      extracted.destCity = dest;
     } else if (uniqueCities.length === 1) {
       extracted.originCity = uniqueCities[0];
-      // Try to find second city after "dan/den/ya/ye/a/e"
-      const parts = msg.split(/['’](?:dan|den|ya|ye|a|e)\s+/i);
-      if (parts.length > 1) {
+      const afterFrom = msgLower.split(/['’](?:dan|den|ten|tan)\s+/i);
+      if (afterFrom.length > 1) {
         for (const city of CITIES) {
-          if (parts[1]?.toLocaleLowerCase('tr').includes(city.toLocaleLowerCase('tr'))) {
+          if (afterFrom[1].includes(turkishToAscii(city))) {
             extracted.destCity = city;
             break;
           }
@@ -170,9 +158,21 @@ export class VoiceService {
       }
     }
 
-    // ===== TITLE =====
-    const titleMatch = msg.match(/(\d+)\s*ton\s+([\wÀ-ɏ]+)/i);
-    if (titleMatch) extracted.title = `${titleMatch[1]} Ton ${titleMatch[2]}`;
+    // ===== TITLE: "27 ton ham demir" → "27 Ton ham demir" =====
+    const titleMatch = msg.match(/(\d+\.?\d*)\s*ton\s+(.+?)(?:\s*(?:\.|$|yükü|var|vardır|olup|fiyat|ton fiyat|bugün|yarın|\d+\s*saat|irtibat|teslim))/i);
+    if (titleMatch) {
+      extracted.title = `${titleMatch[1]} Ton ${titleMatch[2].trim()}`;
+    } else {
+      const simpleMatch = msg.match(/(\d+\.?\d*)\s*ton\s+(.{3,40}?)(?:\s*\.|\s*$)/i);
+      if (simpleMatch) extracted.title = `${simpleMatch[1]} Ton ${simpleMatch[2].trim()}`;
+    }
+
+    // ===== WEIGHT: "27 ton" → 27000 kg =====
+    const weightMatch = msg.match(/(\d+\.?\d*)\s*(?:ton|kg|kilogram)/i);
+    if (weightMatch) {
+      const val = parseFloat(weightMatch[1]);
+      extracted.weight = (msgLower.includes('kg') || msgLower.includes('kilogram')) ? val : Math.round(val * 1000);
+    }
 
     // ===== WEIGHT =====
     const weightMatch = msg.match(/(\d+\.?\d*)\s*(?:ton|kg|kilogram)/i);
@@ -181,9 +181,18 @@ export class VoiceService {
       extracted.weight = msgAscii.includes('kg') || msgAscii.includes('kilogram') ? val : val * 1000;
     }
 
-    // ===== PRICE =====
-    const priceMatch = msg.match(/(\d+\.?\d*)\s*(?:TL|₺|lira)/i);
-    if (priceMatch) extracted.price = parseFloat(priceMatch[1]);
+    // ===== PRICE: "ton fiyatı 750", "750 + kdv", "750 TL" =====
+    const tonPriceMatch = msg.match(/(?:ton\s*fiyat[ıi]|fiyat[ıi]?)\s*:?\s*(\d+\.?\d*)/i);
+    const normalPriceMatch = msg.match(/(\d+\.?\d*)\s*(?:\+?\s*kdv|\s*TL|\s*₺|\s*lira)/i);
+    if (tonPriceMatch) extracted.price = parseFloat(tonPriceMatch[1]);
+    else if (normalPriceMatch) extracted.price = parseFloat(normalPriceMatch[1]);
+
+    // "750 + kdv" → price is 750 + 20% KDV = 900 (KDV dahil)
+    if (extracted.price && /\+\s*kdv/i.test(msg)) {
+      const kdvRateMatch = msg.match(/%\s*(\d+)\s*kdv/i);
+      const kdvRate = kdvRateMatch ? parseInt(kdvRateMatch[1]) / 100 : 0.20;
+      extracted.price = Math.round(extracted.price * (1 + kdvRate));
+    }
 
     // ===== VEHICLE TYPE =====
     const vehicleKeywords: Record<string, string> = {
@@ -201,42 +210,53 @@ export class VoiceService {
       }
     }
 
-    // ===== CONTACT EXTRACTION =====
-    // "teslim alacak", "irtibat", "alıcı" → isim + telefon
-    const contactMatch = msg.match(/(?:teslim\s*alacak|irtibat|al[ıi]c[ıi])\s*(?:ki[şs]i)?\s*:*\s*([a-zA-ZçÇğĞıİöÖşŞüÜ\s]{3,30})\s*(?:tel|telefon|no|numara)?\s*:?\s*(\d[\d\s-]{8,15})/i);
+    // ===== CONTACT: "irtibat: Kazım KARTAL tel:05057945405" =====
+    const contactMatch = msg.match(/(?:teslim\s*alacak|irtibat|al[ıi]c[ıi]|yetkili|sorumlu)\s*(?:ki[şs]i)?\s*:?\s*([a-zA-ZçÇğĞıİöÖşŞüÜ\s]{3,35}?)\s*(?:tel|telefon|no|numara)?\s*:?\s*(\d[\d\s-]{8,15})/i);
     if (contactMatch) {
       extracted.contactName = contactMatch[1].trim();
       extracted.contactPhone = contactMatch[2].replace(/[\s-]/g, '');
     }
-
-    // Alternatif: direkt "isim telefon" kalıbı (Kazım Kartal 0505...)
     if (!extracted.contactPhone) {
-      const phoneMatch = msg.match(/(05\d{2})\s*(\d{3})\s*(\d{2})\s*(\d{2})/);
+      const phoneMatch = msg.match(/(05\d{2})[\s-]*(\d{3})[\s-]*(\d{2})[\s-]*(\d{2})/);
       if (phoneMatch) {
-        extracted.contactPhone = phoneMatch[0].replace(/\s/g, '');
-        // Telefon öncesindeki 2-3 kelimeyi isim olarak al
+        extracted.contactPhone = phoneMatch[0].replace(/[\s-]/g, '');
         const beforePhone = msg.slice(0, msg.indexOf(phoneMatch[0])).trim().split(/\s+/);
         if (beforePhone.length >= 2) {
-          extracted.contactName = beforePhone.slice(-2).join(' ');
+          extracted.contactName = beforePhone.slice(-2).join(' ').replace(/[,.:;]/g, '');
         }
       }
     }
 
-    // ===== DATE/TIME EXTRACTION =====
+    // ===== DATE/TIME =====
     const now = new Date();
     if (/bugün|bugun/i.test(msg)) {
       extracted.pickupDate = now.toISOString().slice(0, 10);
     } else if (/yar[ıi]n/i.test(msg)) {
       const tomorrow = new Date(now); tomorrow.setDate(tomorrow.getDate() + 1);
       extracted.pickupDate = tomorrow.toISOString().slice(0, 10);
-    } else if (/(\d{1,2})\s*saat\s*i[çc]inde/i.test(msg)) {
-      const match = msg.match(/(\d{1,2})\s*saat\s*i[çc]inde/i);
-      const hours = parseInt(match![1]);
+    }
+    // Saat: "saat 14:00'dan sonra" → pickupTime
+    const timeMatch = msg.match(/saat\s*:?\s*(\d{1,2})[.:](\d{2})/i);
+    if (timeMatch) extracted.pickupTime = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+
+    // "X saat içinde teslim" → deliveryDate
+    const hoursMatch = msg.match(/(\d{1,4})\s*saat\s*i[çc]inde\s*(?:teslim|var[ıi]ş)/i);
+    if (hoursMatch) {
+      const hours = parseInt(hoursMatch[1]);
       const delivery = new Date(now.getTime() + hours * 60 * 60 * 1000);
       extracted.deliveryDate = delivery.toISOString().slice(0, 10);
-    } else if (/(\d{2})[\/\.-](\d{2})[\/\.-](\d{4})/.test(msg)) {
-      const match = msg.match(/(\d{2})[\/\.-](\d{2})[\/\.-](\d{4})/);
-      extracted.pickupDate = `${match![3]}-${match![2]}-${match![1]}`;
+    }
+    // "X gün içinde teslim"
+    const daysMatch = msg.match(/(\d{1,3})\s*g[üu]n\s*i[çc]inde/i);
+    if (daysMatch) {
+      const days = parseInt(daysMatch[1]);
+      const delivery = new Date(now.getTime() + days * 86400000);
+      extracted.deliveryDate = delivery.toISOString().slice(0, 10);
+    }
+    // DD.MM.YYYY format
+    const dateMatch = msg.match(/(\d{2})[\/\.-](\d{2})[\/\.-](\d{4})/);
+    if (dateMatch) {
+      extracted.pickupDate = `${dateMatch[3]}-${dateMatch[2]}-${dateMatch[1]}`;
     }
 
     // ===== ADDRESS EXTRACTION =====

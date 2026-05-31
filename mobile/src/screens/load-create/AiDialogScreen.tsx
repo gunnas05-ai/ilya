@@ -218,16 +218,11 @@ export default function AiDialogScreen({ navigation }: any) {
       const mapped = mapToFormFields(extractedFields);
       updateFormData(mapped);
       try {
-        const existing = await AsyncStorage.getItem('kaptan_load_draft');
-        const draft = existing ? JSON.parse(existing) : {};
-        await AsyncStorage.setItem('kaptan_load_draft', JSON.stringify({ ...draft, ...mapped }));
+        await AsyncStorage.setItem('kaptan_load_draft', JSON.stringify(mapped));
       } catch {}
     }
-    if (navigation.canGoBack()) {
-      navigation.goBack();
-    } else {
-      navigation.navigate('LoadCreate');
-    }
+    // Her zaman LoadCreate'e git — form draft'tan okur
+    navigation.navigate('LoadCreate');
   };
 
   const hasData = Object.keys(extractedFields).length >= 2;
