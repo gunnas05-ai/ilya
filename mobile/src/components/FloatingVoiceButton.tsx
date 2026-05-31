@@ -140,29 +140,57 @@ export default function FloatingVoiceButton({ onNavigate, colors }: Props) {
 
       hapticSuccess();
 
-      // Execute action based on intent
+      const navigate = (screen: string, p?: any) => setTimeout(() => onNavigate(screen, p), 1000);
+
       switch (intent) {
         case 'NAVIGATE':
-          if (params.screen) setTimeout(() => onNavigate(params.screen, params), 1000);
+        case 'LIST_INVOICES': case 'VIEW_ACCOUNTANT': case 'VIEW_PROFIT_LOSS':
+        case 'CHECK_WALLET': case 'SEARCH_RESTAURANTS': case 'MAKE_RESERVATION':
+        case 'START_TRACKING': case 'VIEW_TRACKING': case 'LIST_VEHICLES':
+        case 'UPDATE_PROFILE': case 'CHECK_PROFILE_STATUS': case 'SEARCH_FUEL_STATIONS':
+        case 'CREATE_INVOICE': case 'CREATE_VEHICLE':
+          if (params.screen) navigate(params.screen, params);
           break;
-        case 'CREATE_EXPENSE':
-        case 'LOG_FUEL':
+
+        case 'CREATE_EXPENSE': case 'LOG_FUEL':
           if (params.amount && params.category) {
             apiClient.post('/finance/expenses', params).catch(() => {});
-            setTimeout(() => onNavigate('Finance'), 1000);
+            navigate('Finance');
           }
           break;
-        case 'SEARCH_LOADS':
-          setTimeout(() => onNavigate('LoadAccept', params), 1000);
+
+        case 'CREATE_INCOME':
+          if (params.data?.amount) {
+            apiClient.post(params.endpoint || '/finance/incomes', params.data).catch(() => {});
+            navigate('Finance');
+          }
           break;
-        case 'SEARCH_MARKETPLACE':
-          setTimeout(() => onNavigate('ListingsBrowse', params), 1000);
+
+        case 'ADD_CUSTOMER': case 'ADD_ACCOUNTANT':
+          if (params.data) {
+            apiClient.post(params.endpoint || '/users/profile', params.data).catch(() => {});
+            Speech.speak('Kayıt başarıyla oluşturuldu.', { language: 'tr-TR', rate: 0.85 });
+          }
           break;
-        case 'CREATE_LOAD':
-          setTimeout(() => onNavigate('AiDialog', { initialMessage: text }), 1000);
+
+        case 'API_CALL':
+          if (params.endpoint && params.data) {
+            const method = params.method || 'POST';
+            if (method === 'POST') apiClient.post(params.endpoint, params.data).catch(() => {});
+            else if (method === 'PUT') apiClient.put(params.endpoint, params.data).catch(() => {});
+            Speech.speak('İşlem tamamlandı.', { language: 'tr-TR', rate: 0.85 });
+          }
           break;
-        default:
+
+        case 'DELETE_ENTITY': case 'CONFIRM_DELETE':
+          Speech.speak(`${params.entityLabel || 'Kayıt'} silme işlemi için lütfen ilgili ekrana gidip manuel olarak silin.`, { language: 'tr-TR', rate: 0.85 });
           break;
+
+        case 'SEARCH_LOADS': navigate('LoadAccept', params); break;
+        case 'SEARCH_MARKETPLACE': navigate('ListingsBrowse', params); break;
+        case 'CREATE_LOAD': navigate('AiDialog', { initialMessage: text }); break;
+
+        default: break;
       }
     } catch {
       Speech.speak('Bağlantı hatası oluştu. Lütfen tekrar deneyin.', { language: 'tr-TR', rate: 0.85 });

@@ -104,12 +104,29 @@ export class VoiceService {
     const intent = this.detectIntent(msg, msgLower);
     extracted._intent = intent;
 
+    if (intent === 'CREATE_INVOICE') return this.parseInvoice(msg, msgLower, extracted);
+    if (intent === 'LIST_INVOICES') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'InvoiceList' }, extracted, response: 'Fatura listeniz görüntüleniyor.' };
+    if (intent === 'ADD_CUSTOMER') return this.parseCustomer(msg, msgLower, extracted);
+    if (intent === 'ADD_ACCOUNTANT') return this.parseAccountant(msg, msgLower, extracted);
+    if (intent === 'VIEW_ACCOUNTANT') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'AccountantDashboard' }, extracted, response: 'Muhasebeci bilgileriniz görüntüleniyor.' };
+    if (intent === 'CREATE_INCOME') return this.parseIncome(msg, msgLower, extracted);
     if (intent === 'CREATE_EXPENSE') return this.parseExpense(msg, msgLower, extracted);
     if (intent === 'LOG_FUEL') return this.parseFuelLog(msg, msgLower, extracted);
+    if (intent === 'VIEW_PROFIT_LOSS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'Finance' }, extracted, response: 'Gelir-gider raporunuz görüntüleniyor.' };
+    if (intent === 'CHECK_WALLET') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'Wallet' }, extracted, response: 'Cüzdan bakiyeniz görüntüleniyor.' };
     if (intent === 'SEARCH_LOADS') return this.parseLoadSearch(msg, msgLower, extracted);
     if (intent === 'SEARCH_MARKETPLACE') return this.parseMarketplaceSearch(msg, msgLower, extracted);
+    if (intent === 'SEARCH_FUEL_STATIONS') return this.parseFuelStationSearch(msg, msgLower, extracted);
+    if (intent === 'SEARCH_RESTAURANTS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'Restaurants' }, extracted, response: 'Restoranlar ve lokantalar görüntüleniyor.' };
+    if (intent === 'MAKE_RESERVATION') return this.parseReservation(msg, msgLower, extracted);
+    if (intent === 'START_TRACKING') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'LoadTracking' }, extracted, response: 'Canlı takip sayfası açılıyor.' };
+    if (intent === 'VIEW_TRACKING') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'LoadTracking' }, extracted, response: 'Takip durumu görüntüleniyor.' };
+    if (intent === 'CREATE_VEHICLE') return this.parseVehicle(msg, msgLower, extracted);
+    if (intent === 'LIST_VEHICLES') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'MyVehicles' }, extracted, response: 'Araç listeniz görüntüleniyor.' };
+    if (intent === 'UPDATE_PROFILE') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'CarrierProfile' }, extracted, response: 'Profil sayfanız açılıyor. Bilgilerinizi buradan güncelleyebilirsiniz.' };
+    if (intent === 'CHECK_PROFILE_STATUS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'CarrierProfile' }, extracted, response: 'Profil durumunuz görüntüleniyor.' };
+    if (intent === 'DELETE_ENTITY') return this.parseDelete(msg, msgLower, extracted);
     if (intent === 'NAVIGATE') return this.parseNavigation(msg, msgLower, extracted);
-    // Default: CREATE_LOAD
     return this.parseLoadCreation(msg, msgLower, extracted);
   }
 
@@ -118,26 +135,53 @@ export class VoiceService {
   }
 
   private detectIntent(msg: string, msgLower: string): string {
-    // Expense/fuel patterns
+    // E-Belge / Invoice
+    if (/(?:e-fatura|fatura|e-irsaliye|irsaliye)\s+(?:olu[şs]tur|kes|yaz|d[üu]zenle)/i.test(msg)) return 'CREATE_INVOICE';
+    if (/(?:fatura|irsaliye)\s+(?:listele|g[oö]ster|durum)/i.test(msg)) return 'LIST_INVOICES';
+    // Customer
+    if (/(?:m[üu][şs]teri|cari)\s+(?:ekle|olu[şs]tur|kaydet)/i.test(msg)) return 'ADD_CUSTOMER';
+    // Accountant
+    if (/(?:muhasebeci|mali\s*m[üu][şs]avir)\s+(?:ekle|tan[ıi]mla|kaydet)/i.test(msg)) return 'ADD_ACCOUNTANT';
+    if (/(?:muhasebeci|mali\s*m[üu][şs]avir).*(?:g[oö]r[üu]nt[üu]le|bilgi|g[oö]ster)/i.test(msg)) return 'VIEW_ACCOUNTANT';
+    // Income
+    if (/(?:gelir|tahsilat|kazan[çc])\s+(?:yaz|kaydet|ekle)/i.test(msg)) return 'CREATE_INCOME';
+    if (/(?:para\s*geldi|[oö]deme\s*ald[ıi]m)/i.test(msg)) return 'CREATE_INCOME';
+    // Expense/fuel
     if (/(?:gider|harcama|masraf)\s+(?:olarak\s+)?(?:yaz|kaydet|ekle)/i.test(msg)) return 'CREATE_EXPENSE';
     if (/(?:mazot|motorin|yak[ıi]t|benzin|LPG)\s+(?:ald[ıi]m|al[ıi]nd[ıi]|doldurdum)/i.test(msg)) return 'LOG_FUEL';
     if (/(?:gider|harcama)\s+(?:yaz|kaydet)/i.test(msg)) return 'CREATE_EXPENSE';
-
+    if (/(?:gelir.*gider|gelir-gider|kar.*zarar|bilan[çc]o)/i.test(msg)) return 'VIEW_PROFIT_LOSS';
+    // Wallet
+    if (/(?:c[üu]zdan|bakiye|param|ne\s*kadar\s*para)/i.test(msg)) return 'CHECK_WALLET';
     // Search patterns
-    if (/(?:en\s+yak[ıi]n|yak[ıi]n[ıi]mdaki|etraf[ıi]mdaki|çevredeki)\s+y[üu]k/i.test(msg)) return 'SEARCH_LOADS';
+    if (/(?:en\s+yak[ıi]n|yak[ıi]n[ıi]mdaki|etraf[ıi]mdaki)\s+y[üu]k/i.test(msg)) return 'SEARCH_LOADS';
     if (/(?:y[üu]k\s+ara|y[üu]k\s+bul|y[üu]kleri\s+(?:s[ıi]rala|g[oö]ster|listele))/i.test(msg)) return 'SEARCH_LOADS';
     if (/(?:ara[çc]|kamyon|t[ıi]r|araç)\s+(?:ar[ıi]yorum|bak[ıi]yorum|bul)/i.test(msg)) return 'SEARCH_MARKETPLACE';
     if (/(\d+)\s*(?:milyon|milyar|bin|TL|₺)\s*(?:luk|tl|alt[ıi]|üst[üu]).*(?:ara[çc]|kamyon|t[ıi]r)/i.test(msg)) return 'SEARCH_MARKETPLACE';
     if (/(?:ilan|sat[ıi]l[ıi]k|ikinci\s*el).*(?:ara[çc]|kamyon|t[ıi]r)/i.test(msg)) return 'SEARCH_MARKETPLACE';
-
-    // Navigation patterns
-    if (/(?:git|a[çc]|g[oö]ster|g[oö]r[üu]nt[üu]le)\s+(?:ana\s*sayfa|profili|finans|c[üu]zdan|ayarlar|harita)/i.test(msg)) return 'NAVIGATE';
-
-    // Default: load creation (has ton/kg + city pattern or explicit "yük ekle")
+    // Fuel stations
+    if (/(?:benzinlik|akaryak[ıi]t|OPET|Shell|BP|yak[ıi]t\s*istasyon)/i.test(msg) && !/(?:ald[ıi]m|doldurdum)/i.test(msg)) return 'SEARCH_FUEL_STATIONS';
+    // Restaurants
+    if (/(?:lokanta|restoran|yemek|rezervasyon).*(?:ara|bul|g[oö]ster|listele)/i.test(msg)) return 'SEARCH_RESTAURANTS';
+    if (/(?:lokanta|restoran).*(?:rezervasyon|yer\s*ay[ıi]rt)/i.test(msg)) return 'MAKE_RESERVATION';
+    // Tracking
+    if (/(?:canl[ıi]\s*takip|takip\s*ba[şs]lat|y[üu]k[üu]\s*takip\s*et)/i.test(msg)) return 'START_TRACKING';
+    if (/(?:takip|konum).*(?:g[oö]ster|durum|nerede)/i.test(msg)) return 'VIEW_TRACKING';
+    // Vehicle management
+    if (/(?:ara[çc]|kamyon|t[ıi]r|araç)\s+(?:ekle|kaydet|tan[ıi]mla)/i.test(msg)) return 'CREATE_VEHICLE';
+    if (/(?:ara[çc]lar[ıi]m|filom|ara[çc]lar[ıi]\s*g[oö]ster)/i.test(msg)) return 'LIST_VEHICLES';
+    // Profile
+    if (/(?:profil|hesap).*(?:g[üu]ncelle|d[üu]zenle|de[gğ]i[şs]tir)/i.test(msg)) return 'UPDATE_PROFILE';
+    if (/(?:profil|hesap).*(?:durum|tamamlanma|eksik)/i.test(msg)) return 'CHECK_PROFILE_STATUS';
+    // Delete operations
+    if (/(?:sil|kald[ıi]r|iptal\s*et).*(?:y[üu]k|ilan|ara[çc]|gider|gelir)/i.test(msg)) return 'DELETE_ENTITY';
+    // Navigation (broad match — check last after specific patterns)
+    if (/(?:git|a[çc]|g[oö]ster|g[oö]r[üu]nt[üu]le|y[oö]nlendir)\s+(?:ana\s*sayfaya|profil|finans|c[üu]zdan|ayarlar|harita|belge|d[oö]k[üu]man)/i.test(msg)) return 'NAVIGATE';
+    if (/(?:ana\s*sayfa|anasayfa|home|ba[şs]lang[ıi][çc])/i.test(msg)) return 'NAVIGATE';
+    // Load creation (has ton/kg + city pattern or explicit)
     if (/(?:y[üu]k\s*(?:ekle|olu[şs]tur|ver|a[çc])|y[üu]k[üu]m\s*var)/i.test(msg)) return 'CREATE_LOAD';
     if (/(\d+)\s*(?:ton|kg|kilogram)/i.test(msg) && /(?:'|’)(?:dan|den|a|e|ya|ye)/i.test(msg)) return 'CREATE_LOAD';
-
-    return 'CREATE_LOAD'; // fallback
+    return 'CREATE_LOAD';
   }
 
   // ═══════════════════════════════════════════════════════════
@@ -510,6 +554,182 @@ export class VoiceService {
       params: { screen: extracted.screen || 'MainTabs' },
       extracted,
       response: extracted.label ? `${extracted.label} sayfasına yönlendiriliyorsunuz.` : 'Ana sayfaya yönlendiriliyorsunuz.',
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: CREATE_INVOICE
+  // ═══════════════════════════════════════════════════════════
+  private parseInvoice(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    // Customer
+    const custMatch = msg.match(/(?:m[üu][şs]teri|cari|al[ıi]c[ıi])\s*:?\s*(.+?)(?:\s*(?:i[çc]in|ad[ıi]na|olarak|\.|$))/i);
+    if (custMatch) extracted.customerName = custMatch[1].trim();
+    // Amount
+    const amtMatch = msg.match(/(\d+\.?\d*)\s*(?:TL|₺|lira)/i);
+    if (amtMatch) extracted.amount = parseFloat(amtMatch[1]);
+    // Type
+    if (/irsaliye/i.test(msg)) extracted.invoiceType = 'irsaliye';
+    else if (/iade/i.test(msg)) extracted.invoiceType = 'iade';
+    else extracted.invoiceType = 'fatura';
+    // Description
+    const descMatch = msg.match(/(?:a[çc][ıi]klama|not)\s*:?\s*(.+?)(?:\s*\.|\s*$)/i);
+    if (descMatch) extracted.description = descMatch[1].trim();
+    else extracted.description = `${extracted.invoiceType || 'fatura'} - ${extracted.customerName || 'müşteri'}`;
+
+    const hasData = extracted.amount || extracted.customerName;
+    return {
+      success: hasData, intent: 'CREATE_INVOICE', action: 'NAVIGATE',
+      params: { screen: 'InvoiceCreate', amount: extracted.amount, customer: extracted.customerName, type: extracted.invoiceType, description: extracted.description },
+      extracted,
+      response: hasData
+        ? `${extracted.customerName || 'Müşteri'} için ${extracted.amount ? extracted.amount + ' ₺ ' : ''}${extracted.invoiceType === 'irsaliye' ? 'e-İrsaliye' : 'e-Fatura'} oluşturuluyor.`
+        : 'Fatura bilgisi anlaşılamadı. Örnek: "ABC Ltd için 5000 TL e-fatura kes"',
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: ADD_CUSTOMER
+  // ═══════════════════════════════════════════════════════════
+  private parseCustomer(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    const nameMatch = msg.match(/(?:m[üu][şs]teri|cari)\s+(?:ekle|olu[şs]tur)\s*:?\s*(.+?)(?:\s*(?:vergi|VKN|TCKN|tel|telefon|\.|$))/i);
+    if (nameMatch) extracted.name = nameMatch[1].trim();
+    else {
+      const simpleMatch = msg.match(/(?:ad[ıi]|isim|unvan)\s*:?\s*(.+?)(?:\s*(?:vergi|VKN|TCKN|tel|\.|$))/i);
+      if (simpleMatch) extracted.name = simpleMatch[1].trim();
+    }
+    const taxMatch = msg.match(/(?:vergi|VKN|TCKN)\s*(?:no|numaras[ıi]|numara)?\s*:?\s*(\d+)/i);
+    if (taxMatch) extracted.taxNumber = taxMatch[1];
+    const phoneMatch = msg.match(/(?:tel|telefon)\s*(?:no|numaras[ıi]|numara)?\s*:?\s*(\d[\d\s-]{8,15})/i);
+    if (phoneMatch) extracted.phone = phoneMatch[1].replace(/[\s-]/g, '');
+
+    return {
+      success: !!extracted.name, intent: 'ADD_CUSTOMER', action: 'API_CALL',
+      params: { endpoint: '/invoice/customer/frequent', method: 'POST', data: { name: extracted.name, taxNumber: extracted.taxNumber, phone: extracted.phone } },
+      extracted,
+      response: extracted.name ? `${extracted.name} müşteri olarak ekleniyor.` : 'Müşteri bilgisi anlaşılamadı.',
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: ADD_ACCOUNTANT
+  // ═══════════════════════════════════════════════════════════
+  private parseAccountant(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    const nameMatch = msg.match(/(?:muhasebeci|mali\s*m[üu][şs]avir)\s+(?:ekle|tan[ıi]mla)\s*:?\s*(.+?)(?:\s*(?:email|e-posta|tel|telefon|\.|$))/i);
+    if (nameMatch) extracted.name = nameMatch[1].trim();
+    else {
+      const snMatch = msg.match(/(?:ad[ıi]|isim)\s*:?\s*(.+?)(?:\s*(?:email|e-posta|tel|\.|$))/i);
+      if (snMatch) extracted.name = snMatch[1].trim();
+    }
+    const emailMatch = msg.match(/(?:email|e-posta)\s*:?\s*([\w.@]+)/i);
+    if (emailMatch) extracted.email = emailMatch[1];
+    const phoneMatch = msg.match(/(?:tel|telefon)\s*:?\s*(\d[\d\s-]{8,15})/i);
+    if (phoneMatch) extracted.phone = phoneMatch[1].replace(/[\s-]/g, '');
+
+    return {
+      success: !!extracted.name, intent: 'ADD_ACCOUNTANT', action: 'API_CALL',
+      params: { endpoint: '/users/profile', method: 'PUT', data: { accountantName: extracted.name, accountantEmail: extracted.email, accountantPhone: extracted.phone } },
+      extracted,
+      response: extracted.name ? `${extracted.name} muhasebeci olarak ekleniyor.` : 'Muhasebeci bilgisi anlaşılamadı.',
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: CREATE_INCOME
+  // ═══════════════════════════════════════════════════════════
+  private parseIncome(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    const amtMatch = msg.match(/(\d+\.?\d*)\s*(?:TL|₺|lira)/i);
+    if (amtMatch) extracted.amount = parseFloat(amtMatch[1]);
+    if (/nakliye|ta[şs][ıi]ma|y[üu]k/i.test(msg)) extracted.type = 'Nakliye Geliri';
+    else if (/kira/i.test(msg)) extracted.type = 'Kira Geliri';
+    else if (/sat[ıi][şs]/i.test(msg)) extracted.type = 'Satış';
+    else extracted.type = 'Diğer Gelir';
+    const descMatch = msg.match(/(?:gelir|tahsilat|kazan[çc]).*(?:a[çc][ıi]klama|not|olarak)\s*:?\s*(.+)/i);
+    if (descMatch) extracted.description = descMatch[1].trim();
+    else extracted.description = `${extracted.type} - ${extracted.amount || 0} ₺`;
+
+    return {
+      success: !!extracted.amount, intent: 'CREATE_INCOME', action: 'API_CALL',
+      params: { endpoint: '/finance/incomes', method: 'POST', data: { amount: extracted.amount, type: extracted.type, description: extracted.description } },
+      extracted,
+      response: extracted.amount ? `${extracted.amount} ₺ ${extracted.type} geliri kaydediliyor.` : 'Gelir bilgisi anlaşılamadı.',
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: SEARCH_FUEL_STATIONS
+  // ═══════════════════════════════════════════════════════════
+  private parseFuelStationSearch(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    const brands = ['OPET', 'Shell', 'BP', 'Total', 'Petrol Ofisi', 'Aytemiz', 'Lukoil', 'GO', 'Alpet'];
+    for (const b of brands) { if (msgLower.includes(b.toLowerCase())) { extracted.brand = b; break; } }
+    const CITIES = ['İstanbul','Ankara','İzmir','Bursa','Antalya','Konya','Adana','Mersin','Gaziantep'];
+    for (const c of CITIES) { if (msgLower.includes(this.turkishToAscii(c))) { extracted.city = c; break; } }
+    return {
+      success: true, intent: 'SEARCH_FUEL_STATIONS', action: 'NAVIGATE',
+      params: { screen: 'FuelStations', brand: extracted.brand, city: extracted.city },
+      extracted,
+      response: `${extracted.brand || 'Tüm'} akaryakıt istasyonları ${extracted.city || ''} görüntüleniyor.`,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: MAKE_RESERVATION
+  // ═══════════════════════════════════════════════════════════
+  private parseReservation(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    const timeMatch = msg.match(/saat\s*(\d{1,2})[.:](\d{2})/i);
+    if (timeMatch) extracted.time = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
+    const guestsMatch = msg.match(/(\d+)\s*(?:ki[şs]i|ki[şs]ilik)/i);
+    if (guestsMatch) extracted.partySize = parseInt(guestsMatch[1]);
+    const restMatch = msg.match(/(.+?)(?:restoran| lokanta| lokantas[ıi])/i);
+    if (restMatch) extracted.restaurant = restMatch[1].trim();
+    if (/bugün|bugun/i.test(msg)) extracted.date = new Date().toISOString().slice(0, 10);
+    else if (/yar[ıi]n/i.test(msg)) { const t = new Date(); t.setDate(t.getDate() + 1); extracted.date = t.toISOString().slice(0, 10); }
+
+    return {
+      success: true, intent: 'MAKE_RESERVATION', action: 'NAVIGATE',
+      params: { screen: 'Restaurants', time: extracted.time, partySize: extracted.partySize, date: extracted.date },
+      extracted,
+      response: `${extracted.restaurant || 'Restoran'} için ${extracted.date ? extracted.date : ''} ${extracted.time || ''} ${extracted.partySize ? extracted.partySize + ' kişi' : ''} rezervasyon sayfası açılıyor.`,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: CREATE_VEHICLE
+  // ═══════════════════════════════════════════════════════════
+  private parseVehicle(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    const plateMatch = msg.match(/(\d{2}\s*[A-Z]{1,3}\s*\d{2,4})/i);
+    if (plateMatch) extracted.plateNumber = plateMatch[1];
+    if (/t[ıi]r|çekici/i.test(msg)) extracted.vehicleType = 'Çekici (TIR)';
+    else if (/kamyon/i.test(msg)) extracted.vehicleType = 'Kamyon';
+    else if (/kamyonet/i.test(msg)) extracted.vehicleType = 'Kamyonet';
+    const tonMatch = msg.match(/(\d+)\s*ton/i);
+    if (tonMatch) extracted.tonnageCapacity = parseInt(tonMatch[1]) * 1000;
+
+    return {
+      success: !!extracted.plateNumber, intent: 'CREATE_VEHICLE', action: 'NAVIGATE',
+      params: { screen: 'VehicleForm', plateNumber: extracted.plateNumber, vehicleType: extracted.vehicleType, tonnageCapacity: extracted.tonnageCapacity },
+      extracted,
+      response: extracted.plateNumber ? `${extracted.plateNumber} plakalı araç kaydediliyor. Araç formu açılıyor.` : 'Araç bilgisi anlaşılamadı. Örnek: "34 ABC 123 plakalı çekici ekle"',
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: DELETE_ENTITY
+  // ═══════════════════════════════════════════════════════════
+  private parseDelete(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    if (/y[üu]k/i.test(msg)) { extracted.entityType = 'load'; extracted.entityLabel = 'Yük'; }
+    else if (/ara[çc]|kamyon|t[ıi]r/i.test(msg)) { extracted.entityType = 'vehicle'; extracted.entityLabel = 'Araç'; }
+    else if (/gider|harcama/i.test(msg)) { extracted.entityType = 'expense'; extracted.entityLabel = 'Gider'; }
+    else if (/gelir/i.test(msg)) { extracted.entityType = 'income'; extracted.entityLabel = 'Gelir'; }
+    else if (/ilan/i.test(msg)) { extracted.entityType = 'listing'; extracted.entityLabel = 'İlan'; }
+    else { extracted.entityType = 'unknown'; extracted.entityLabel = 'Kayıt'; }
+    const idMatch = msg.match(/(?:no|numara|ID|kodu)\s*:?\s*(\w+)/i);
+    if (idMatch) extracted.entityId = idMatch[1];
+
+    return {
+      success: true, intent: 'DELETE_ENTITY', action: 'CONFIRM_DELETE',
+      params: { entityType: extracted.entityType, entityId: extracted.entityId, entityLabel: extracted.entityLabel },
+      extracted,
+      response: `${extracted.entityLabel} silme işlemi için onay gerekiyor. ${extracted.entityId ? 'ID: ' + extracted.entityId : ''} Silmek istediğinize emin misiniz?`,
     };
   }
 
