@@ -4,9 +4,12 @@ import { useTheme } from '../../hooks/useTheme';
 import { spacing, radius, typography } from '../../theme';
 import { loadService } from '../../services/loadService';
 import { useLoadAcceptStore } from '../../store/loadAcceptStore';
+import { handleError } from '../../services/errorService';
 import { hapticLight, hapticMedium, hapticSuccess } from '../../utils/haptic';
 import { apiClient } from '../../services/api';
 import Card from '../../components/shared/Card';
+import ErrorState from '../../components/shared/ErrorState';
+import ListSkeleton from '../../components/shared/ListSkeleton';
 
 const LOAD_TYPE_LABELS: Record<string, string> = { tam_yuk: 'Tam Yük', kismi_yuk: 'Kısmi', evden_eve: 'Evden Eve', sehir_ici: 'Şehir İçi' };
 const URGENCY_LABELS: Record<string, string> = { Dusuk: 'Düşük', Normal: 'Normal', Yuksek: 'Yüksek' };
@@ -16,6 +19,7 @@ export default function LoadAcceptDetail({ navigation, route }: any) {
   const { colors } = useTheme();
   const { placeBid } = useLoadAcceptStore();
   const [load, setLoad] = useState<any>(null);
+  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showBid, setShowBid] = useState(false);
   const [bidAmount, setBidAmount] = useState('');
@@ -25,14 +29,14 @@ export default function LoadAcceptDetail({ navigation, route }: any) {
   const [instantBooking, setInstantBooking] = useState(false);
   const [rateData, setRateData] = useState<any>(null);
 
-  useEffect(() => {
-    loadService.getById(loadId).then((data) => { setLoad(data); setLoading(false); setRateData(null); }).catch(() => setLoading(false));
-    apiClient.get(`/instant-book/${loadId}/status`).then(r => {
-      setInstantStatus(r.data || r);
-    }).catch(() => {});
-  }, [loadId]);
+  const fetchLoad = () => {
+    setLoading(true); setError(null);
+    loadService.getById(loadId).then((data) => { setLoad(data); setRateData(null); }).catch((e) => { handleError(e, { screen: 'LoadAcceptDetail' }); setError('Yük detayı yüklenirken bir hata oluştu.'); }).finally(() => setLoading(false));
+    apiClient.get(`/instant-book/${loadId}/status`).then(r => { setInstantStatus(r.data || r); }).catch(() => {});
+  };
 
-  // Yük yüklendikten sonra rota fiyat istihbaratını çek
+  useEffect(() => { fetchLoad(); }, [loadId]);
+
   useEffect(() => {
     if (!load?.fromCity || !load?.toCity) return;
     apiClient.get(`/rates/route?from=${encodeURIComponent(load.fromCity)}&to=${encodeURIComponent(load.toCity)}`)
@@ -86,6 +90,10 @@ export default function LoadAcceptDetail({ navigation, route }: any) {
   if (!load) return <View style={[styles.container, { backgroundColor: colors.background }, styles.center]}><Text style={{ color: colors.textSecondary }}>Yük bulunamadı</Text></View>;
 
   const typeLabel = LOAD_TYPE_LABELS[load.loadType] || load.loadType;
+
+  if (loading) return <View style={[styles.container, { backgroundColor: colors.background }]}><ListSkeleton count={3} /></View>;
+  if (error) return <View style={[styles.container, { backgroundColor: colors.background }]}><ErrorState message={error} onRetry={fetchLoad} /></View>;
+  if (!load) return <View style={[styles.container, { backgroundColor: colors.background }]}><ErrorState message="Yük bulunamadı." /></View>;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
