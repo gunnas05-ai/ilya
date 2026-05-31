@@ -150,6 +150,7 @@ export class AuthService {
   }
 
   // ── Refresh Token ──────────────────────────────────────────
+  // Her refresh'te yeni token uretilir, eski token gecersiz olur (rotation)
   async refresh(refreshToken: string) {
     try {
       const payload = this.jwtService.verify(refreshToken, {
@@ -157,11 +158,15 @@ export class AuthService {
       });
       const user = await this.userRepo.findOne({ where: { id: payload.sub } });
       if (!user || user.refreshToken !== refreshToken) {
-        throw new UnauthorizedException('Geçersiz refresh token');
+        throw new UnauthorizedException('Geçersiz veya daha once kullanilmis refresh token');
       }
+      // generateTokens() yeni refresh token uretip eskisini override eder
       return this.generateTokens(user);
-    } catch {
-      throw new UnauthorizedException('Refresh token süresi dolmuş');
+    } catch (err: any) {
+      if (err instanceof UnauthorizedException) throw err;
+      if (err?.name === 'TokenExpiredError') throw new UnauthorizedException('Refresh token suresi dolmus, tekrar giris yapin');
+      if (err?.name === 'JsonWebTokenError') throw new UnauthorizedException('Gecersiz refresh token');
+      throw new UnauthorizedException('Refresh token gecersiz veya suresi dolmus');
     }
   }
 
