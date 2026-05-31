@@ -1,3 +1,14 @@
+/**
+ * FinanceService — Gelir/Gider/Hatırlatıcı/Tekrarlayan islemler.
+ *
+ * REFACTOR PLANI (teknik borc):
+ * Bu servis 393 satir — asagidakilere bolunmeli:
+ *   - IncomeService      (gelir CRUD)
+ *   - ExpenseService     (gider CRUD + OCR)
+ *   - DashboardService   (ozet, trend, dashboard)
+ *   - ReminderService    (hatirlatici cron)
+ *   - RecurringService   (tekrarlayan gelir)
+ */
 import { Injectable, Logger, Inject } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
