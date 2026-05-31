@@ -1,5 +1,6 @@
 import { Controller, Post, Body, Get, HttpCode, HttpStatus, UseGuards, Req, Headers, Patch } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { TotpService } from './totp.service';
 import { IsEmail, IsString, MinLength, IsOptional, IsEnum, IsBoolean } from 'class-validator';
@@ -91,24 +92,28 @@ export class AuthController {
   ) {}
 
   @Post('register')
+  @Throttle({ default: { limit: 3, ttl: 60000 } }) // 3 kayit/dakika
   async register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
   }
 
   @Post('verify-otp')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 dogrulama/dakika
   async verifyOtp(@Body() dto: VerifyOtpDto) {
     return this.authService.verifyOtp(dto.userId, dto.otpCode);
   }
 
   @Post('resend-otp')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 2, ttl: 120000 } }) // 2 yeniden gonderim/2dk
   async resendOtp(@Body() dto: ResendOtpDto) {
     return this.authService.resendOtp(dto.userId);
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 giris/dakika (brute-force koruma)
   async login(@Body() dto: LoginDto, @Headers('x-device-fingerprint') fingerprint?: string) {
     return this.authService.login(dto.email, dto.password, fingerprint, dto.rememberMe);
   }
