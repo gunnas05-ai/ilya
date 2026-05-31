@@ -1,0 +1,425 @@
+================================================================================
+KAPTAN LOJİSTİK - ENTERPRISE DENETİM RAPORU
+Tarih: 31 Mayıs 2026
+Kapsam: Mobil (React Native) + Backend (NestJS) + Veritabanı
+================================================================================
+
+================================================================================
+1. KRİTİK HATALAR (Hemen Düzeltilmeli)
+================================================================================
+
+1.1 [BACKEND] Hardcoded JWT Secret Fallback
+    Dosya: backend/src/auth/auth.module.ts:16
+    Sorun: process.env.JWT_SECRET tanımlı değilse 'kaptan-jwt-secret-dev-only'
+           fallback'i kullanılıyor. Deployment hatasında tüm JWT'ler forge edilebilir.
+    Çözüm: Fallback'i kaldırın, env var yoksa throw edin.
+
+1.2 [BACKEND] Hardcoded TX Signing Key
+    Dosya: backend/src/escrow/wallet.service.ts:10
+    Sorun: TX_SIGNING_SECRET yoksa 'kaptan-tx-signing-key-dev' kullanılıyor.
+           Tüm cüzdan işlem imzaları forge edilebilir.
+    Çözüm: Env var zorunlu yapın, fallback'i kaldırın.
+
+1.3 [BACKEND] WhatsAppController Tamamen Korumasız
+    Dosya: backend/src/common/whatsapp.controller.ts
+    Sorun: getSettings, updateSettings, sendTest — hiçbirinde auth guard yok.
+           updateSettings veritabanına yazıyor, sendTest rastgele numaraya
+           WhatsApp mesajı gönderiyor.
+    Çözüm: @UseGuards(AuthGuard('jwt'), RolesGuard) + @Roles('super_admin') ekleyin.
+
+1.4 [BACKEND] ChatController Tamamen Korumasız
+    Dosya: backend/src/chat/chat.controller.ts:1
+    Sorun: getRooms, createRoom, sendMessage, deleteMessage, searchMessages —
+           hiçbir auth guard yok. Herkes tüm sohbetleri okuyabilir/silebilir.
+    Çözüm: Sınıf seviyesinde @UseGuards(AuthGuard('jwt')) ekleyin.
+
+1.5 [BACKEND] Token Fallback XOR Şifreleme (Şifreleme Değil)
+    Dosya: mobile/src/services/secureStorage.ts:15-21
+    Sorun: expo-secure-store yoksa token'lar AsyncStorage'da XOR ile saklanıyor.
+           XOR anahtarı sabit (0x5A) — 30 saniyede kırılır.
+    Çözüm: SecureStore yoksa kullanıcıyı uyarın, hassas veriyi AsyncStorage'a
+           asla yazmayın.
+
+1.6 [BACKEND] forwardRef() Döngüsü
+    Dosya: backend/src/bids/bids.module.ts:19, backend/src/escrow/escrow.module.ts:40
+    Sorun: BidsModule -> EscrowModule -> QrModule döngüsü var. forwardRef()
+           kullanımı bunun göstergesi.
+    Çözüm: Ortak bir SharedModule oluşturun veya event-driven yaklaşıma geçin.
+
+1.7 [MOBİL] 35/68 Ekranda ErrorState Yok
+    Dosya: mobile/src/screens/ (35 dosya)
+    Sorun: Kullanıcı API hatası aldığında boş ekran veya sonsuz loading görüyor.
+           Hiçbir geri bildirim yok.
+    Çözüm: Her ekrana ErrorState + EmptyState + LoadingState ekleyin.
+
+1.8 [MOBİL] 22+ Boş Catch Blok
+    Dosyalar: haptic.ts, secureStorage.ts, authStore.ts, usageAnalytics.ts,
+             notificationService.ts, offlineQueue.ts, locationPoller.ts vb.
+    Sorun: Hatalar sessizce yutuluyor. Debug imkansız.
+    Çözüm: handleError() çağrısı ekleyin.
+
+================================================================================
+2. YÜKSEK ÖNCELİKLİ EKSİKLER
+================================================================================
+
+2.1 [BACKEND] Refresh Token Rotasyonu Yok
+    Dosya: backend/src/auth/auth.service.ts:153-166
+    Sorun: Refresh token kullanıldıktan sonra rotate edilmiyor. Token çalınırsa
+           7-30 gün boyunca geçerli.
+    Çözüm: Her refresh'te yeni token üretip eskisini invalidate edin.
+
+2.2 [BACKEND] SQLite'da synchronize:true
+    Dosya: backend/src/database-config.ts:35
+    Sorun: PostgreSQL yoksa SQLite'a düşüyor ve synchronize:true ile tüm
+           şema değişikliklerini otomatik uyguluyor. Kolon/tablo SİLEBİLİR.
+    Çözüm: SQLite'ta da migration kullanın veya synchronize'ı kaldırın.
+
+2.3 [BACKEND] Eksik Index'ler
+    Dosyalar: loads/load.entity.ts, bids/bid.entity.ts, escrow/escrow.entity.ts
+    Sorun: fromCity, toCity, loadType, vehicleType, creatorId, loadId, carrierId
+           — hiçbirinde @Index() yok. Büyük veride full table scan.
+    Çözüm: Sorgulanan tüm kolonlara @Index() ekleyin.
+
+2.4 [BACKEND] Input Validation Eksikliği
+    Dosyalar: Çoğu controller
+    Sorun: @Body() body: any kullanılıyor. class-validator DTO'ları sadece
+           AuthController ve UsersController'da var. Hatalı veri runtime'da patlıyor.
+    Çözüm: Tüm endpoint'lere typed DTO + class-validator ekleyin.
+
+2.5 [BACKEND] CommonModule @Global() Aşırı Kullanımı
+    Dosya: backend/src/common/common.module.ts:39
+    Sorun: 16 servis + Kafka bağlantısı global yapılmış. Bağımlılık grafiği
+           görünmez hale gelmiş.
+    Çözüm: @Global()'i kaldırın, modülleri explicit import edin.
+
+2.6 [MOBİL] Tüm Ekranlar Eager Loading
+    Dosya: mobile/src/navigation/index.tsx:15-72
+    Sorun: 62 ekranın tamamı statik import ile başlangıçta yükleniyor.
+           Başlangıç süresi çok uzun.
+    Çözüm: React.lazy() + Suspense ile lazy loading uygulayın.
+
+2.7 [MOBİL] 30+ Ekran Servis Katmanını Atlıyor
+    Dosyalar: HomeScreen, AdminPanelScreen, WalletScreen, TaxDashboardScreen vb.
+    Sorun: apiClient doğrudan ekranlardan çağrılıyor. Response unwrap mantığı
+           her ekranda tekrar ediliyor. Test edilemez.
+    Çözüm: Tüm API çağrılarını servis katmanına taşıyın.
+
+2.8 [MOBİL] Zustand Store'lar React Query Yerine Server State Tutuyor
+    Dosyalar: loadAcceptStore, trackingStore, analyticsStore, returnLoadStore,
+             poiStore, carrierStore
+    Sorun: React Query kurulu ama kullanılmıyor. Her store kendi loading/error
+           state'ini yönetiyor. Cache yok, refetch yok.
+    Çözüm: Server state'i React Query'ye taşıyın, Zustand'ı sadece UI state
+           için kullanın.
+
+2.9 [MOBİL] Zero React.memo Kullanımı
+    Genel: Tüm kod tabanı
+    Sorun: Hiçbir bileşende React.memo yok. Her parent render'da tüm child'lar
+           yeniden render ediliyor.
+    Çözüm: Liste öğelerine, kart bileşenlerine, navigation bileşenlerine
+           React.memo ekleyin.
+
+2.10 [MOBİL] Inline Style'lar Her Render'da Yeniden Oluşuyor
+    Genel: Neredeyse tüm ekranlar
+    Sorun: style={{...}} inline objeler her render'da yeni referans oluşturuyor.
+           Gereksiz re-render ve GC baskısı.
+    Çözüm: Tüm stilleri StyleSheet.create() içine taşıyın.
+
+================================================================================
+3. ORTA SEVİYE İYİLEŞTİRMELER
+================================================================================
+
+3.1 [BACKEND] @Permissions() Decorator'ı Hiç Kullanılmamış
+    Dosya: backend/src/common/roles.decorator.ts:7
+    Sorun: Permission-based yetkilendirme için decorator tanımlanmış ama
+           hiçbir controller'da @Permissions() çağrısı yok. Ölü kod.
+    Çözüm: Ya kullanın ya da kaldırın.
+
+3.2 [BACKEND] Tutarsız Response Formatı
+    Dosyalar: ChatController, SozlesmeController, LoadsController, AuthController
+    Sorun: Bazı endpoint'ler {success,data}, bazıları {data,meta}, bazıları
+           direkt obje dönüyor. Client tarafı her endpoint için farklı parse.
+    Çözüm: Tüm endpoint'leri TransformInterceptor'a uygun hale getirin.
+
+3.3 [BACKEND] In-Memory Rate Limiting
+    Dosya: backend/src/common/rate-limit.guard.ts:5-6
+    Sorun: BLOCKED_IPS ve EXCEED_COUNTS in-memory Map. Multi-instance'da
+           her instance'ın kendi state'i var. Saldırgan instance'lar arası
+           geçiş yaparak rate-limit'i aşabilir.
+    Çözüm: Redis-backed rate limiting kullanın.
+
+3.4 [BACKEND] AuthModule JwtModule'u Export Ediyor
+    Dosya: backend/src/auth/auth.module.ts:22
+    Sorun: JwtModule export edilince her modül JwtService ile token
+           oluşturabilir. Yetkisiz token üretimi riski.
+    Çözüm: Sadece AuthService'i export edin.
+
+3.5 [BACKEND] God Class'lar
+    Dosyalar: finance/finance.service.ts (393 satır), bids/bids.service.ts (388),
+             fuel-stations/fuel-stations.controller.ts (498 satır)
+    Sorun: Tek sorumluluk prensibi ihlal edilmiş.
+    Çözüm: FinanceService'i IncomeService, ExpenseService, DashboardService,
+           ReminderService olarak bölün.
+
+3.6 [MOBİL] Emoji İkon Kullanımı
+    Dosyalar: HomeScreen, AdminPanelScreen, MainTabs, ErrorState, EmptyState
+    Sorun: İkon yerine emoji kullanılıyor. Android'de tutarsız render,
+           erişilebilirlik yok, renklendirilemez.
+    Çözüm: @expo/vector-icons (zaten kurulu) kullanın.
+
+3.7 [MOBİL] Erişilebilirlik Neredeyse Yok
+    Genel: 68 ekranda sadece 7 dosyada accessibilityLabel/accessibilityRole var.
+    Sorun: Ekran okuyucu kullananlar uygulamayı kullanamaz.
+    Çözüm: Tüm interaktif bileşenlere accessibility props ekleyin.
+
+3.8 [MOBİL] i18n Sistemi Kurulu Ama Kullanılmıyor
+    Dosyalar: i18n/index.ts, i18n/tr.json, i18n/en.json mevcut
+    Sorun: 68 ekranın neredeyse tamamında sabit Türkçe string'ler var.
+           useTranslation() sadece 6 dosyada kullanılıyor.
+    Çözüm: Tüm UI metinlerini i18n anahtarlarına taşıyın.
+
+3.9 [MOBİL] Alert.alert Aşırı Kullanımı
+    Dosyalar: 41 ekran + 3 servis + 1 hook
+    Sorun: Bilgilendirme mesajları için bile Alert.alert kullanılıyor.
+           Sürüş modunda kullanıcıyı blokluyor.
+    Çözüm: Bilgi/başarı/hata için toast (zaten kurulu), sadece kritik
+           onaylar için Alert kullanın.
+
+3.10 [MOBİL] Offline Queue Idempotency Yok
+    Dosya: mobile/src/services/offlineQueue.ts:96-111
+    Sorun: İstek sunucuda başarılı olup yanıt ağ hatası alırsa, aynı istek
+           tekrar gönderiliyor. Çift teklif, çift harcama riski.
+    Çözüm: Her isteğe idempotency key ekleyin, sunucu tarafında tekrar
+           eden istekleri tespit edin.
+
+================================================================================
+4. GÜVENLİK RİSKLERİ
+================================================================================
+
+4.1 [BACKEND] .env Dosyası Git'te
+    Dosya: backend/.env
+    Risk: JWT_SECRET, JWT_REFRESH_SECRET, ENCRYPTION_KEY, IYZICO anahtarları
+          repoya push'lanmış durumda. Repo publik olursa tüm secret'lar açığa çıkar.
+    Çözüm: .env'i .gitignore'a ekleyin, mevcut secret'ları rotate edin.
+
+4.2 [MOBİL] SSL Pinning Yok
+    Dosya: mobile/src/services/securityService.ts:43-55
+    Risk: isSecureConnection sadece https:// prefix'i kontrol ediyor. Zararlı
+          CA sertifikasıyla MITM yapılabilir.
+    Çözüm: react-native-ssl-pinning veya TrustKit entegre edin.
+
+4.3 [MOBİL] Root/Jailbreak Tespiti Boş
+    Dosya: mobile/src/services/securityService.ts:17-24
+    Risk: checkDeviceIntegrity() içi boş — her zaman true dönüyor.
+    Çözüm: Gerçek root/jailbreak tespiti ekleyin (SafetyNet, JailMonkey).
+
+4.4 [BACKEND] EscrowAdminController Yetkisiz
+    Dosya: backend/src/vehicles/vehicles.controller.ts:99-109
+    Risk: admin/escrow endpoint'leri sadece JWT kontrolü yapıyor, rol kontrolü
+          yok. Herhangi bir authenticated kullanıcı escrow'u toggle'layabilir.
+    Çözüm: @Roles('super_admin', 'admin') ekleyin.
+
+4.5 [MOBİL] Crash Report Spoofing
+    Dosya: mobile/src/services/crashReporting.ts, backend/src/common/crash-report.controller.ts:18
+    Risk: Crash report endpoint'i auth gerektirmiyor. userId ve userEmail client
+          tarafından gönderiliyor — herkes istediği kullanıcı adına crash report
+          gönderebilir.
+    Çözüm: userId'yi JWT'den alın, client'tan kabul etmeyin.
+
+4.6 [BACKEND] SozlesmeController Korumasız
+    Dosya: backend/src/common/sozlesme.controller.ts:27-29
+    Risk: Admin endpoint'leri inline rol kontrolü yapıyor ama req.user undefined
+          olunca "Cannot read property 'role' of undefined" hatası alıyor.
+          Hata mesajı stack trace içeriyor olabilir.
+    Çözüm: @UseGuards(AuthGuard('jwt'), RolesGuard) + @Roles('super_admin')
+           ekleyin.
+
+================================================================================
+5. PERFORMANS PROBLEMLERİ
+================================================================================
+
+5.1 [MOBİL] ScrollView ile Liste Render (FlatList Kullanılmalı)
+    Ekranlar: AdminPanelScreen, AnalyticsDashboardScreen, PlanManagementScreen,
+             CommissionConfigScreen, CreditPackageScreen, CategoryBrowseScreen,
+             PartDisputeScreen, DocumentCenterScreen, SystemSettingsScreen
+    Sorun: Dinamik liste verileri ScrollView'da render ediliyor. Tüm öğeler
+           aynı anda DOM'da — 100+ öğede çökme.
+    Çözüm: FlatList'e geçin, getItemLayout, windowSize, maxToRenderPerBatch
+           optimize edin.
+
+5.2 [MOBİL] Gereksiz useEffect Tetiklenmeleri
+    Dosya: mobile/src/screens/load-create/Step1Common.tsx:74-76
+    Sorun: Birden fazla alan değişikliğinde ayrı ayrı useEffect tetikleniyor.
+    Çözüm: useMemo veya tek bir onChange handler kullanın.
+
+5.3 [MOBİL] setTimeout Cleanup Eksik
+    Dosya: mobile/src/screens/RestaurantsScreen.tsx:196-204
+    Sorun: 4 zincirleme setTimeout (5sn, 12sn, 20sn, 30sn) cleanup
+           yapılmamış. Unmount olan component'e state update.
+    Çözüm: useEffect cleanup'ında clearTimeout ekleyin.
+
+5.4 [MOBİL] Tüm Ekranlar Statik Import
+    Dosya: mobile/src/navigation/index.tsx:15-72
+    Sorun: 62 ekran eager-loading. Başlangıçta hepsi hafızada.
+    Çözüm: React.lazy() ile dynamic import.
+
+5.5 [MOBİL] WebSocket URL Türetme Kırılgan
+    Dosya: mobile/src/services/websocket.ts:10, mobile/src/constants/config.ts:43
+    Sorun: WS URL'si API URL'sinden string replace ile türetiliyor. API
+           URL pattern'i değişirse WS sessizce kopar.
+    Çözüm: Açıkça wsUrl tanımlayın.
+
+================================================================================
+6. ÖLÇEKLENEBİLİRLİK RİSKLERİ
+================================================================================
+
+6.1 [BACKEND] SQLite Production'da Kullanılamaz
+    Dosya: backend/src/database-config.ts:30-37
+    Risk: PostgreSQL yoksa SQLite'a düşüyor. 100+ eşzamanlı kullanıcıda
+          SQLite kilitlenir. PostGIS geometry veri tipleri SQLite'ta çalışmaz.
+    Çözüm: PostgreSQL zorunlu yapın, SQLite fallback'i sadece test için
+           bırakın.
+
+6.2 [BACKEND] Rate Limit In-Memory — Multi-Instance Sorunu
+    Dosya: backend/src/common/rate-limit.guard.ts:5-6
+    Risk: Yatay ölçeklemede her instance kendi rate-limit state'ine sahip.
+    Çözüm: Redis-backed rate limiting.
+
+6.3 [BACKEND] Kafka Global Bağlantı
+    Dosya: backend/src/common/common.module.ts:43
+    Risk: CommonModule @Global() olduğu için Kafka bağlantısı da global.
+          Kafka down olursa tüm uygulama etkilenir.
+    Çözüm: Kafka'yı ayrı bir modüle alın, sadece ihtiyacı olan modüller
+           import etsin.
+
+6.4 [MOBİL] Offline Queue İdempotency Yok
+    Risk: Ölçeklenince aynı istek birden fazla instance'tan gelebilir.
+    Çözüm: Idempotency key + sunucu tarafı dedup.
+
+================================================================================
+7. UX/UI PROBLEMLERİ
+================================================================================
+
+7.1 [MOBİL] Emoji'ler İkon Olarak Kullanılıyor
+    Etki: Android cihazlarda tutarsız görünüm, erişilebilirlik yok.
+    Çözüm: @expo/vector-icons kullanın.
+
+7.2 [MOBİL] Hardcoded Renkler
+    Dosyalar: navigation/index.tsx:257 (#FF6B00), MainTabs.tsx:206 (#FF6B00),
+             toast.tsx:26-29 (#10B981, #EF4444)
+    Etki: Dark mode'da kontrast sorunu, tema değişiminde tutarsızlık.
+    Çözüm: Tüm renkleri theme/colors.ts'ten alın.
+
+7.3 [MOBİL] Admin Ekran Başlıkları Eksik
+    Dosya: mobile/src/navigation/index.tsx
+    Sorun: TestCenter, PermissionMatrix, AuditLog, SecurityCenter, SystemSettings,
+           RoutePlanner, DriverDashboard — i18nKey tanımlanmamış, başlık yok.
+    Çözüm: i18nKey ekleyin veya buildScreenOptions'da title tanımlayın.
+
+7.4 [MOBİL] Erişilebilirlik Yok
+    Etki: Screen reader kullanıcıları uygulamayı kullanamaz. App Store
+          reddi riski.
+    Çözüm: Tüm interaktif elementlere accessibilityLabel, accessibilityRole,
+           accessibilityHint ekleyin.
+
+================================================================================
+8. VERİTABANI MİMARİSİ SORUNLARI
+================================================================================
+
+8.1 [BACKEND] Eksik Index'ler — Özet
+    - User: role kolonunda index yok
+    - Load: fromCity, toCity, loadType, vehicleType, creatorId, status'da yok
+    - Bid: loadId, carrierId'de yok
+    - EscrowTransaction: loadId, shipperId, carrierId'de yok
+    - WalletTransaction: userId'de yok
+
+8.2 [BACKEND] JSONB SQLite Uyumsuz
+    - User.missingFields jsonb tipinde — SQLite'ta text olarak sync'leniyor
+    - VehiclePosition.position geometry tipinde — SQLite'ta desteklenmiyor
+    - StorageMethod enum'ları SQLite'ta varchar olarak saklanıyor
+
+8.3 [BACKEND] Migration Yok (SQLite Modu)
+    - PostgreSQL'de migration'lar çalışıyor, SQLite'ta synchronize:true
+    - İki ortam arasında şema farklılıkları birikebilir
+
+================================================================================
+9. PROFESYONEL TAVSİYELER
+================================================================================
+
+9.1 Clean Architecture'a Geçiş
+    Mevcut: Modül başına controller+service+entity (NestJS standardı)
+    Öneri: Domain-driven katmanlar — her modülde application/domain/infrastructure
+
+9.2 CI/CD Pipeline
+    Eksik: GitHub Actions, test otomasyonu, lint-staged, pre-commit hook'lar
+    Öneri: PR başına otomatik test, lint, type-check, build
+
+9.3 Monitoring & Observability
+    Mevcut: OpenTelemetry tracing, Prometheus metrics endpoint
+    Eksik: Alert yapılandırması, dashboard, log aggregation (ELK/Loki)
+    Öneri: Grafana dashboard + alert kuralları ekleyin
+
+9.4 Environment Yönetimi
+    Mevcut: .env dosyası (git'te!), NODE_ENV kontrolü
+    Öneri: .env.example + .env.development + .env.production, git'e sadece
+           .env.example commit. Secret'ları vault'ta saklayın.
+
+9.5 Test Coverage
+    Mobile: 100 test (iyi), Detox E2E hazır
+    Backend: 4/12 suite geçiyor, çoğu kırık
+    Öneri: Backend testlerini düzeltin, %80 coverage hedefleyin
+
+================================================================================
+10. APP STORE / PLAY STORE HAZIRLIĞI
+================================================================================
+
+10.1 Crash Riskleri: Crash reporting backend'e bağlı ama Sentry DSN tanımlı
+     değil. Production'da crash'ler gözlemlenemez.
+
+10.2 Analytics Eksik: usageAnalytics servisi yazılmış ama sadece __DEV__
+     kontrolü ile devre dışı. Production'da hiç veri toplanmıyor.
+
+10.3 Push Notification: Token kaydı yapılıyor ama gerçek push gönderimi için
+     FCM/APNs yapılandırması eksik.
+
+10.4 App Version: Zorunlu güncelleme mekanizması var ama store linkleri
+     placeholder (id0000000000). Gerçek store ID'leri ile değiştirilmeli.
+
+10.5 Gizlilik: KVKK metni var ama uygulama içinde veri toplama izni
+     (ATT prompt for iOS) yok. Apple reddedebilir.
+
+================================================================================
+11. YAPILMASI GEREKEN ÖNCELİK SIRASI
+================================================================================
+
+ACİL (Bu Hafta):
+1.  .env'i git'ten çıkar, tüm secret'ları rotate et
+2.  WhatsAppController ve ChatController'a auth guard ekle
+3.  JWT_SECRET ve TX_SIGNING_KEY fallback'lerini kaldır
+4.  EscrowAdminController'a @Roles() ekle
+5.  Refresh token rotasyonu uygula
+
+YÜKSEK (Bu Ay):
+6.  SQLite'ta synchronize:true'yu kaldır
+7.  Eksik index'leri ekle (Load, Bid, Escrow, User)
+8.  Tüm endpoint'lere typed DTO + class-validator ekle
+9.  @Global() CommonModule'i parçala
+10. forwardRef() döngülerini kır (Bids-Escrow-Qr)
+
+ORTA (2 Ay):
+11. Mobile: 62 ekrana lazy loading uygula
+12. Mobile: Server state'i React Query'ye taşı
+13. Mobile: Tüm ekranlara ErrorState ekle
+14. Mobile: Alert.alert → toast dönüşümü
+15. Backend: God class'ları böl
+
+DÜŞÜK (3 Ay):
+16. Mobile: Emoji → @expo/vector-icons geçişi
+17. Mobile: Erişilebilirlik (a11y) ekle
+18. Mobile: i18n kullanımını yaygınlaştır
+19. Backend: Response formatını standardize et
+20. CI/CD pipeline + monitoring + Grafana
+
+================================================================================
+RAPOR SONU
+================================================================================
