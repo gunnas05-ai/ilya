@@ -79,6 +79,8 @@ export class AuthService {
       // ISLETME fields
       businessType: dto.businessType,
       businessAddress: dto.businessAddress,
+      // GENEL
+      inviteCode: dto.inviteCode,
     });
 
     await this.userRepo.save(user);

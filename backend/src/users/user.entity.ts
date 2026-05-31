@@ -139,6 +139,9 @@ export class User {
   @Column({ nullable: true })
   taxOffice: string;
 
+  @Column({ nullable: true })
+  inviteCode: string; // Davet kodu — GENEL kullanici kaydinda
+
   @Column({ default: false })
   escrowAccountVerified: boolean;
 
