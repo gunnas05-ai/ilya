@@ -32,11 +32,14 @@ export const PremiumButton = ({ title, onPress, loading, type = 'primary', style
       : '#FFFFFF';
 
   return (
-    <TouchableOpacity 
-      style={[styles.button, { backgroundColor: bgColor }, style]} 
+    <TouchableOpacity
+      style={[styles.button, { backgroundColor: bgColor }, style]}
       onPress={handlePress}
       activeOpacity={0.8}
       disabled={loading}
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: !!loading }}
     >
       {loading ? (
         <ActivityIndicator color={textColor} />

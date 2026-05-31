@@ -21,10 +21,10 @@ export class SozlesmeController {
     const setting = await this.settingsRepo.findOne({
       where: { key: 'privacy_agreement_text' },
     });
-    return {
+    return { success: true, data: {
       text: setting?.value || 'Gizlilik Sözleşmesi metni henüz tanımlanmamıştır.',
       updatedAt: setting?.updatedAt || null,
-    };
+    }};
   }
 
   /** Admin: Update privacy agreement or KVKK text */
@@ -60,6 +60,6 @@ export class SozlesmeController {
     });
     const result: Record<string, string> = {};
     settings.forEach((s) => { result[s.key] = s.value; });
-    return result;
+    return { success: true, data: result };
   }
 }
