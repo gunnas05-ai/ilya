@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, TouchableOpacity, Modal, StyleSheet, Animated } from 'react-native';
+import * as Speech from 'expo-speech';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../hooks/useTheme';
@@ -110,11 +111,9 @@ export function PersistentTabBar() {
 
   const handleHeyKaptan = () => {
     const greeting = `${getGreeting()}${userName ? ' ' + userName + ' Bey' : ''}, size nasıl yardımcı olabilirim?`;
-    try {
-      const Speech = require('expo-speech');
-      Speech.speak(greeting, { language: 'tr-TR', rate: 0.85 });
-    } catch {}
-    navigation.navigate('AiDialog');
+    Speech.speak(greeting, { language: 'tr-TR', rate: 0.85 });
+    // Greeting'i AiDialog'e ilk mesaj olarak ilet
+    navigation.navigate('AiDialog', { initialMessage: greeting });
   };
 
   const menuItems = FAB_MENU_ITEMS.filter((item) => !item.perm || can(item.perm as any));

@@ -21,14 +21,18 @@ function cleanPhone(raw: string): string {
   return digits;
 }
 
-export default function AiDialogScreen({ navigation }: any) {
+export default function AiDialogScreen({ navigation, route }: any) {
   const { colors } = useTheme();
   const { updateFormData } = useLoadCreateStore();
   const flatListRef = useRef<FlatList>(null);
+  const inputRef = useRef<TextInput>(null);
+  const initialMsg = route?.params?.initialMessage;
 
   const [messages, setMessages] = useState<Message[]>([{
     id: '0', role: 'assistant',
-    text: '🎤 Merhaba! Ben Kaptan AI Asistan. Şunları yapabilirim:\n\n📦 **Yük Ekle:** "İstanbul\'dan İzmir\'e 27 ton ham demir"\n🔍 **Yük Ara:** "En yakın yükleri sırala" veya "İstanbul\'daki 10 ton üstü yükleri göster"\n🚛 **Araç Ara:** "4 milyonluk araç arıyorum" veya "Ankara\'da kamyon ilanları"\n💰 **Gider Yaz:** "500 TL yemek gideri yaz"\n⛽ **Yakıt Kaydet:** "OPET\'ten 350 litre mazot aldım litre fiyatı 20 TL"\n🗺️ **Gezin:** "Profili aç", "Finans sayfasına git", "Cüzdanı göster"\n\n"Bulunduğum konum" derseniz GPS\'ten alırım.',
+    text: initialMsg
+      ? `🎤 ${initialMsg}\n\nKonuşarak yük ekleyebilir, arama yapabilir, gider yazabilir veya istediğiniz sayfaya gidebilirsiniz.`
+      : '🎤 Merhaba! Ben Kaptan AI Asistan. Şunları yapabilirim:\n\n📦 **Yük Ekle:** "İstanbul\'dan İzmir\'e 27 ton ham demir"\n🔍 **Yük Ara:** "En yakın yükleri sırala"\n🚛 **Araç Ara:** "4 milyonluk araç arıyorum"\n💰 **Gider Yaz:** "500 TL yemek gideri yaz"\n⛽ **Yakıt Kaydet:** "OPET\'ten 350 litre mazot aldım"\n🗺️ **Gezin:** "Profili aç", "Finans sayfasına git"\n\n"Bulunduğum konum" derseniz GPS\'ten alırım.',
   }]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
