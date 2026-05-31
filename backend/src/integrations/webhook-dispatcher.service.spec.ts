@@ -22,8 +22,8 @@ describe('WebhookDispatcherService', () => {
     isActive: true,
     successCount: 0,
     failureCount: 0,
-    lastError: null,
-    lastSentAt: null,
+    lastError: undefined,
+    lastSentAt: undefined,
     createdAt: new Date(),
     updatedAt: new Date(),
   };
