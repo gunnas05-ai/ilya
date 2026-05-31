@@ -35,6 +35,7 @@ describe('LoadsService', () => {
       save: jest.fn().mockResolvedValue(mockLoad),
       findOne: jest.fn().mockResolvedValue(mockLoad),
       find: jest.fn().mockResolvedValue([mockLoad]),
+    } as any;
       createQueryBuilder: jest.fn().mockReturnValue({
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
