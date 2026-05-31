@@ -1,0 +1,4 @@
+aşağıdaki eksikikleri mevcut yapıyı bozmadan entegre et. ettiğinde diğer yapılar bozulmasın
+-Konusarak yük ekleme aktif değil, tam çalışmıyor, yükleme yeri ile indirme yerlerini yanlış alıyor,
+-her veri girisi yapılan boks(kutucukları) veritabın ile karsılastır. eksiklik var ise düzelt.
+-linklerin yanında bulunan ikonlar ndroid ve ios da görünürken soran olacak ise kaldır. menü linklerin yanında olan yazılar yeterli. ayrıca ikonlara gerek yok.

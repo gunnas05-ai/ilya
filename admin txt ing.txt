@@ -1,0 +1,456 @@
+# ENTERPRISE ADMIN PANEL + RBAC (ROLE BASED ACCESS CONTROL) MASTER PROMPT
+
+ROLE:
+You are a world-class:
+
+* Enterprise Software Architect
+* RBAC / Permission System Architect
+* React Native Expert
+* Admin Dashboard UX Architect
+* Backend API Architect
+* Logistics Operations Architect
+* Database Architect
+* Enterprise Security Engineer
+* Multi Tenant SaaS Architect
+* Form & Validation Specialist
+
+Your mission is to design a COMPLETE ENTERPRISE-GRADE ADMIN PANEL and ADVANCED ROLE & PERMISSION MANAGEMENT SYSTEM for a large-scale logistics and transportation platform.
+
+The system already has a completed mobile application and backend infrastructure.
+
+Now the project requires a VERY POWERFUL ADMIN PANEL with:
+
+* Dynamic role management
+* Module based permissions
+* Checkbox authorization system
+* Hierarchical admin structure
+* Flexible user authorization
+* Enterprise security
+* Multi-role assignment
+* Dynamic permission inheritance
+* User type management
+* Fine-grained access control
+
+The system must be scalable, secure, enterprise-level, and future-proof.
+
+---
+
+## SYSTEM USER TYPES
+
+There are 6 main user types:
+
+0. Super Admin
+1. Company / Load Owner
+2. Carrier / Driver
+3. Business Owner (Restaurant, Fuel Station, Shop, Parking etc.)
+4. General User
+5. Guest User (Automatically assigned by system)
+
+IMPORTANT:
+
+The Super Admin must be able to dynamically convert any user into another role.
+
+Example:
+
+* General User -> Admin
+* General User -> Company Owner
+* General User -> Carrier
+* General User -> Business Owner
+* Carrier -> Admin
+* Company Owner -> Moderator
+
+The system must NOT use hardcoded role logic.
+
+Everything must be dynamically manageable from admin panel.
+
+---
+
+## CORE SYSTEM REQUIREMENT
+
+I want a PROFESSIONAL ENTERPRISE RBAC SYSTEM.
+
+NOT a simple role system.
+
+I want:
+
+* Role Based Access Control (RBAC)
+* Module Based Permissions
+* Dynamic Permission Assignment
+* Permission Matrix
+* Hierarchical Authorization
+* Permission Inheritance
+* Feature Flags
+* Multi-role support
+* Fine-grained permissions
+* Scope-based permissions
+
+---
+
+## ADMIN PANEL GOALS
+
+The admin panel must allow Super Admins to:
+
+* Create new roles
+* Edit roles
+* Delete roles
+* Assign permissions
+* Group permissions
+* Assign multiple roles to one user
+* Assign module-based permissions
+* Assign screen permissions
+* Assign API permissions
+* Assign CRUD permissions
+* Assign operational permissions
+* Temporarily suspend permissions
+* Audit all permission changes
+* Track who changed what
+* Restore previous permission sets
+
+---
+
+## VERY IMPORTANT:
+
+DO NOT create a simple checkbox table only.
+
+First THINK deeply like an enterprise software architect.
+
+Analyze:
+
+* scalability
+* future growth
+* security
+* modularity
+* maintainability
+* UX simplicity
+* operational usability
+
+Then propose a BETTER and MORE MODERN architecture than traditional permission tables if possible.
+
+---
+
+## EXPECTED SYSTEM ARCHITECTURE
+
+The system should include:
+
+# 1. ROLE MANAGEMENT SYSTEM
+
+Design:
+
+* Roles
+* Sub roles
+* Role groups
+* Dynamic roles
+* System roles
+* Temporary roles
+* Internal staff roles
+* Regional admin roles
+* Read-only admin roles
+
+---
+
+# 2. PERMISSION MANAGEMENT SYSTEM
+
+Design permission categories:
+
+Example:
+
+* Full Access
+* Create
+* Read
+* Update
+* Delete
+* Approve
+* Reject
+* Export
+* Import
+* Financial Access
+* Invoice Access
+* Payment Access
+* Settlement Access
+* Escrow Access
+* User Ban
+* User Suspend
+* GPS Tracking Access
+* Analytics Access
+* Admin Access
+* API Access
+* Webhook Access
+* AI Access
+* OCR Access
+* Notification Access
+
+---
+
+# 3. MODULE BASED AUTHORIZATION
+
+The admin panel must support permissions per module.
+
+Example modules:
+
+---
+
+## CORE MODULES
+
+* Dashboard
+* User Management
+* Role Management
+* Permission Management
+* Logistics Operations
+* Load Management
+* Driver Management
+* Vehicle Management
+* Route Management
+* Live Tracking
+* GPS Tracking
+* Map System
+* Escrow Payment System
+* Wallet System
+* Accounting
+* E-Invoice
+* E-Archive
+* Financial Reports
+* Tax Reports
+* Offer/Bidding System
+* Messaging System
+* Notification System
+* AI Assistant
+* OCR Document System
+* Business Marketplace
+* Product Marketplace
+* Fuel Stations
+* Restaurants
+* Parking Areas
+* Campaign System
+* Loyalty System
+* Support Tickets
+* CRM
+* Affiliate System
+* Referral System
+* Analytics
+* Reporting
+* Audit Logs
+* Fraud Detection
+* Security Center
+* API Management
+* Integration Management
+* Mobile App Management
+* CMS Management
+* Banner Management
+* Content Management
+* File Management
+* Cloud Storage
+* Backup System
+* System Settings
+
+---
+
+# 4. PERMISSION MATRIX UI
+
+---
+
+Design a MODERN ENTERPRISE PERMISSION MATRIX.
+
+NOT a primitive old table.
+
+The UI should include:
+
+* Expandable permission groups
+* Nested permissions
+* Smart checkbox system
+* Parent-child checkbox logic
+* Select all
+* Indeterminate states
+* Searchable permissions
+* Filter by module
+* Filter by role
+* Bulk permission assignment
+* Drag-and-drop role grouping
+* Color indicators
+* Permission presets
+* Permission templates
+* Permission cloning
+* Quick permission copy
+* Real-time permission preview
+
+---
+
+# 5. RECOMMENDED UI/UX
+
+---
+
+Design modern UX ideas such as:
+
+* Permission cards
+* Tree structures
+* Accordion modules
+* Expandable permission nodes
+* Multi-level permission hierarchy
+* Smart toggles
+* Permission dependency warnings
+* Security alerts
+* Dangerous permission highlighting
+
+---
+
+# 6. DATABASE ARCHITECTURE
+
+---
+
+Design enterprise database structure:
+
+Tables:
+
+* users
+* roles
+* permissions
+* role_permissions
+* user_roles
+* permission_groups
+* module_permissions
+* audit_logs
+* admin_activity_logs
+* security_events
+
+Include:
+
+* indexes
+* relationships
+* scalable structure
+* multi-tenant support
+* soft delete
+* permission caching strategy
+
+---
+
+# 7. BACKEND ARCHITECTURE
+
+---
+
+Design:
+
+* RBAC middleware
+* Permission guards
+* JWT role validation
+* API permission validation
+* Route guards
+* Dynamic permission loading
+* Permission cache
+* Redis integration
+* Security layers
+
+---
+
+# 8. MOBILE APPLICATION INTEGRATION
+
+---
+
+Explain:
+
+How React Native mobile app should:
+
+* hide unauthorized screens
+* hide buttons dynamically
+* hide modules dynamically
+* protect routes
+* validate permissions
+* refresh permissions
+* handle revoked access
+* handle expired sessions
+
+---
+
+# 9. SUPER ADMIN FEATURES
+
+---
+
+Super Admin must be able to:
+
+* Create admins
+* Demote admins
+* Suspend users
+* Freeze accounts
+* Transfer permissions
+* Clone permissions
+* Impersonate users
+* Monitor live system activity
+* View audit history
+* Restore permissions
+* Emergency lock modules
+* Enable maintenance mode
+
+---
+
+# 10. SECURITY REQUIREMENTS
+
+---
+
+Design enterprise security:
+
+* RBAC security
+* Anti privilege escalation
+* Admin action logging
+* Session tracking
+* Device tracking
+* IP tracking
+* Geo restriction
+* MFA / 2FA
+* Admin approval workflows
+* Sensitive action confirmations
+
+---
+
+# 11. UX REQUIREMENTS
+
+---
+
+The system must be:
+
+* Simple for non-technical admins
+* Extremely scalable
+* Easy to manage
+* Fast
+* Visually understandable
+* Mobile responsive
+* Tablet compatible
+* Dark mode compatible
+
+---
+
+# 12. OUTPUT FORMAT
+
+---
+
+Generate:
+
+1. Full architecture explanation
+2. Best RBAC strategy
+3. Best admin panel UX structure
+4. Database schema
+5. API architecture
+6. Permission hierarchy
+7. Recommended UI layout
+8. Modern checkbox system
+9. Enterprise best practices
+10. Security recommendations
+11. React Native integration strategy
+12. Example permission matrix
+13. Example role hierarchy
+14. Example admin workflows
+15. Suggested future-proof improvements
+
+VERY IMPORTANT:
+
+Do NOT generate a beginner-level permission system.
+
+Think like:
+
+* Uber Freight
+* SAP
+* Salesforce
+* Oracle
+* Stripe Dashboard
+* AWS IAM
+* Azure RBAC
+* Enterprise SaaS Admin Panels
+
+Build a MODERN ENTERPRISE-GRADE ADMIN & AUTHORIZATION ECOSYSTEM.

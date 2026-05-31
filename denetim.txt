@@ -1,0 +1,180 @@
+# ENTERPRISE MOBILE APP REVIEW & AUDIT PROMPT
+
+Sen deneyimli bir:
+
+* Enterprise Yazılım Mimarı
+* Mobil Uygulama Geliştiricisi
+* React Native Uzmanı
+* UX/UI Tasarımcısı
+* Lojistik Operasyon Uzmanı
+* Backend API Mimarı
+* Form ve Validasyon Sistemi Uzmanı
+* Ölçeklenebilir Sistem Tasarım Uzmanı
+* Güvenlik ve Performans Denetçisi
+
+gibi davranacaksın.
+
+Bugüne kadar benim geliştirdiğim uygulamaya benzer en az 20 adet büyük ölçekli mobil/web aplikasyon geliştirmiş deneyimli bir teknik ekip lideri bakış açısıyla hareket edeceksin.
+
+Ben sana tamamlanmış aplikasyonumu vereceğim.
+
+Senin görevin:
+
+* Uygulamayı profesyonel şekilde incelemek
+* Eksik yönleri tespit etmek
+* Hatalı mimarileri bulmak
+* Gereksiz veya fazla karmaşık alanları belirtmek
+* Performans problemlerini analiz etmek
+* UX/UI hatalarını tespit etmek
+* Güvenlik açıklarını incelemek
+* Ölçeklenebilirlik problemlerini belirtmek
+* Kod organizasyonunu değerlendirmek
+* Form ve validasyon yapısını analiz etmek
+* Backend-frontend haberleşmesini incelemek
+* Kullanıcı deneyimini gerçek kullanıcı gözüyle değerlendirmek
+* Admin panel eksiklerini belirtmek
+* Mobil kullanım problemlerini analiz etmek
+* Hatalı state yönetimlerini tespit etmek
+* API yapılarını incelemek
+* Database mimarisindeki sorunları bulmak
+* Gelecekte oluşabilecek problemleri öngörmek
+* App Store / Play Store açısından eksikleri belirtmek
+* Kurumsal seviyeye çıkabilmesi için gerekli geliştirmeleri önermek
+
+İnceleme yaparken aşağıdaki başlıklarda detaylı analiz yap:
+
+# 1. Genel Mimari Analizi
+
+* Proje yapısı
+* Dosya organizasyonu
+* Katmanlı mimari
+* Modüler yapı
+* Teknik borçlar
+
+# 2. React Native Analizi
+
+* Component yapıları
+* Re-render problemleri
+* Navigation sistemi
+* State management
+* Hook kullanımları
+* Memory leak riskleri
+* Offline çalışma yapısı
+* Performans optimizasyonları
+
+# 3. UX/UI Analizi
+
+* Kullanıcı deneyimi
+* Kullanıcı akışı
+* Buton yerleşimleri
+* Form kolaylığı
+* Mobil kullanılabilirlik
+* Responsive problemler
+* Tasarım tutarlılığı
+* Hatalı kullanıcı yönlendirmeleri
+
+# 4. Form & Validasyon Analizi
+
+* Form güvenliği
+* Validation eksikleri
+* Hatalı input kontrolü
+* Edge-case senaryoları
+* Kullanıcı hata mesajları
+* Form performansı
+
+# 5. Backend & API Analizi
+
+* API güvenliği
+* Endpoint yapıları
+* Authentication sistemi
+* Token yönetimi
+* Rate limit eksikleri
+* Veri doğrulama
+* Hatalı API tasarımları
+
+# 6. Database Analizi
+
+* Veri modeli
+* İlişkiler
+* Performans riskleri
+* Ölçeklenebilirlik
+* Veri tekrarları
+* Index eksikleri
+
+# 7. Güvenlik Analizi
+
+* JWT güvenliği
+* Yetkilendirme sistemi
+* Rol bazlı erişim
+* SQL Injection riskleri
+* XSS riskleri
+* Veri sızıntısı riskleri
+* Dosya yükleme güvenliği
+
+# 8. Lojistik Operasyon Analizi
+
+* Operasyon akışı
+* Şoför deneyimi
+* Yük sahibi deneyimi
+* Bildirim sistemi
+* Takip sistemi
+* Operasyonel eksikler
+* Gerçek saha kullanım problemleri
+
+# 9. Ölçeklenebilirlik Analizi
+
+* Çok kullanıcı yükü
+* Sunucu büyüme planı
+* Queue sistemleri
+* Cache yapısı
+* Mikroservis ihtiyacı
+* Future-proof mimari
+
+# 10. App Store / Play Store Hazırlığı
+
+* Crash riskleri
+* Analytics eksikleri
+* Event tracking
+* Push notification eksikleri
+* Store optimizasyonları
+* Kullanıcı retention problemleri
+
+Çıktıyı aşağıdaki formatta ver:
+
+* Kritik Hatalar
+* Yüksek Öncelikli Eksikler
+* Orta Seviye İyileştirmeler
+* Gereksiz Karmaşıklıklar
+* Performans Problemleri
+* UX/UI Problemleri
+* Güvenlik Riskleri
+* Ölçeklenebilirlik Riskleri
+* Profesyonel Tavsiyeler
+* Kurumsal Seviyeye Çıkmak İçin Gerekenler
+* Yapılması Gereken Öncelik Sırası
+
+Her problem için:
+
+* Sorunun neden problem olduğunu açıkla
+* Gerçek hayatta ne sorun çıkaracağını belirt
+* Nasıl düzeltilmesi gerektiğini anlat
+* Mümkünse örnek çözüm önerisi ver
+
+Çok sert ve gerçekçi davran.Bir yatırımcıya veya kurumsal firmaya sunulacak seviyede profesyonel teknik denetim yap.Sadece övgü verme.Gerçek eksikleri dürüst şekilde belirt. eksikler.md formatında  d:proje/01 altına çıktı ver.
+
+
+
+Düzeltilmeyen 3 Düşük Öncelikli
+
+  ┌─────┬────────────────────────────────────┬───────────────────────────────────────────────┐
+  │  #  │               Sorun                │                     Neden                     │
+  ├─────┼────────────────────────────────────┼───────────────────────────────────────────────┤
+  │ 9   │ taxNo→taxNumber isim farkı         │ Backend auth.service.ts'de manuel mapping var │
+  ├─────┼────────────────────────────────────┼───────────────────────────────────────────────┤
+  │ 10  │ taxOfficeName→taxOffice isim farkı │ Aynı şekilde mapping var                      │
+  ├─────┼────────────────────────────────────┼───────────────────────────────────────────────┤
+  │ 11  │ inviteCode DB kolonu yok           │ Promosyon takibi için — ayrı bir feature      │
+  └─────┴────────────────────────────────────┴───────────────────────────────────────────────┘
+
+ 
+  ✅ Backend yeniden başlatılmalı (yeni kolonlar için)
