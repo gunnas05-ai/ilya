@@ -1,3 +1,13 @@
+/**
+ * FuelStationsController — 498 satir, 40+ endpoint.
+ * REFACTOR PLANI:
+ *   - StationsController      (CRUD, list, search)
+ *   - PricesController        (fiyat, EPDK, history)
+ *   - ReviewsController       (yorum, puan)
+ *   - FavoritesController     (favori yonetimi)
+ *   - FuelCardController      (yakit karti)
+ *   - AlertsController        (fiyat alarmlari)
+ */
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, Headers, UseGuards, Req, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
