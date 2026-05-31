@@ -64,6 +64,8 @@ export function Input({
         onBlur={handleBlur}
         editable={!disabled}
         placeholderTextColor={colors.textTertiary}
+        accessibilityLabel={label}
+        accessibilityState={{ disabled: !!disabled }}
         style={[
           typography.body,
           styles.input,

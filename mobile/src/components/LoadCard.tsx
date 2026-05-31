@@ -1,6 +1,7 @@
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useTheme } from '../hooks/useTheme';
-import { spacing, radius, typography } from '../theme';
+import { spacing, radius } from '../theme';
 import { hapticLight } from '../utils/haptic';
 
 interface LoadCardProps {
@@ -10,7 +11,7 @@ interface LoadCardProps {
   distance?: number | null;
 }
 
-export default function LoadCard({ load, onPress, showDistance, distance }: LoadCardProps) {
+function LoadCard({ load, onPress, showDistance, distance }: LoadCardProps) {
   const { colors } = useTheme();
 
   const typeLabels: Record<string, string> = {
@@ -90,6 +91,8 @@ export default function LoadCard({ load, onPress, showDistance, distance }: Load
     </TouchableOpacity>
   );
 }
+
+export default React.memo(LoadCard);
 
 const styles = StyleSheet.create({
   card: {

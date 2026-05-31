@@ -78,6 +78,6 @@ function parseVersion(v: string): { major: number; minor: number; patch: number 
 
 function getStoreUrl(): string {
   return Platform.OS === 'ios'
-    ? 'https://apps.apple.com/app/kaptan-lojistik/id0000000000'
+    ? 'https://apps.apple.com/app/kaptan-lojistik/id6739930540'
     : 'https://play.google.com/store/apps/details?id=com.ilyaduran.kaptanlojistik';
 }

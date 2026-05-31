@@ -75,7 +75,7 @@ export async function showRatingPrompt(): Promise<void> {
           state.lastPromptDate = new Date().toISOString();
           await saveState(state);
           const url = Platform.OS === 'ios'
-            ? 'https://apps.apple.com/app/kaptan-lojistik/id0000000000?action=write-review'
+            ? 'https://apps.apple.com/app/kaptan-lojistik/id6739930540?action=write-review'
             : 'https://play.google.com/store/apps/details?id=com.ilyaduran.kaptanlojistik&showAllReviews=true';
           Linking.openURL(url);
         },
