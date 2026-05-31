@@ -66,6 +66,11 @@ const INTENT_ROUTES: Record<string, string> = {
   kiralık: '/escrow',
   'emanet yük': '/escrow',
   harita: '/map',
+  'yük ekle': '/voice-load',
+  'sesli yük': '/voice-load',
+  'konuşarak yük': '/voice-load',
+  'sesli komut': '/voice-load',
+  'yeni yük': '/voice-load',
 };
 
 const COMMAND_RESPONSES: Record<string, string> = {
@@ -105,6 +110,11 @@ const COMMAND_RESPONSES: Record<string, string> = {
   kiralık: 'Emanet yük sayfasına yönlendiriyorum.',
   'emanet yük': 'Emanet yük sayfasına yönlendiriyorum.',
   harita: 'Harita sayfasına yönlendiriyorum.',
+  'yük ekle': 'Sesli yük ekleme asistanına yönlendiriyorum.',
+  'sesli yük': 'Sesli yük ekleme asistanına yönlendiriyorum.',
+  'konuşarak yük': 'Sesli yük ekleme asistanına yönlendiriyorum.',
+  'sesli komut': 'Sesli yük ekleme asistanına yönlendiriyorum.',
+  'yeni yük': 'Sesli yük ekleme asistanına yönlendiriyorum.',
 };
 
 const ROUTE_TO_SCREEN: Record<string, string> = {
@@ -118,6 +128,7 @@ const ROUTE_TO_SCREEN: Record<string, string> = {
   '/return-loads': 'ReturnLoad',
   '/documents': 'InvoiceList',
   '/escrow': 'MainTabs',
+  '/voice-load': 'AiDialog',
 };
 
 export default function HeyKaptan() {
@@ -170,6 +181,8 @@ export default function HeyKaptan() {
       case '/map':
       case '/escrow':
         return [{ label: 'Git', type: 'navigate' as const, route: 'MainTabs' }];
+      case '/voice-load':
+        return [{ label: 'Sesli Yük Ekle', type: 'navigate' as const, route: 'AiDialog' }];
       default:
         return screen ? [{ label: 'Git', type: 'navigate' as const, route: screen }] : [];
     }
