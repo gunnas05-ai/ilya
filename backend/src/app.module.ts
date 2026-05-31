@@ -131,7 +131,7 @@ const isProduction = process.env.NODE_ENV === 'production';
       useFactory: () => new ValidationPipe({
         whitelist: true,
         transform: true,
-        forbidNonWhitelisted: false,
+        forbidNonWhitelisted: isProduction, // Production'da bilinmeyen alanlari reddet
         disableErrorMessages: isProduction,
       }),
     },
