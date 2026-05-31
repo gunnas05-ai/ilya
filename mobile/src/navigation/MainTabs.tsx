@@ -98,7 +98,7 @@ function DummyComponent() {
 }
 
 const PERSISTENT_TABS = [
-  { name: 'MainTabs' as const, label: 'Ana Sayfa', icon: '🏠' },
+  { name: 'Menuler' as const, label: 'Menüler', icon: '📋', isMenu: true as const },
   { name: 'LoadCreate' as const, label: 'Yük Ekle', icon: '➕' },
   { name: 'HeyKaptan' as const, label: '', isHeyKaptan: true as const },
   { name: 'LoadAccept' as const, label: 'Yük Al', icon: '🔍' },
@@ -163,8 +163,10 @@ function getGreeting(): string {
 export function PersistentTabBar() {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
+  const { can } = usePermission();
   const { user } = useAuthStore();
   const userName = user?.fullName?.split(' ')[0] || '';
+  const [showMenu, setShowMenu] = useState(false);
 
   const handleTabPress = (tabName: string) => {
     if (tabName === 'MainTabs') navigation.navigate('MainTabs', { screen: 'Home' });
@@ -182,26 +184,64 @@ export function PersistentTabBar() {
     navigation.navigate('AiDialog');
   };
 
+  const menuItems = FAB_MENU_ITEMS.filter((item) => !item.perm || can(item.perm as any));
+
   return (
-    <View style={[styles.persistentTab, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-      {PERSISTENT_TABS.map((tab) => {
-        if (tab.isHeyKaptan) {
+    <>
+      <View style={[styles.persistentTab, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+        {PERSISTENT_TABS.map((tab) => {
+          if (tab.isHeyKaptan) {
+            return (
+              <TouchableOpacity key={tab.name} style={styles.tabItem} onPress={handleHeyKaptan} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Hey Kaptan">
+                <View style={styles.heyKaptanIcon}>
+                  <Text style={styles.heyKaptanText}>🎤</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          }
+          if (tab.isMenu) {
+            return (
+              <TouchableOpacity key={tab.name} style={styles.tabItem} onPress={() => setShowMenu(true)} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Menüler">
+                <Text style={{ fontSize: 20 }}>{tab.icon}</Text>
+                <Text style={[styles.tabLabel, { color: colors.textTertiary }]}>{tab.label}</Text>
+              </TouchableOpacity>
+            );
+          }
           return (
-            <TouchableOpacity key={tab.name} style={styles.tabItem} onPress={handleHeyKaptan} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Hey Kaptan">
-              <View style={styles.heyKaptanIcon}>
-                <Text style={styles.heyKaptanText}>🎤</Text>
-              </View>
+            <TouchableOpacity key={tab.name} style={styles.tabItem} onPress={() => handleTabPress(tab.name)} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={tab.label}>
+              <Text style={{ fontSize: 20 }}>{tab.icon}</Text>
+              <Text style={[styles.tabLabel, { color: colors.textTertiary }]}>{tab.label}</Text>
             </TouchableOpacity>
           );
-        }
-        return (
-          <TouchableOpacity key={tab.name} style={styles.tabItem} onPress={() => handleTabPress(tab.name)} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={tab.label}>
-            <Text style={{ fontSize: 20 }}>{tab.icon}</Text>
-            <Text style={[styles.tabLabel, { color: colors.textTertiary }]}>{tab.label}</Text>
+        })}
+      </View>
+
+      {/* Menüler Accordion Sheet */}
+      <Modal visible={showMenu} transparent animationType="slide" onRequestClose={() => setShowMenu(false)}>
+        <TouchableOpacity style={styles.fabOverlay} activeOpacity={1} onPress={() => setShowMenu(false)}>
+          <TouchableOpacity activeOpacity={1} onPress={() => {}}>
+            <View style={[styles.fabSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={[styles.fabHandle, { backgroundColor: colors.border }]} />
+              <Text style={[typography.h3, { color: colors.text, fontWeight: '800', marginBottom: spacing.md, textAlign: 'center' }]}>📋 Menüler</Text>
+              {menuItems.map((item, i) => (
+                <TouchableOpacity
+                  key={i}
+                  style={[styles.menuLink, i < menuItems.length - 1 && { borderBottomWidth: StyleSheet.hairlineWidth, borderBottomColor: colors.border }]}
+                  onPress={() => { setShowMenu(false); navigation.navigate(item.screen); }}
+                  activeOpacity={0.6}
+                >
+                  <Text style={[typography.body, { color: colors.text }]}>{item.title}</Text>
+                  <Text style={[typography.caption, { color: colors.primary }]}>›</Text>
+                </TouchableOpacity>
+              ))}
+              <TouchableOpacity style={[styles.fabCloseBtn, { backgroundColor: colors.background, borderColor: colors.border }]} onPress={() => setShowMenu(false)}>
+                <Text style={[typography.label, { color: colors.text, fontWeight: '700' }]}>Kapat</Text>
+              </TouchableOpacity>
+            </View>
           </TouchableOpacity>
-        );
-      })}
-    </View>
+        </TouchableOpacity>
+      </Modal>
+    </>
   );
 }
 
@@ -238,4 +278,5 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4, shadowRadius: 5, elevation: 6,
   },
   heyKaptanText: { color: '#FFF', fontSize: 24 },
+  menuLink: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 14, paddingHorizontal: 16 },
 });

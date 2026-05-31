@@ -13,8 +13,6 @@ import { apiClient } from '../services/api';
 import Card from '../components/shared/Card';
 import ListSkeleton from '../components/shared/ListSkeleton';
 import EmptyState from '../components/shared/EmptyState';
-import FloatingVoiceButton from '../components/FloatingVoiceButton';
-import HomeMenuAccordion from '../components/HomeMenuAccordion';
 import ErrorState from '../components/shared/ErrorState';
 import { ProfileStatusBanner } from '../components/ProfileStatusBanner';
 import LoadCard from '../components/LoadCard';
@@ -36,10 +34,6 @@ export default function HomeScreen() {
   const [isAvailable, setIsAvailable] = useState(true);
   const [announcement, setAnnouncement] = useState<string | null>(null);
   const [profileStatus, setProfileStatus] = useState<any>(null);
-
-  const handleVoiceNavigate = (screen: string, params?: any) => {
-    try { navigation.navigate(screen as any, params); } catch {}
-  };
 
   const recentQuery = useRecentLoads();
   const loading = recentQuery.isLoading;
@@ -72,8 +66,6 @@ export default function HomeScreen() {
       </View>
 
       <ProfileStatusBanner status={profileStatus} />
-
-      <HomeMenuAccordion />
 
       {isGuest && (
         <View style={{ marginBottom: spacing.md }}>
@@ -128,7 +120,6 @@ export default function HomeScreen() {
         </>
       )}
     </ScrollView>
-      <FloatingVoiceButton onNavigate={handleVoiceNavigate} colors={colors} />
     </View>
   );
 }
