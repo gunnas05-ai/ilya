@@ -54,8 +54,10 @@ export default function PermissionMatrixScreen() {
     return groups;
   }, [permissions]);
 
+  const [error, setError] = useState<string | null>(null);
+
   const fetchData = useCallback(async () => {
-    setLoading(true);
+    setLoading(true); setError(null);
     try {
       const [rolesRes, permsRes] = await Promise.all([
         apiClient.get('/admin/roles'),
@@ -69,7 +71,8 @@ export default function PermissionMatrixScreen() {
         const rp = roleList[0].permissions?.map((rp: any) => rp.permission?.key) || [];
         setRolePerms(new Set(rp));
       }
-    } catch {} finally { setLoading(false); }
+    } catch { setError('Yetki verileri yuklenirken bir hata olustu. Backend guncellemesi gerekli olabilir.'); }
+    finally { setLoading(false); }
   }, []);
 
   useFocusEffect(useCallback(() => { fetchData(); }, []));
@@ -163,7 +166,11 @@ export default function PermissionMatrixScreen() {
         ))}
       </ScrollView>
 
-      {loading ? (
+      {error ? (
+        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: spacing.xl }}>
+          <ErrorState message={error} onRetry={fetchData} />
+        </View>
+      ) : loading ? (
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator color={colors.primary} size="large" /></View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: spacing.lg, paddingBottom: 120 }}>

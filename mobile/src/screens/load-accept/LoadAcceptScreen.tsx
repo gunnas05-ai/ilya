@@ -22,14 +22,18 @@ import LoadCard from '../../components/LoadCard';
 
 const LOAD_TYPE_LABELS: Record<string, string> = { tam_yuk: 'Tam Yük', kismi_yuk: 'Kısmi', evden_eve: 'Evden Eve', sehir_ici: 'Şehir İçi' };
 
+const PAGE_SIZE = 10;
+
 export default function LoadAcceptScreen() {
   const navigation = useNavigation<NavProp>();
   const { colors } = useTheme();
   const [profileVerified, setProfileVerified] = useState<boolean | null>(null);
   const [loads, setLoads] = useState<any[]>([]);
+  const [aiLoads, setAiLoads] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(true);
@@ -37,14 +41,27 @@ export default function LoadAcceptScreen() {
   const fetchLoads = useCallback(async () => {
     try {
       setError(null);
-      const data = await loadService.getAll({ limit: 50 });
-      const list = Array.isArray(data?.loads) ? data.loads : Array.isArray(data) ? data : [];
+      const [data, aiData] = await Promise.all([
+        loadService.getAll({ limit: 100, sortBy: 'pickupDate', sortOrder: 'DESC' }),
+        loadService.getRecommended().catch(() => null),
+      ]);
+      let list = Array.isArray(data?.loads) ? data.loads : Array.isArray(data) ? data : [];
+      // Tarihe gore sirala (yeni→eski)
+      list.sort((a: any, b: any) => new Date(b.pickupDate || 0).getTime() - new Date(a.pickupDate || 0).getTime());
       setLoads(list);
+      if (aiData) {
+        const ai = Array.isArray(aiData) ? aiData.slice(0, 3) : [];
+        setAiLoads(ai);
+      }
     } catch (e) {
       handleError(e, { screen: 'LoadAcceptScreen', action: 'fetchLoads' });
       setError('Yükler yüklenirken bir hata oluştu.');
     } finally { setLoading(false); setRefreshing(false); }
   }, []);
+
+  // Pagination
+  const totalPages = Math.ceil(loads.length / PAGE_SIZE);
+  const pagedLoads = loads.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   useEffect(() => {
     const role = useAuthStore.getState().user?.role;
@@ -117,6 +134,23 @@ export default function LoadAcceptScreen() {
         </TouchableOpacity>
       </View>
 
+      {/* AI Onerilen Yukler (sadece arama yapilmadiginda) */}
+      {!loading && !error && !search && aiLoads.length > 0 && (
+        <>
+          <Text style={[typography.h3, { color: colors.text, fontWeight: '800', marginBottom: spacing.sm }]}>🤖 Sana Özel Yükler</Text>
+          {aiLoads.map((item: any) => (
+            <LoadCard
+              key={item.load?.id || item.id || 'ai'}
+              load={item.load || item}
+              onPress={() => navigation.navigate('LoadAcceptDetail', { loadId: item.load?.id || item.id })}
+              showDistance
+              distance={getDistance(item.load || item)}
+            />
+          ))}
+          <View style={{ height: 1, backgroundColor: colors.border, marginVertical: spacing.md }} />
+        </>
+      )}
+
       {/* Yük Listesi */}
       {loading && !error ? (
         <ListSkeleton count={4} />
@@ -125,15 +159,29 @@ export default function LoadAcceptScreen() {
       ) : filtered.length === 0 ? (
         <EmptyState emoji="📦" message="Uygun yük bulunamadı." />
       ) : (
-        filtered.map((load: any) => (
-          <LoadCard
-            key={load.loadId || load.id}
-            load={load}
-            onPress={() => navigation.navigate('LoadAcceptDetail', { loadId: load.loadId || load.id })}
-            showDistance
-            distance={getDistance(load)}
-          />
-        ))
+        <>
+          {pagedLoads.filter((l: any) => !search || (l.title || '').toLowerCase().includes(search.toLowerCase()) || (l.fromCity || '').toLowerCase().includes(search.toLowerCase())).map((load: any) => (
+            <LoadCard
+              key={load.loadId || load.id}
+              load={load}
+              onPress={() => navigation.navigate('LoadAcceptDetail', { loadId: load.loadId || load.id })}
+              showDistance
+              distance={getDistance(load)}
+            />
+          ))}
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', gap: spacing.md, marginTop: spacing.md, paddingBottom: spacing.xl }}>
+              <TouchableOpacity style={[styles.pgBtn, { borderColor: colors.primary, opacity: page <= 0 ? 0.4 : 1 }]} onPress={() => setPage(p => Math.max(0, p - 1))} disabled={page <= 0}>
+                <Text style={[typography.body, { color: colors.primary, fontWeight: '700' }]}>{'< Geri'}</Text>
+              </TouchableOpacity>
+              <Text style={[typography.body, { color: colors.text, fontWeight: '700' }]}>{page + 1} / {totalPages}</Text>
+              <TouchableOpacity style={[styles.pgBtn, { borderColor: colors.primary, opacity: page >= totalPages - 1 ? 0.4 : 1 }]} onPress={() => setPage(p => Math.min(totalPages - 1, p + 1))} disabled={page >= totalPages - 1}>
+                <Text style={[typography.body, { color: colors.primary, fontWeight: '700' }]}>{'İleri >'}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </>
       )}
     </ScrollView>
   );
@@ -145,4 +193,5 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderRadius: radius.md, borderWidth: 1, fontSize: 15, minHeight: 48 },
   searchBtn: { width: 48, height: 48, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center' },
   loadRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: spacing.md, borderBottomWidth: StyleSheet.hairlineWidth, minHeight: 56 },
+  pgBtn: { paddingHorizontal: spacing.lg, paddingVertical: spacing.sm, borderRadius: radius.md, borderWidth: 1.5 },
 });

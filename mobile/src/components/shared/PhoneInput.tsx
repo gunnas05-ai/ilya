@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, useEffect } from 'react';
+import React, { useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
 import { useTheme } from '../../hooks/useTheme';
 import { typography, spacing, radius } from '../../theme';
@@ -75,6 +75,8 @@ export function PhoneInput({
   const { colors } = useTheme();
   const [isFocused, setIsFocused] = useState(false);
   const [touched, setTouched] = useState(false);
+  const [selection, setSelection] = useState({ start: 2, end: 2 });
+  const inputRef = useRef<TextInput>(null);
 
   const [userDigits, setUserDigits] = useState(() => extractUserDigits(value || ''));
 
@@ -84,6 +86,16 @@ export function PhoneInput({
   }, [value]);
 
   const displayValue = useMemo(() => formatDisplay(userDigits), [userDigits]);
+
+  // Cursor'u ilk bos `_` pozisyonuna yerlestir
+  const cursorPos = useMemo(() => {
+    let pos = 2; // "0(" sonrasi
+    for (let i = 0; i < userDigits.length; i++) {
+      pos = MASK_TEMPLATE.indexOf('_', pos) + 1;
+    }
+    if (pos === 0) pos = MASK_LENGTH;
+    return Math.min(pos, MASK_LENGTH);
+  }, [userDigits]);
 
   const emit = useCallback(
     (digits: string) => {
@@ -98,8 +110,13 @@ export function PhoneInput({
       if (next === userDigits) return;
       setUserDigits(next);
       emit(next);
+      // Cursor'u sonraki bosluga tasi
+      setTimeout(() => {
+        const nextPos = next.length >= 9 ? MASK_LENGTH : cursorPos;
+        setSelection({ start: nextPos, end: nextPos });
+      }, 10);
     },
-    [userDigits, emit],
+    [userDigits, emit, cursorPos],
   );
 
   const handleFocus = useCallback(
@@ -132,6 +149,7 @@ export function PhoneInput({
   return (
     <View style={[styles.container, containerStyle]}>
       <TextInput
+        ref={inputRef}
         style={[
           typography.body,
           styles.input,
@@ -152,6 +170,7 @@ export function PhoneInput({
         editable={editable}
         maxLength={MASK_LENGTH}
         caretHidden={false}
+        selection={isFocused ? selection : undefined}
       />
       {error ? (
         <Text style={[typography.small, { color: colors.danger, marginTop: spacing.xs }]}>
