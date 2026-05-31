@@ -1,7 +1,15 @@
-import { Controller, Get, Put, Post, Body } from '@nestjs/common';
+import { Controller, Get, Put, Post, Body, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { WhatsAppService } from './whatsapp.service';
+import { Roles } from './roles.decorator';
+import { RolesGuard } from './roles.guard';
 
+@ApiTags('admin')
 @Controller({ path: 'admin/whatsapp', version: '1' })
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles('super_admin', 'admin')
+@ApiBearerAuth()
 export class WhatsAppController {
   constructor(private readonly service: WhatsAppService) {}
 

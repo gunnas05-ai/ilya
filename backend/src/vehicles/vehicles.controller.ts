@@ -3,6 +3,8 @@ import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { VehiclesService } from './vehicles.service';
 import { FleetService } from './fleet.service';
+import { Roles } from '../common/roles.decorator';
+import { RolesGuard } from '../common/roles.guard';
 
 @Controller('vehicles')
 @UseGuards(AuthGuard('jwt'))
@@ -97,7 +99,8 @@ export class ListingsController {
 }
 
 @Controller('admin/escrow')
-@UseGuards(AuthGuard('jwt'))
+@UseGuards(AuthGuard('jwt'), RolesGuard)
+@Roles('super_admin', 'admin')
 export class EscrowAdminController {
   constructor(private service: VehiclesService) {}
 

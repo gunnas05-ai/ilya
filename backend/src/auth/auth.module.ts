@@ -13,7 +13,7 @@ import { JwtStrategy } from './jwt.strategy';
     TypeOrmModule.forFeature([User]),
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'kaptan-jwt-secret-dev-only',
+      secret: process.env.JWT_SECRET || (() => { throw new Error('JWT_SECRET env var is required for security'); })(),
       signOptions: { expiresIn: '15m' },
     }),
   ],

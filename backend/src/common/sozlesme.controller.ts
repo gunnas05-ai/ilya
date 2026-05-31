@@ -1,8 +1,13 @@
-import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { ApiTags, ApiBearerAuth } from '@nestjs/swagger';
 import { SystemSetting } from './system-setting.entity';
+import { Roles } from './roles.decorator';
+import { RolesGuard } from './roles.guard';
 
+@ApiTags('legal')
 @Controller('sozlesmeler')
 export class SozlesmeController {
   constructor(
@@ -24,15 +29,13 @@ export class SozlesmeController {
 
   /** Admin: Update privacy agreement or KVKK text */
   @Post('admin/update')
-  async updateText(@Body() body: { key: string; text: string }, @Req() req: any) {
-    if (!req.user || (req.user.role !== 'admin' && req.user.role !== 'super_admin')) {
-      return { success: false, message: 'Yetkisiz erişim' };
-    }
-
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('super_admin', 'admin')
+  @ApiBearerAuth()
+  async updateText(@Body() body: { key: string; text: string }) {
     const existing = await this.settingsRepo.findOne({ where: { key: body.key } });
     if (existing) {
       existing.value = body.text;
-      existing.updatedBy = req.user.id;
       await this.settingsRepo.save(existing);
     } else {
       await this.settingsRepo.save(
@@ -40,7 +43,6 @@ export class SozlesmeController {
           key: body.key,
           value: body.text,
           description: body.key === 'privacy_agreement_text' ? 'Gizlilik Sözleşmesi metni' : 'KVKK metni',
-          updatedBy: req.user.id,
         }),
       );
     }
@@ -49,7 +51,10 @@ export class SozlesmeController {
 
   /** Admin: Get all legal texts */
   @Get('admin/all')
-  async getAllTexts(@Req() req: any) {
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('super_admin', 'admin')
+  @ApiBearerAuth()
+  async getAllTexts() {
     const settings = await this.settingsRepo.find({
       where: [{ key: 'privacy_agreement_text' }, { key: 'kvkk_text' }],
     });

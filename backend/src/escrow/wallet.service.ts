@@ -7,7 +7,9 @@ import { Wallet, WalletTransaction, TransactionType } from './wallet.entity';
 import { AuditLogService, AuditAction } from './audit-log.service';
 import { OutboxService } from './outbox.service';
 
-const TX_SIGNING_KEY = crypto.createHash('sha256').update(process.env.TX_SIGNING_SECRET || 'kaptan-tx-signing-key-dev').digest('hex');
+const TX_SIGNING_KEY = crypto.createHash('sha256').update(
+  process.env.TX_SIGNING_SECRET || (() => { throw new Error('TX_SIGNING_SECRET env var is required for transaction security'); })()
+).digest('hex');
 
 function signTransaction(walletId: string, type: TransactionType, amount: number, balanceBefore: number, balanceAfter: number, referenceId: string): string {
   const payload = `${walletId}|${type}|${amount}|${balanceBefore}|${balanceAfter}|${referenceId}|${Date.now()}`;
