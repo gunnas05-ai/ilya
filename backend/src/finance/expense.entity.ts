@@ -38,6 +38,9 @@ export class Expense {
   @Column({ length: 3, default: 'TRY' })
   currency: string;
 
+  @Column({ nullable: true })
+  description: string;
+
   @Column('timestamp')
   date: Date;
 

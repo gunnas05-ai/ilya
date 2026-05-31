@@ -74,6 +74,31 @@ export class User {
   @Column('float', { nullable: true })
   volumeCapacity: number;
 
+  // Kamyon olculeri
+  @Column('float', { nullable: true })
+  vehicleHeight: number;
+
+  @Column('float', { nullable: true })
+  vehicleWidth: number;
+
+  @Column('float', { nullable: true })
+  vehicleLength: number;
+
+  @Column('float', { nullable: true })
+  totalWeight: number;
+
+  @Column('float', { nullable: true })
+  axleWeight: number;
+
+  @Column({ nullable: true })
+  adrClass: string;
+
+  @Column({ nullable: true })
+  trailerType: string;
+
+  @Column({ default: false })
+  hasRefrigeration: boolean;
+
   @Column({ nullable: true })
   kBelgesi: string;
 

@@ -8,6 +8,7 @@ import { IsString, IsOptional, IsBoolean, IsNumber } from 'class-validator';
 
 class UpdateProfileDto {
   @IsOptional() @IsString() fullName?: string;
+  @IsOptional() @IsString() email?: string;
   @IsOptional() @IsString() phone?: string;
   @IsOptional() @IsString() licenseNumber?: string;
   @IsOptional() @IsString() plateNumber?: string;
@@ -21,6 +22,19 @@ class UpdateProfileDto {
   @IsOptional() @IsString() taxNumber?: string;
   @IsOptional() @IsString() taxOffice?: string;
   @IsOptional() @IsString() tcKimlikNo?: string;
+  @IsOptional() @IsString() companyTitle?: string;
+  @IsOptional() @IsString() accountantName?: string;
+  @IsOptional() @IsString() accountantEmail?: string;
+  @IsOptional() @IsString() accountantPhone?: string;
+  // Kamyon olculeri
+  @IsOptional() @IsNumber() vehicleHeight?: number;
+  @IsOptional() @IsNumber() vehicleWidth?: number;
+  @IsOptional() @IsNumber() vehicleLength?: number;
+  @IsOptional() @IsNumber() totalWeight?: number;
+  @IsOptional() @IsNumber() axleWeight?: number;
+  @IsOptional() @IsString() adrClass?: string;
+  @IsOptional() @IsString() trailerType?: string;
+  @IsOptional() @IsBoolean() hasRefrigeration?: boolean;
   @IsOptional() @IsBoolean() escrowAccountVerified?: boolean;
 }
 

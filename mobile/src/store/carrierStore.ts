@@ -27,7 +27,7 @@ export const useCarrierStore = create<CarrierState>((set, get) => ({
       const user = res.data.data?.user;
       if (user) {
         const profile: CarrierProfile = {
-          companyName: user.companyName || '',
+          companyName: user.companyTitle || user.companyName || '',
           licenseNumber: user.licenseNumber || '',
           plateNumber: user.plateNumber || '',
           vehicleType: user.vehicleType || '',
