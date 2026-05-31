@@ -107,9 +107,6 @@ export class Load {
   @Column('float', { nullable: true })
   totalWeight: number;
 
-  @Column('float', { nullable: true })
-  totalTonnage: number; // Tonaj bazli fiyatlandirma icin
-
   @Column({ nullable: true })
   coldChain: boolean;
 
