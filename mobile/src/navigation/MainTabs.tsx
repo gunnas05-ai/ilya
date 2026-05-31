@@ -1,6 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, Animated } from 'react-native';
-import * as Speech from 'expo-speech';
+import React, { useState } from 'react';
+import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../hooks/useTheme';
@@ -8,6 +7,7 @@ import { useAuthStore } from '../store/authStore';
 import { usePermission } from '../hooks/usePermission';
 import { spacing, typography } from '../theme';
 import CustomBackButton from './CustomBackButton';
+import VoiceAssistantModal from '../components/VoiceAssistantModal';
 import ThemeToggle from './ThemeToggle';
 import HomeNavigator from './HomeNavigator';
 import ProfileNavigator from './ProfileNavigator';
@@ -85,22 +85,12 @@ function MainTabNavigator() {
 
 // ── Persistent Tab Bar ──────────────────────────────────
 
-function getGreeting(): string {
-  const h = new Date().getHours();
-  if (h < 6) return 'İyi geceler';
-  if (h < 12) return 'Günaydın';
-  if (h < 17) return 'İyi günler';
-  if (h < 21) return 'İyi akşamlar';
-  return 'İyi geceler';
-}
-
 export function PersistentTabBar() {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
   const { can } = usePermission();
-  const { user } = useAuthStore();
-  const userName = user?.fullName?.split(' ')[0] || '';
   const [showMenu, setShowMenu] = useState(false);
+  const [showVoiceAssistant, setShowVoiceAssistant] = useState(false);
 
   const handleTabPress = (tabName: string) => {
     if (tabName === 'MainTabs') navigation.navigate('MainTabs', { screen: 'Home' });
@@ -109,11 +99,8 @@ export function PersistentTabBar() {
     else if (tabName === 'Profile') navigation.navigate('MainTabs', { screen: 'Profile' });
   };
 
-  const handleHeyKaptan = () => {
-    const greeting = `${getGreeting()}${userName ? ' ' + userName + ' Bey' : ''}, size nasıl yardımcı olabilirim?`;
-    Speech.speak(greeting, { language: 'tr-TR', rate: 0.85 });
-    // Greeting'i AiDialog'e ilk mesaj olarak ilet
-    navigation.navigate('AiDialog', { initialMessage: greeting });
+  const handleVoiceNavigate = (screen: string, params?: any) => {
+    try { navigation.navigate(screen, params); } catch {}
   };
 
   const menuItems = FAB_MENU_ITEMS.filter((item) => !item.perm || can(item.perm as any));
@@ -124,7 +111,7 @@ export function PersistentTabBar() {
         {PERSISTENT_TABS.map((tab) => {
           if (tab.isHeyKaptan) {
             return (
-              <TouchableOpacity key={tab.name} style={styles.tabItem} onPress={handleHeyKaptan} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Hey Kaptan">
+              <TouchableOpacity key={tab.name} style={styles.tabItem} onPress={() => setShowVoiceAssistant(true)} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Hey Kaptan">
                 <View style={styles.heyKaptanIcon}>
                   <Text style={styles.heyKaptanText}>🎤</Text>
                 </View>
@@ -173,6 +160,13 @@ export function PersistentTabBar() {
           </TouchableOpacity>
         </TouchableOpacity>
       </Modal>
+
+      {/* Voice Assistant Modal */}
+      <VoiceAssistantModal
+        visible={showVoiceAssistant}
+        onClose={() => setShowVoiceAssistant(false)}
+        onNavigate={handleVoiceNavigate}
+      />
     </>
   );
 }
