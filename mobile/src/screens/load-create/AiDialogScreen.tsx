@@ -200,7 +200,7 @@ export default function AiDialogScreen({ navigation }: any) {
     if (fields.originAddress) m.fromAddress = fields.originAddress;
     if (fields.destAddress) m.toAddress = fields.destAddress;
     if (fields.title || fields.cargo_type) m.title = fields.title || fields.cargo_type;
-    if (fields.weight) { const w = String(fields.weight); m.weight = w; m.totalWeight = parseFloat(w) || 0; }
+    if (fields.weight) { const w = parseFloat(String(fields.weight)) || 0; m.weight = String(w); m.totalWeight = w; m.totalTonnage = w; }
     if (fields.price) m.totalPrice = parseFloat(String(fields.price)) || 0;
     if (fields.vehicleType) m.vehicleType = fields.vehicleType;
     if (fields.loadType) m.loadType = fields.loadType;
