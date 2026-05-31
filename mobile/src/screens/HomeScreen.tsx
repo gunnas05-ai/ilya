@@ -13,6 +13,7 @@ import { apiClient } from '../services/api';
 import Card from '../components/shared/Card';
 import ListSkeleton from '../components/shared/ListSkeleton';
 import EmptyState from '../components/shared/EmptyState';
+import FloatingVoiceButton from '../components/FloatingVoiceButton';
 import ErrorState from '../components/shared/ErrorState';
 import { ProfileStatusBanner } from '../components/ProfileStatusBanner';
 import LoadCard from '../components/LoadCard';
@@ -35,6 +36,10 @@ export default function HomeScreen() {
   const [announcement, setAnnouncement] = useState<string | null>(null);
   const [profileStatus, setProfileStatus] = useState<any>(null);
 
+  const handleVoiceNavigate = (screen: string, params?: any) => {
+    try { navigation.navigate(screen as any, params); } catch {}
+  };
+
   const recentQuery = useRecentLoads();
   const loading = recentQuery.isLoading;
 
@@ -48,10 +53,11 @@ export default function HomeScreen() {
   const onRetry = () => { recentQuery.refetch(); };
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: colors.background }}
-      contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing['2xl'] }}
-      refreshControl={
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        style={{ flex: 1, backgroundColor: colors.background }}
+        contentContainerStyle={{ padding: spacing.lg, paddingBottom: spacing['2xl'] }}
+        refreshControl={
         <RefreshControl
           refreshing={recentQuery.isRefetching}
           onRefresh={() => { recentQuery.refetch(); }}
@@ -119,6 +125,8 @@ export default function HomeScreen() {
         </>
       )}
     </ScrollView>
+      <FloatingVoiceButton onNavigate={handleVoiceNavigate} colors={colors} />
+    </View>
   );
 }
 
