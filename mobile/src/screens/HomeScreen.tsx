@@ -14,6 +14,7 @@ import Card from '../components/shared/Card';
 import ListSkeleton from '../components/shared/ListSkeleton';
 import EmptyState from '../components/shared/EmptyState';
 import FloatingVoiceButton from '../components/FloatingVoiceButton';
+import HomeMenuAccordion from '../components/HomeMenuAccordion';
 import ErrorState from '../components/shared/ErrorState';
 import { ProfileStatusBanner } from '../components/ProfileStatusBanner';
 import LoadCard from '../components/LoadCard';
@@ -71,6 +72,8 @@ export default function HomeScreen() {
       </View>
 
       <ProfileStatusBanner status={profileStatus} />
+
+      <HomeMenuAccordion />
 
       {isGuest && (
         <View style={{ marginBottom: spacing.md }}>

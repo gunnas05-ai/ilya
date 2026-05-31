@@ -100,7 +100,7 @@ function DummyComponent() {
 const PERSISTENT_TABS = [
   { name: 'MainTabs' as const, label: 'Ana Sayfa', icon: '🏠' },
   { name: 'LoadCreate' as const, label: 'Yük Ekle', icon: '➕' },
-  { name: 'HizliIslemler' as const, label: 'İşlemler', isFAB: true as const },
+  { name: 'HeyKaptan' as const, label: '', isHeyKaptan: true as const },
   { name: 'LoadAccept' as const, label: 'Yük Al', icon: '🔍' },
   { name: 'Profile' as const, label: 'Profil', icon: '👤' },
 ];
@@ -151,11 +151,20 @@ function MainTabNavigator() {
 
 // ── Persistent Tab Bar ──────────────────────────────────
 
+function getGreeting(): string {
+  const h = new Date().getHours();
+  if (h < 6) return 'İyi geceler';
+  if (h < 12) return 'Günaydın';
+  if (h < 17) return 'İyi günler';
+  if (h < 21) return 'İyi akşamlar';
+  return 'İyi geceler';
+}
+
 export function PersistentTabBar() {
   const navigation = useNavigation<any>();
   const { colors } = useTheme();
-  const { can } = usePermission();
-  const [showFAB, setShowFAB] = useState(false);
+  const { user } = useAuthStore();
+  const userName = user?.fullName?.split(' ')[0] || '';
 
   const handleTabPress = (tabName: string) => {
     if (tabName === 'MainTabs') navigation.navigate('MainTabs', { screen: 'Home' });
@@ -164,33 +173,35 @@ export function PersistentTabBar() {
     else if (tabName === 'Profile') navigation.navigate('MainTabs', { screen: 'Profile' });
   };
 
+  const handleHeyKaptan = () => {
+    const greeting = `${getGreeting()}${userName ? ' ' + userName + ' Bey' : ''}, size nasıl yardımcı olabilirim?`;
+    try {
+      const Speech = require('expo-speech');
+      Speech.speak(greeting, { language: 'tr-TR', rate: 0.85 });
+    } catch {}
+    navigation.navigate('AiDialog');
+  };
+
   return (
-    <>
-      <View style={[styles.persistentTab, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
-        {PERSISTENT_TABS.map((tab) => {
-          if (tab.isFAB) {
-            return (
-              <TouchableOpacity key={tab.name} style={styles.tabItem} onPress={() => setShowFAB(true)} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Hızlı İşlemler">
-                <View style={styles.fabIcon}><Text style={styles.fabIconText}>+</Text></View>
-              </TouchableOpacity>
-            );
-          }
+    <View style={[styles.persistentTab, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+      {PERSISTENT_TABS.map((tab) => {
+        if (tab.isHeyKaptan) {
           return (
-            <TouchableOpacity key={tab.name} style={styles.tabItem} onPress={() => handleTabPress(tab.name)} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={tab.label}>
-              <Text style={{ fontSize: 20 }}>{tab.icon}</Text>
-              <Text style={[styles.tabLabel, { color: colors.textTertiary }]}>{tab.label}</Text>
+            <TouchableOpacity key={tab.name} style={styles.tabItem} onPress={handleHeyKaptan} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Hey Kaptan">
+              <View style={styles.heyKaptanIcon}>
+                <Text style={styles.heyKaptanText}>🎤</Text>
+              </View>
             </TouchableOpacity>
           );
-        })}
-      </View>
-      <FABMenuSheet
-        visible={showFAB}
-        onClose={() => setShowFAB(false)}
-        onNavigate={(screen) => { setShowFAB(false); navigation.navigate(screen); }}
-        colors={colors}
-        canCheck={(perm) => can(perm as any)}
-      />
-    </>
+        }
+        return (
+          <TouchableOpacity key={tab.name} style={styles.tabItem} onPress={() => handleTabPress(tab.name)} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={tab.label}>
+            <Text style={{ fontSize: 20 }}>{tab.icon}</Text>
+            <Text style={[styles.tabLabel, { color: colors.textTertiary }]}>{tab.label}</Text>
+          </TouchableOpacity>
+        );
+      })}
+    </View>
   );
 }
 
@@ -220,4 +231,11 @@ const styles = StyleSheet.create({
   persistentTab: { flexDirection: 'row', borderTopWidth: 1, height: 60, paddingBottom: 8, paddingTop: 8 },
   tabItem: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: 4 },
   tabLabel: { fontSize: 10, fontWeight: '600', marginTop: 2 },
+  heyKaptanIcon: {
+    top: -15, justifyContent: 'center', alignItems: 'center',
+    width: 56, height: 56, borderRadius: 28, backgroundColor: '#FF6B00',
+    shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4, shadowRadius: 5, elevation: 6,
+  },
+  heyKaptanText: { color: '#FFF', fontSize: 24 },
 });
