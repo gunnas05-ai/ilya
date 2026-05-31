@@ -121,9 +121,9 @@ export default function AdminPanelScreen({ navigation }: any) {
         { key: 'pay_cards',     label: 'Kayıtlı Kartlar',        icon: '💳', route: 'SavedCards' },
         { key: 'pay_subscription', label: 'Abonelik Paketleri',  icon: '📦', route: 'Subscription' },
         { key: 'pay_wallet',    label: 'Cüzdan & Escrow',        icon: '🛡️', route: 'Wallet' },
-        { key: 'pay_commission', label: 'Komisyon Oranları',     icon: '📊' },
-        { key: 'pay_plans',     label: 'Abonelik Planları',      icon: '📋' },
-        { key: 'pay_credits',   label: 'Kontör Paketleri',       icon: '🧾' },
+        { key: 'pay_commission', label: 'Komisyon Oranları',     icon: '📊', route: 'CommissionConfig' },
+        { key: 'pay_plans',     label: 'Abonelik Planları',      icon: '📋', route: 'PlanManagement' },
+        { key: 'pay_credits',   label: 'Kontör Paketleri',       icon: '🧾', route: 'CreditPackageMgmt' },
       ],
     },
     {
