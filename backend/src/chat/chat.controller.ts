@@ -18,7 +18,7 @@ export class ChatController {
   async getRooms(@Req() req: any, @Query('userId') userId?: string) {
     const uid = userId || req.user?.id;
     const rooms = uid ? await this.chatService.getUserRooms(uid) : await this.chatService.getAllRooms();
-    return { data: rooms, meta: { total: rooms.length } };
+    return { success: true, data: rooms, meta: { total: rooms.length } };
   }
 
   @Post('rooms')
@@ -27,7 +27,7 @@ export class ChatController {
       ...body,
       createdBy: body.createdBy || req.user?.id,
     });
-    return { data: room };
+    return { success: true, data: room };
   }
 
   @Get('rooms/:id')

@@ -18,6 +18,7 @@ export interface OfflineRequest {
   data: any;
   timestamp: number;
   retryCount: number;
+  idempotencyKey?: string; // Tekrar eden istekleri onler
 }
 
 function generateId(): string {

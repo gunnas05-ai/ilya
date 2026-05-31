@@ -7,7 +7,10 @@ interface CardProps {
   accentColor?: string;
   onPress?: () => void;
   style?: any;
+  accessibilityLabel?: string;
 }
+
+export default function Card({ children, accentColor, onPress, style, accessibilityLabel }: CardProps) {
 
 export default function Card({ children, accentColor, onPress, style }: CardProps) {
   const { colors } = useTheme();
@@ -27,7 +30,7 @@ export default function Card({ children, accentColor, onPress, style }: CardProp
 
   if (onPress) {
     return (
-      <TouchableOpacity onPress={onPress} activeOpacity={0.7}>
+      <TouchableOpacity onPress={onPress} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel={accessibilityLabel || 'Kart'}>
         {container}
       </TouchableOpacity>
     );
