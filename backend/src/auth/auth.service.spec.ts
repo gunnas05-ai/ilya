@@ -1,17 +1,16 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
-import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
 import { User, UserRole } from '../users/user.entity';
 
 describe('AuthService', () => {
   let service: AuthService;
-  let userRepo: jest.Mocked<Partial<Repository<User>>>;
-  let jwtService: jest.Mocked<Partial<JwtService>>;
+  let userRepo: any;
+  let jwtService: any;
 
-  const mockUser: Partial<User> = {
+  const mockUser = {
     id: 'test-user-id',
     email: 'test@kaptan.com',
     phone: '5550000000',
@@ -19,7 +18,7 @@ describe('AuthService', () => {
     fullName: 'Test User',
     role: UserRole.TASIYICI,
     isActive: true,
-  };
+  } as User;
 
   beforeEach(async () => {
     userRepo = {
@@ -44,41 +43,51 @@ describe('AuthService', () => {
     mockUser.passwordHash = await bcrypt.hash('123456', 10);
   });
 
-  describe('validateUser', () => {
-    it('should return user when credentials are valid', async () => {
-      userRepo.findOne.mockResolvedValue(mockUser as User);
-      const result = await service.validateUser('test@kaptan.com', '123456');
-      expect(result).toBeDefined();
-      expect(result?.email).toBe('test@kaptan.com');
-    });
-
-    it('should return null when user not found', async () => {
-      userRepo.findOne.mockResolvedValue(null);
-      const result = await service.validateUser('nonexistent@test.com', '123456');
-      expect(result).toBeNull();
-    });
-
-    it('should return null when password is wrong', async () => {
-      userRepo.findOne.mockResolvedValue(mockUser as User);
-      const result = await service.validateUser('test@kaptan.com', 'wrongpassword');
-      expect(result).toBeNull();
-    });
-  });
-
   describe('login', () => {
-    it('should return access token and refresh token', async () => {
-      userRepo.findOne.mockResolvedValue(mockUser as User);
-      const result = await service.login({ email: 'test@kaptan.com', password: '123456' } as any);
+    it('should return tokens on valid credentials', async () => {
+      userRepo.findOne.mockResolvedValue(mockUser);
+      const result = await service.login('test@kaptan.com', '123456');
       expect(result).toBeDefined();
       expect(result.accessToken).toBeDefined();
       expect(result.refreshToken).toBeDefined();
     });
 
-    it('should throw on invalid credentials', async () => {
+    it('should throw on user not found', async () => {
       userRepo.findOne.mockResolvedValue(null);
-      await expect(
-        service.login({ email: 'bad@test.com', password: 'x' } as any),
-      ).rejects.toThrow();
+      await expect(service.login('bad@test.com', 'x')).rejects.toThrow();
+    });
+
+    it('should throw on wrong password', async () => {
+      userRepo.findOne.mockResolvedValue(mockUser);
+      await expect(service.login('test@kaptan.com', 'wrongpassword')).rejects.toThrow();
+    });
+
+    it('should throw when password is empty', async () => {
+      await expect(service.login('test@kaptan.com', '')).rejects.toThrow();
+    });
+  });
+
+  describe('register', () => {
+    it('should register a new user', async () => {
+      userRepo.findOne.mockResolvedValue(null);
+      const dto = {
+        email: 'new@kaptan.com', phone: '5551112233', password: 'test123',
+        fullName: 'New User', uiRole: 'TASIYICI' as any,
+        kvkkAccepted: true, termsAccepted: true,
+      };
+      const result = await service.register(dto);
+      expect(result).toBeDefined();
+      expect(result.userId).toBeDefined();
+    });
+
+    it('should throw on duplicate email', async () => {
+      userRepo.findOne.mockResolvedValue(mockUser);
+      const dto = {
+        email: 'test@kaptan.com', phone: '5550000000', password: 'test123',
+        fullName: 'Dup User', uiRole: 'TASIYICI' as any,
+        kvkkAccepted: true, termsAccepted: true,
+      };
+      await expect(service.register(dto)).rejects.toThrow();
     });
   });
 });

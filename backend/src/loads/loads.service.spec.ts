@@ -23,8 +23,8 @@ describe('LoadsService', () => {
     isAuction: false,
     escrow: true,
     creatorId: 'shipper-1',
-    receiverId: null,
-    reservedById: null,
+    receiverId: undefined,
+    reservedById: undefined,
     bidCount: 0,
     version: 0,
   };
