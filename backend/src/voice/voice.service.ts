@@ -174,13 +174,6 @@ export class VoiceService {
       extracted.weight = (msgLower.includes('kg') || msgLower.includes('kilogram')) ? val : Math.round(val * 1000);
     }
 
-    // ===== WEIGHT =====
-    const weightMatch = msg.match(/(\d+\.?\d*)\s*(?:ton|kg|kilogram)/i);
-    if (weightMatch) {
-      const val = parseFloat(weightMatch[1]);
-      extracted.weight = msgAscii.includes('kg') || msgAscii.includes('kilogram') ? val : val * 1000;
-    }
-
     // ===== PRICE: "ton fiyatı 750", "750 + kdv", "750 TL" =====
     const tonPriceMatch = msg.match(/(?:ton\s*fiyat[ıi]|fiyat[ıi]?)\s*:?\s*(\d+\.?\d*)/i);
     const normalPriceMatch = msg.match(/(\d+\.?\d*)\s*(?:\+?\s*kdv|\s*TL|\s*₺|\s*lira)/i);
@@ -204,27 +197,29 @@ export class VoiceService {
       'lowbed': 'Lowbed Çekici',
     };
     for (const [key, label] of Object.entries(vehicleKeywords)) {
-      if (msgAscii.includes(key)) {
+      if (msgLower.includes(key)) {
         extracted.vehicleType = label;
         break;
       }
     }
 
-    // ===== CONTACT: "irtibat: Kazım KARTAL tel:05057945405" =====
-    const contactMatch = msg.match(/(?:teslim\s*alacak|irtibat|al[ıi]c[ıi]|yetkili|sorumlu)\s*(?:ki[şs]i)?\s*:?\s*([a-zA-ZçÇğĞıİöÖşŞüÜ\s]{3,35}?)\s*(?:tel|telefon|no|numara)?\s*:?\s*(\d[\d\s-]{8,15})/i);
-    if (contactMatch) {
-      extracted.contactName = contactMatch[1].trim();
-      extracted.contactPhone = contactMatch[2].replace(/[\s-]/g, '');
-    }
-    if (!extracted.contactPhone) {
-      const phoneMatch = msg.match(/(05\d{2})[\s-]*(\d{3})[\s-]*(\d{2})[\s-]*(\d{2})/);
-      if (phoneMatch) {
-        extracted.contactPhone = phoneMatch[0].replace(/[\s-]/g, '');
-        const beforePhone = msg.slice(0, msg.indexOf(phoneMatch[0])).trim().split(/\s+/);
-        if (beforePhone.length >= 2) {
-          extracted.contactName = beforePhone.slice(-2).join(' ').replace(/[,.:;]/g, '');
-        }
-      }
+    // ===== CONTACT: telefonu bul, hemen oncesindeki ismi cikar =====
+    const phoneMatch = msg.match(/(05\d{2})[\s-]*(\d{3})[\s-]*(\d{2})[\s-]*(\d{2})/);
+    if (phoneMatch) {
+      extracted.contactPhone = phoneMatch[0].replace(/[\s-]/g, '');
+      // Telefon oncesini al
+      const beforePhone = msg.slice(0, msg.indexOf(phoneMatch[0]));
+      // Etiket kelimelerini (irtibat, tel, telefon, no, numara) sondan temizle
+      const skipWords = /^(irtibat|tel|telefon|no|numara|kişi|kisi|kurulacak|teslim|alacak|alici|alıcı)$/i;
+      const words = beforePhone.split(/[\s.,:;]+/).filter(w => w.length > 0);
+      // Sondan baslayarak etiketleri atla
+      let endIdx = words.length;
+      while (endIdx > 0 && skipWords.test(words[endIdx - 1])) endIdx--;
+      // Sondaki 2-3 kelimeyi isim olarak al, basindaki etiketleri temizle
+      const startIdx = Math.max(0, endIdx - 3);
+      let nameWords = words.slice(startIdx, endIdx);
+      while (nameWords.length > 1 && skipWords.test(nameWords[0])) nameWords = nameWords.slice(1);
+      extracted.contactName = nameWords.join(' ').replace(/[.,:;]/g, '').trim();
     }
 
     // ===== DATE/TIME =====
