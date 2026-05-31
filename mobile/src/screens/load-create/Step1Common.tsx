@@ -61,8 +61,14 @@ export default forwardRef<Step1Handle, Step1Props>(function Step1Common({ onNext
     if (d.contactName) setValue('contactName', d.contactName);
     if (d.contactPhone) setValue('contactPhone', d.contactPhone);
     if (d.pickupDate) setValue('pickupDate', new Date(d.pickupDate));
+    if (d.pickupTime) setValue('pickupTime', d.pickupTime);
     if (d.deliveryDate) setValue('deliveryDate', new Date(d.deliveryDate));
+    if (d.deliveryTime) setValue('deliveryTime', d.deliveryTime);
     if (d.description) setValue('description', d.description);
+    if (d.weight || d.totalWeight) {
+      const w = d.totalWeight || d.weight;
+      setValue('totalWeight' as any, String(w));
+    }
   }, [formData, setValue]);
 
   // Ekran odaklandığında store'daki AI verilerini forma aktar

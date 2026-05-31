@@ -207,8 +207,11 @@ export default function AiDialogScreen({ navigation }: any) {
     if (fields.contactName) m.contactName = fields.contactName;
     if (fields.contactPhone) m.contactPhone = cleanPhone(String(fields.contactPhone));
     if (fields.pickupDate) m.pickupDate = fields.pickupDate;
+    if (fields.pickupTime) m.pickupTime = fields.pickupTime;
     if (fields.deliveryDate) m.deliveryDate = fields.deliveryDate;
+    if (fields.deliveryTime) m.deliveryTime = fields.deliveryTime;
     if (fields.description) m.description = fields.description;
+    if (fields.notes) m.description = fields.notes;
     return m;
   };
 

@@ -239,15 +239,15 @@ export class VoiceService {
     const timeMatch = msg.match(/saat\s*:?\s*(\d{1,2})[.:](\d{2})/i);
     if (timeMatch) extracted.pickupTime = `${timeMatch[1].padStart(2, '0')}:${timeMatch[2]}`;
 
-    // "X saat içinde teslim" → deliveryDate
-    const hoursMatch = msg.match(/(\d{1,4})\s*saat\s*i[çc]inde\s*(?:teslim|var[ıi]ş)/i);
+    // "X saat içinde/içerisinde teslim" → deliveryDate
+    const hoursMatch = msg.match(/(\d{1,4})\s*saat\s*i[çc](?:inde|erisinde)\s*(?:teslim|var[ıi]ş)/i);
     if (hoursMatch) {
       const hours = parseInt(hoursMatch[1]);
       const delivery = new Date(now.getTime() + hours * 60 * 60 * 1000);
       extracted.deliveryDate = delivery.toISOString().slice(0, 10);
     }
-    // "X gün içinde teslim"
-    const daysMatch = msg.match(/(\d{1,3})\s*g[üu]n\s*i[çc]inde/i);
+    // "X gün içinde/içerisinde teslim"
+    const daysMatch = msg.match(/(\d{1,3})\s*g[üu]n\s*i[çc](?:inde|erisinde)/i);
     if (daysMatch) {
       const days = parseInt(daysMatch[1]);
       const delivery = new Date(now.getTime() + days * 86400000);
