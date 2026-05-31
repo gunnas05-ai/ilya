@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, Animated, Dimensions, Easing } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, StyleSheet, Animated, Dimensions, Easing, StatusBar } from 'react-native';
 import * as Speech from 'expo-speech';
 import { apiClient } from '../services/api';
 import { useAuthStore } from '../store/authStore';
@@ -7,6 +7,43 @@ import { hapticLight, hapticSuccess } from '../utils/haptic';
 import KaptanAvatar from './KaptanAvatar';
 
 const { width: SW, height: SH } = Dimensions.get('window');
+
+// Audio visualizer bars
+function AudioVisualizer({ active }: { active: boolean }) {
+  const bars = useRef(Array.from({ length: 7 }, () => new Animated.Value(0))).current;
+
+  useEffect(() => {
+    if (active) {
+      const anims = bars.map((bar, i) =>
+        Animated.loop(
+          Animated.sequence([
+            Animated.timing(bar, { toValue: 1, duration: 200 + i * 50, useNativeDriver: true }),
+            Animated.timing(bar, { toValue: 0.2, duration: 200 + i * 50, useNativeDriver: true }),
+          ]),
+        ),
+      );
+      anims.forEach(a => a.start());
+      return () => anims.forEach(a => a.stop());
+    } else {
+      bars.forEach(b => b.setValue(0.2));
+    }
+  }, [active]);
+
+  return (
+    <View style={awStyles.row}>
+      {bars.map((bar, i) => (
+        <Animated.View
+          key={i}
+          style={[awStyles.bar, { transform: [{ scaleY: bar.interpolate({ inputRange: [0, 1], outputRange: [0.3, 1] }) }] }]}
+        />
+      ))}
+    </View>
+  );
+}
+const awStyles = StyleSheet.create({
+  row: { flexDirection: 'row', alignItems: 'flex-end', gap: 3, height: 24, justifyContent: 'center' },
+  bar: { width: 4, height: 24, borderRadius: 2, backgroundColor: '#FF6B00' },
+});
 
 type AvatarState = 'idle' | 'greeting' | 'listening' | 'talking' | 'thinking' | 'success' | 'error';
 
@@ -221,9 +258,19 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
           <Text style={styles.closeText}>✕</Text>
         </TouchableOpacity>
 
+        {/* Vignette overlay */}
+        <View style={styles.vignette} pointerEvents="none" />
+
         {/* Avatar */}
         <Animated.View style={[styles.avatarContainer, { transform: [{ translateY: slideUp }, { scale: cameraZoom }] }]}>
           <KaptanAvatar state={avatarState} message={message} />
+
+          {/* Audio visualizer when talking */}
+          {avatarState === 'talking' && (
+            <View style={{ marginTop: 12 }}>
+              <AudioVisualizer active={true} />
+            </View>
+          )}
         </Animated.View>
 
         {/* Conversation history */}
@@ -266,4 +313,5 @@ const styles = StyleSheet.create({
   listenBtn: { position: 'absolute', bottom: 100, paddingHorizontal: 30, paddingVertical: 16, borderRadius: 30, backgroundColor: '#FF6B00', shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 10, elevation: 8 },
   listenBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
   particle: { position: 'absolute' },
+  vignette: { ...StyleSheet.absoluteFillObject, zIndex: 1, pointerEvents: 'none' },
 });
