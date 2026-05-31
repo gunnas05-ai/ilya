@@ -15,9 +15,12 @@
     },
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.ilyaduran.kaptanlojistik",
       "infoPlist": {
-        "NSSpeechRecognitionUsageDescription": "Allow $(PRODUCT_NAME) to use speech recognition.",
-        "NSMicrophoneUsageDescription": "Allow $(PRODUCT_NAME) to use the microphone."
+        "NSSpeechRecognitionUsageDescription": "Kaptan, sesli komut özelliği için mikrofon erişimine ihtiyaç duyar.",
+        "NSMicrophoneUsageDescription": "Kaptan, sesli komut özelliği için mikrofon erişimine ihtiyaç duyar.",
+        "NSLocationWhenInUseUsageDescription": "Kaptan, yakınınızdaki yükleri göstermek için konum bilginize ihtiyaç duyar.",
+        "NSLocationAlwaysUsageDescription": "Kaptan, seyir halindeyken canlı takip için konum bilginize ihtiyaç duyar."
       }
     },
     "android": {
@@ -28,12 +31,19 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "permissions": [
-        "android.permission.RECORD_AUDIO"
+        "android.permission.RECORD_AUDIO",
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
       ],
-      "package": "com.ilyaduran.kaptanlojistik"
+      "package": "com.ilyaduran.kaptanlojistik",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./assets/favicon.png"
+    },
+    "locales": {
+      "tr": "./src/i18n/tr.json",
+      "en": "./src/i18n/en.json"
     },
     "plugins": [
       "expo-localization",
@@ -41,6 +51,11 @@
       "@react-native-voice/voice",
       "expo-speech-recognition",
       "expo-secure-store"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "kaptan-lojistik"
+      }
+    }
   }
 }

@@ -8,45 +8,43 @@ try {
 
 const TOKEN_KEY = 'auth_tokens_secure';
 const USER_KEY = 'auth_user_secure';
-// Eski anahtarlar — geriye donuk uyumluluk
 const OLD_TOKEN_KEY = '@auth_tokens_secure';
 const OLD_USER_KEY = '@auth_user_secure';
 
-function obfuscate(text: string): string {
-  let result = '';
-  for (let i = 0; i < text.length; i++) {
-    result += String.fromCharCode(text.charCodeAt(i) ^ 0x5A);
-  }
-  return result;
+function isSecureAvailable(): boolean {
+  return !!(SecureStore && Platform.OS !== 'web');
 }
 
-export async function setSecureItem(key: string, value: string): Promise<void> {
-  if (SecureStore && Platform.OS !== 'web') {
-    await SecureStore.setItemAsync(key, value, {
-      keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
+async function setSecureItem(key: string, value: string): Promise<void> {
+  if (isSecureAvailable()) {
+    await SecureStore!.setItemAsync(key, value, {
+      keychainAccessible: SecureStore!.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
     });
   } else {
-    await AsyncStorage.setItem(key, obfuscate(value));
+    // Web / fallback: AsyncStorage (not encrypted — dev only)
+    if (process.env.NODE_ENV === 'production') {
+      console.error('[SecureStorage] SecureStore unavailable in production — tokens stored in plaintext!');
+    }
+    await AsyncStorage.setItem(key, value);
   }
 }
 
-export async function getSecureItem(key: string): Promise<string | null> {
-  if (SecureStore && Platform.OS !== 'web') {
-    return SecureStore.getItemAsync(key);
+async function getSecureItem(key: string): Promise<string | null> {
+  if (isSecureAvailable()) {
+    return SecureStore!.getItemAsync(key);
   }
-  const raw = await AsyncStorage.getItem(key);
-  return raw ? obfuscate(raw) : null;
+  return AsyncStorage.getItem(key);
 }
 
-export async function removeSecureItem(key: string): Promise<void> {
-  if (SecureStore && Platform.OS !== 'web') {
-    await SecureStore.deleteItemAsync(key);
+async function removeSecureItem(key: string): Promise<void> {
+  if (isSecureAvailable()) {
+    await SecureStore!.deleteItemAsync(key);
   } else {
     await AsyncStorage.removeItem(key);
   }
 }
 
-export async function removeSecureItems(keys: string[]): Promise<void> {
+async function removeSecureItems(keys: string[]): Promise<void> {
   await Promise.all(keys.map((k) => removeSecureItem(k)));
 }
 
@@ -59,13 +57,10 @@ export async function saveUser(user: object): Promise<void> {
 }
 
 export async function getTokens(): Promise<{ accessToken: string; refreshToken: string } | null> {
-  // Once yeni anahtari dene
   let raw = await getSecureItem(TOKEN_KEY);
-  // Bulunamazsa eski anahtari dene (geriye donuk uyumluluk)
   if (!raw) {
     raw = await getSecureItem(OLD_TOKEN_KEY);
     if (raw) {
-      // Migrate: eski anahtardan yeni anahtara tasi
       await setSecureItem(TOKEN_KEY, raw);
       await removeSecureItem(OLD_TOKEN_KEY);
     }

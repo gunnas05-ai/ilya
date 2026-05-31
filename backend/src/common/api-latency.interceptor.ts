@@ -1,14 +1,13 @@
-import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Optional } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
-import { EscrowMetricsService } from '../escrow/escrow-metrics.service';
 import { StructuredLogger } from './structured-logger.service';
 
 @Injectable()
 export class ApiLatencyInterceptor implements NestInterceptor {
   constructor(
-    private metricsService: EscrowMetricsService,
     private logger: StructuredLogger,
+    @Optional() private metricsService?: any, // Generic metrics interface (not escrow-specific)
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {
@@ -19,13 +18,14 @@ export class ApiLatencyInterceptor implements NestInterceptor {
     const userId = req.user?.id;
     const ip = req.ip || req.connection?.remoteAddress;
 
-    // EX-031: Structured request logging
     this.logger.logRequest(method, path, userId, ip);
 
     return next.handle().pipe(
       tap((response) => {
         const duration = Date.now() - start;
-        this.metricsService.recordApiLatency(duration / 1000, method, path);
+        if (this.metricsService?.recordApiLatency) {
+          this.metricsService.recordApiLatency(duration / 1000, method, path);
+        }
         const statusCode = context.switchToHttp().getResponse()?.statusCode || 200;
         this.logger.logResponse(method, path, statusCode, duration);
       }),

@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-nati
 import * as Speech from 'expo-speech';
 import { spacing, radius, typography } from '../theme';
 
-const VOICE_COMMANDS = [
+const QUICK_COMMANDS = [
   { command: 'Yakınımdaki dönüş yüklerini göster', action: 'show_nearby', icon: '📍' },
   { command: '100 kilometre içindeki yükleri filtrele', action: 'filter_100', icon: '🎯' },
   { command: 'Escrow garantili yükleri göster', action: 'filter_escrow', icon: '🔒' },
@@ -22,29 +22,30 @@ interface VoiceCommandBarProps {
   colors: any;
 }
 
+/** Hızlı komut çubuğu — tek dokunuşla sık kullanılan işlemleri tetikler.
+ *  Sesli komut özelliği (expo-speech-recognition) henüz aktif değil. */
 export default function VoiceCommandBar({ onCommand, colors }: VoiceCommandBarProps) {
-  const [listening, setListening] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
-  const handleVoiceCommand = (action: string, command: string) => {
+  const handleQuickCommand = (action: string, command: string) => {
     onCommand(action, command);
-    Speech.speak(`"${command}" komutu algılandı`, {
+    Speech.speak(`"${command}" komutu uygulandı`, {
       language: 'tr-TR',
       rate: 0.85,
     });
   };
 
-  const toggleListening = () => {
-    if (listening) {
-      setListening(false);
+  const toggleExpanded = () => {
+    if (expanded) {
+      setExpanded(false);
       Speech.stop();
     } else {
-      setListening(true);
-      Speech.speak('Sesli komutlar kullanıma hazır. Lütfen bir komut seçin.', {
+      setExpanded(true);
+      Speech.speak('Hızlı komutlar kullanıma hazır.', {
         language: 'tr-TR',
         rate: 0.85,
       });
-      // Auto-dismiss after 10 seconds
-      setTimeout(() => setListening(false), 10000);
+      setTimeout(() => setExpanded(false), 10000);
     }
   };
 
@@ -52,24 +53,24 @@ export default function VoiceCommandBar({ onCommand, colors }: VoiceCommandBarPr
     <View style={[styles.container, { backgroundColor: colors.card, borderColor: colors.border }]}>
       <View style={styles.header}>
         <TouchableOpacity
-          style={[styles.micBtn, listening && { backgroundColor: colors.danger + '20' }]}
-          onPress={toggleListening}
+          style={[styles.micBtn, expanded && { backgroundColor: colors.primary + '15' }]}
+          onPress={toggleExpanded}
         >
-          <Text style={[typography.h3, { color: listening ? colors.danger : colors.text }]}>
-            {listening ? '🔴' : '🎤'}
+          <Text style={[typography.h3, { color: expanded ? colors.primary : colors.text }]}>
+            {expanded ? '⚡' : '🎤'}
           </Text>
         </TouchableOpacity>
         <Text style={[typography.label, { color: colors.textTertiary, flex: 1 }]}>
-          {listening ? 'Dinleniyor... Bir komut seçin' : 'Sesli Komutlar'}
+          {expanded ? 'Hızlı Komutlar — birini seçin' : 'Hızlı Komutlar'}
         </Text>
       </View>
-      {listening && (
+      {expanded && (
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.commandsScroll}>
-          {VOICE_COMMANDS.map((cmd) => (
+          {QUICK_COMMANDS.map((cmd) => (
             <TouchableOpacity
               key={cmd.action}
               style={[styles.commandChip, { backgroundColor: colors.primary + '15', borderColor: colors.primary + '30' }]}
-              onPress={() => handleVoiceCommand(cmd.action, cmd.command)}
+              onPress={() => handleQuickCommand(cmd.action, cmd.command)}
             >
               <Text style={[typography.caption, { color: colors.primary }]}>
                 {cmd.icon} {cmd.command}

@@ -15,13 +15,18 @@ class PlaceBidDto {
   @IsOptional() @IsNumber() @Min(60) validDuration?: number;
 }
 
+class CounterBidDto {
+  @IsNumber() @Min(1) counterAmount: number;
+  @IsOptional() @IsString() counterNote?: string;
+}
+
 @Controller('bids')
 @UseGuards(AuthGuard('jwt'))
 export class BidsController {
   constructor(private bidsService: BidsService) {}
 
   @Post()
-  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 teklif/dakika
+  @Throttle({ default: { limit: 10, ttl: 60000 } })
   async placeBid(@Body() body: PlaceBidDto, @Req() req: any) {
     return this.bidsService.placeBid({ ...body, carrierId: req.user.id, carrierName: req.user.fullName });
   }
@@ -42,18 +47,13 @@ export class BidsController {
     return this.bidsService.getBidsForLoad(loadId);
   }
 
-  @Put(':id/accept')
-  async acceptBid(@Param('id') id: string, @Req() req: any) {
-    return this.bidsService.acceptBid(id, req.user.id);
-  }
-
   @Put(':id/reject')
   async rejectBid(@Param('id') id: string, @Req() req: any) {
     return this.bidsService.rejectBid(id, req.user.id);
   }
 
   @Put(':id/counter')
-  async counterBid(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async counterBid(@Param('id') id: string, @Body() body: CounterBidDto, @Req() req: any) {
     return this.bidsService.counterBid(id, req.user.id, body.counterAmount, body.counterNote || '');
   }
 

@@ -56,7 +56,7 @@ export class TaxController {
   }
 
   @Post('declarations')
-  async saveDeclaration(@Req() req: any, @Body() body: any) {
+  async saveDeclaration(@Req() req: any, @Body() body: { declarationType: string; year: number; month: number; draftJson: any; tahakkukAmount?: number }) {
     const draft = this.declarationRepo.create({ companyId: req.user.id, declarationType: body.declarationType, year: body.year, month: body.month, draftJson: JSON.stringify(body.draftJson), tahakkukAmount: body.tahakkukAmount || 0, status: DeclarationStatus.DRAFT });
     await this.declarationRepo.save(draft);
     return { success: true, data: draft };

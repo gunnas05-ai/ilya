@@ -2,17 +2,34 @@ import axios from 'axios';
 
 const API_BASE = '/api/v1';
 
+// Helper: set session cookie for middleware auth check (non-httpOnly, 7 day expiry)
+function setSessionCookie(token: string) {
+  if (typeof document !== 'undefined') {
+    const expires = new Date(Date.now() + 7 * 86400000).toUTCString();
+    document.cookie = `admin_session=${token}; expires=${expires}; path=/; SameSite=Lax`;
+  }
+}
+
+function clearSessionCookie() {
+  if (typeof document !== 'undefined') {
+    document.cookie = 'admin_session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/';
+  }
+}
+
 export const api = axios.create({
   baseURL: API_BASE,
   timeout: 15000,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Request interceptor — attach access token
+// Request interceptor — attach access token + sync cookie for middleware
 api.interceptors.request.use((config) => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('admin_token');
-    if (token) config.headers.Authorization = `Bearer ${token}`;
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+      setSessionCookie(token);
+    }
   }
   return config;
 });
@@ -63,6 +80,7 @@ api.interceptors.response.use(
           if (newAccessToken) {
             localStorage.setItem('admin_token', newAccessToken);
             if (newRefreshToken) localStorage.setItem('admin_refresh', newRefreshToken);
+            setSessionCookie(newAccessToken);
 
             api.defaults.headers.common.Authorization = `Bearer ${newAccessToken}`;
             processQueue(null, newAccessToken);
@@ -77,6 +95,7 @@ api.interceptors.response.use(
       localStorage.removeItem('admin_token');
       localStorage.removeItem('admin_refresh');
       localStorage.removeItem('admin_user');
+      clearSessionCookie();
       if (typeof window !== 'undefined') {
         window.location.href = '/login';
       }

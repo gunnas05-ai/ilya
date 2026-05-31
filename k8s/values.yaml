@@ -3,7 +3,7 @@
 # Ortam
 environment: production
 imageRegistry: registry.kaptanlojistik.com
-imageTag: latest
+imageTag: "REQUIRED-SET-VERSION-TAG"
 
 # ── Global annotations ──
 global:
@@ -28,7 +28,7 @@ postgres:
   env:
     POSTGRES_USER: kaptan
     POSTGRES_DB: kaptan
-    POSTGRES_PASSWORD: kaptan_dev_2026  # Production'da Vault'tan gelmeli
+    POSTGRES_PASSWORD: "REQUIRED-OVERRIDE-IN-PRODUCTION"  # Vault veya sealed-secrets kullanin
   service:
     port: 5432
 
@@ -132,11 +132,12 @@ backend:
 # ── MinIO (Object Storage) ──
 minio:
   enabled: true
-  image: minio/minio:latest
+  image: minio/minio:RELEASE.2024-11-07T00-52-20Z
   replicas: 1
   storage: 200Gi
   env:
     MINIO_ROOT_USER: kaptan_admin
+    MINIO_ROOT_PASSWORD: "REQUIRED-OVERRIDE-IN-PRODUCTION"  # Vault veya sealed-secrets kullanin
   service:
     apiPort: 9000
     consolePort: 9001

@@ -2,6 +2,9 @@ import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateCol
 import { Bid } from '../bids/bid.entity';
 import { EscrowTransaction } from '../escrow/escrow-transaction.entity';
 import { Wallet } from '../escrow/wallet.entity';
+import { CarrierProfile } from './carrier-profile.entity';
+import { CompanyProfile } from './company-profile.entity';
+import { MfaSettings } from './mfa-settings.entity';
 
 export enum UserRole {
   YUK_VEREN = 'yuk_veren',
@@ -55,7 +58,17 @@ export class User {
   @Column({ nullable: true })
   companyId: string;
 
-  // Carrier profile fields
+  // ── Relations (canonical) ──────────────────────────────
+  @OneToOne(() => CarrierProfile, (cp) => cp.user, { cascade: true })
+  carrierProfile: CarrierProfile;
+
+  @OneToOne(() => CompanyProfile, (cp) => cp.user, { cascade: true })
+  companyProfile: CompanyProfile;
+
+  @OneToOne(() => MfaSettings, (ms) => ms.user, { cascade: true })
+  mfaSettings: MfaSettings;
+
+  // ── Legacy inline columns (deprecated — use relations above) ──
   @Column({ nullable: true })
   licenseNumber: string;
 

@@ -5,13 +5,22 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Load, LoadType, LoadStatus } from './load.entity';
 import { calculateDistance } from '../common/distance';
 
+export interface ISubscriptionService {
+  getActiveSubscription(userId: string): Promise<{ status: string; planId: string } | null>;
+  canCreateLoad(userId: string): Promise<boolean>;
+}
+
 @Injectable()
 export class LoadsService {
   constructor(
     @InjectRepository(Load)
     private loadRepo: Repository<Load>,
     private eventEmitter: EventEmitter2,
-    @Optional() private subscriptionService?: any,
+    @Optional() @Inject('ISubscriptionService') private subscriptionService?: ISubscriptionService,
+    @Optional() @InjectRepository('InvoiceRepository' as any)
+    private invoiceRepo?: Repository<any>,
+    @Optional() @InjectRepository('EscrowTransactionRepository' as any)
+    private escrowRepo?: Repository<any>,
   ) {}
 
   async create(data: Partial<Load>, creatorId: string) {
@@ -121,7 +130,7 @@ export class LoadsService {
     sortBy?: string;
     sortOrder?: 'ASC' | 'DESC';
   }) {
-    const page = filters.page || 1;
+    const page = Math.min(filters.page || 1, 50); // maxSkip = 50 * limit
     const limit = Math.min(filters.limit || 20, 100);
     const query = this.loadRepo.createQueryBuilder('load')
       .where('load.status != :deletedStatus', { deletedStatus: LoadStatus.IPTAL });
@@ -235,16 +244,14 @@ export class LoadsService {
     const isAssignedCarrier = load.reservedById === userId || isReceiver;
     const isInTransit = load.status === LoadStatus.YOLDA || load.status === LoadStatus.TESLIM_EDILDI;
 
-    // Check if any invoice references this load (via invoice items or related fields)
-    const { Invoice } = await import('../gib/invoice.entity');
-    const { getRepositoryToken } = await import('@nestjs/typeorm');
-    // Use direct query to check
-    const existingInvoice = await this.loadRepo.manager
-      .createQueryBuilder(Invoice, 'inv')
-      .where('inv.createdById = :userId', { userId })
-      .andWhere('inv.status != :cancelled', { cancelled: 'cancelled' })
-      .orderBy('inv.createdAt', 'DESC')
-      .getOne();
+    // Check if any invoice references this load
+    let existingInvoice: any = null;
+    if (this.invoiceRepo) {
+      existingInvoice = await this.invoiceRepo.findOne({
+        where: { createdById: userId },
+        order: { createdAt: 'DESC' as any },
+      });
+    }
 
     return {
       loadId,
@@ -472,21 +479,18 @@ export class LoadsService {
 
     // Auto-create escrow transaction if escrow enabled
     let escrowTx = null;
-    if (load.escrow && load.totalPrice && load.totalPrice > 0) {
+    if (load.escrow && load.totalPrice && load.totalPrice > 0 && this.escrowRepo) {
       try {
-        const { EscrowTransaction, EscrowStatus } = await import('../escrow/escrow-transaction.entity');
-        const escrowRepo = this.loadRepo.manager.getRepository(EscrowTransaction);
-        escrowTx = escrowRepo.create({
+        escrowTx = this.escrowRepo.create({
           loadId: load.id,
           shipperId: load.creatorId,
           carrierId,
           amount: load.totalPrice,
-          status: EscrowStatus.BLOKEDE,
+          status: 'BLOKEDE',
           idempotencyKey: `instant-book-${loadId}-${carrierId}`,
         });
-        await escrowRepo.save(escrowTx);
+        await this.escrowRepo.save(escrowTx);
       } catch (e) {
-        // Escrow creation failure should not rollback the booking
         this.eventEmitter.emit('escrow.creation_failed', { loadId, carrierId, error: (e as Error).message });
       }
     }

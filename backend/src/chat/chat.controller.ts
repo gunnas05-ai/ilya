@@ -61,7 +61,7 @@ export class ChatController {
   }
 
   @Post('rooms/:id/messages')
-  async sendMessage(@Param('id') roomId: string, @Body() body: any, @Req() req: any) {
+  async sendMessage(@Param('id') roomId: string, @Body() body: { text: string; fileUrl?: string; fileName?: string; fileType?: string; fileSize?: number; senderId?: string; senderName?: string; senderRole?: string }, @Req() req: any) {
     const msg = await this.chatService.sendMessage({
       roomId,
       senderId: body.senderId || req.user?.id,

@@ -10,7 +10,7 @@ export class PodController {
   @UseGuards(AuthGuard('jwt'))
   async uploadSignature(
     @Param('loadId') loadId: string,
-    @Body() body: any,
+    @Body() body: { signatureImageBase64: string; signerName: string; signerRole?: string; vectorPath?: any; deviceId?: string; latitude?: number; longitude?: number },
     @Req() req: any,
     @Ip() ip: string,
   ) {

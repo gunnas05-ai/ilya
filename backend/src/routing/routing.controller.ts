@@ -8,7 +8,7 @@ export class RoutingController {
 
   @Post('truck-route')
   @UseGuards(AuthGuard('jwt'))
-  async calculateTruckRoute(@Body() body: any, @Req() req: any) {
+  async calculateTruckRoute(@Body() body: { origin: { lat: number; lng: number }; destination: { lat: number; lng: number }; waypoints?: any[]; vehicleProfile?: { height?: number; weight?: number; length?: number; width?: number; hasRefrigeration?: boolean; adrClass?: string } }, @Req() req: any) {
     return this.routingService.calculateTruckRoute({
       origin: body.origin,
       destination: body.destination,
@@ -25,7 +25,7 @@ export class RoutingController {
 
   @Post('check-bridge')
   @UseGuards(AuthGuard('jwt'))
-  async checkBridgeClearance(@Body() body: any) {
+  async checkBridgeClearance(@Body() body: { vehicleHeight: number; routeCoordinates: Array<{ lat: number; lng: number }> }) {
     return this.routingService.checkBridgeClearance(body.vehicleHeight, body.routeCoordinates);
   }
 }

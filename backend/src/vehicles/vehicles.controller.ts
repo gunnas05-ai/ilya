@@ -1,10 +1,36 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Req, UseInterceptors, UploadedFile, ParseFilePipeBuilder, HttpStatus } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { IsString, IsNumber, IsOptional, IsBoolean, Min } from 'class-validator';
 import { VehiclesService } from './vehicles.service';
 import { FleetService } from './fleet.service';
 import { Roles } from '../common/roles.decorator';
 import { RolesGuard } from '../common/roles.guard';
+
+class CreateVehicleDto {
+  @IsString() plateNumber: string;
+  @IsString() vehicleType: string;
+  @IsOptional() @IsString() brand?: string;
+  @IsOptional() @IsString() model?: string;
+  @IsOptional() @IsNumber() modelYear?: number;
+  @IsOptional() @IsString() trailerType?: string;
+  @IsOptional() @IsNumber() @Min(0) tonnageCapacity?: number;
+  @IsOptional() @IsNumber() @Min(0) volumeCapacity?: number;
+  @IsOptional() @IsBoolean() hasRefrigeration?: boolean;
+}
+
+class UpdateVehicleDto {
+  @IsOptional() @IsString() plateNumber?: string;
+  @IsOptional() @IsString() vehicleType?: string;
+  @IsOptional() @IsString() brand?: string;
+  @IsOptional() @IsString() model?: string;
+  @IsOptional() @IsNumber() modelYear?: number;
+  @IsOptional() @IsString() trailerType?: string;
+  @IsOptional() @IsNumber() @Min(0) tonnageCapacity?: number;
+  @IsOptional() @IsNumber() @Min(0) volumeCapacity?: number;
+  @IsOptional() @IsBoolean() hasRefrigeration?: boolean;
+  @IsOptional() @IsBoolean() isActive?: boolean;
+}
 
 @Controller('vehicles')
 @UseGuards(AuthGuard('jwt'))
@@ -14,7 +40,6 @@ export class VehiclesController {
     private fleetService: FleetService,
   ) {}
 
-  // EX-021: Fleet dashboard
   @Get('fleet/dashboard')
   getFleetDashboard(@Req() req: any) { return this.fleetService.getFleetDashboard(req.user.id); }
 
@@ -27,13 +52,13 @@ export class VehiclesController {
   getMyVehicles(@Req() req: any) { return this.service.getMyVehicles(req.user.id); }
 
   @Post()
-  create(@Body() body: any, @Req() req: any) { return this.service.createVehicle(req.user.id, body); }
+  create(@Body() body: CreateVehicleDto, @Req() req: any) { return this.service.createVehicle(req.user.id, body); }
 
   @Get(':id')
   getOne(@Param('id') id: string, @Req() req: any) { return this.service.getVehicle(id, req.user.id); }
 
   @Put(':id')
-  update(@Param('id') id: string, @Body() body: any, @Req() req: any) { return this.service.updateVehicle(id, req.user.id, body); }
+  update(@Param('id') id: string, @Body() body: UpdateVehicleDto, @Req() req: any) { return this.service.updateVehicle(id, req.user.id, body); }
 
   @Delete(':id')
   delete(@Param('id') id: string, @Req() req: any) { return this.service.deleteVehicle(id, req.user.id); }
@@ -82,7 +107,9 @@ export class ListingsController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
-  create(@Body() body: any, @Req() req: any) { return this.service.createListing(req.user.id, body); }
+  create(@Body() body: { vehicleId: string; price: number; description: string; city: string }, @Req() req: any) {
+    return this.service.createListing(req.user.id, body);
+  }
 
   @Get(':id')
   getOne(@Param('id') id: string) { return this.service.getListing(id); }

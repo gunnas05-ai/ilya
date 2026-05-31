@@ -1,6 +1,7 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Inject, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
+import { OnEvent } from '@nestjs/event-emitter';
 import * as crypto from 'crypto';
 import { QRCode, QRCheckpointType } from './qr-code.entity';
 import { Load } from '../loads/load.entity';
@@ -12,7 +13,7 @@ import { AuditLogService, AuditAction } from '../escrow/audit-log.service';
 import { EscrowMetricsService } from '../escrow/escrow-metrics.service';
 import { isWithinRadius } from '../common/distance';
 
-const HMAC_SECRET = process.env.QR_HMAC_SECRET || 'kaptan-qr-dev-secret-2026';
+const HMAC_SECRET = process.env.QR_HMAC_SECRET || (() => { throw new Error('QR_HMAC_SECRET env var is required for QR code security'); })();
 const ENCRYPTION_KEY = crypto.createHash('sha256').update(HMAC_SECRET + '-aes-key').digest();
 
 function signToken(payload: string): string {
@@ -43,6 +44,8 @@ function decryptPayload(encrypted: string): object {
 
 @Injectable()
 export class QrService {
+  private readonly logger = new Logger(QrService.name);
+
   constructor(
     @InjectRepository(QRCode)
     private qrRepo: Repository<QRCode>,
@@ -53,11 +56,25 @@ export class QrService {
     @InjectRepository(User)
     private userRepo: Repository<User>,
     private wsGateway: WebSocketGateway,
-    @Inject(forwardRef(() => EscrowService))
     private escrowService: EscrowService,
     private auditLogService: AuditLogService,
     private metricsService: EscrowMetricsService,
   ) {}
+
+  /** Event-driven QR generation — escrow oluşturulduğunda otomatik tetiklenir */
+  @OnEvent('escrow.created')
+  async handleEscrowCreated(payload: {
+    loadId: string;
+    driverId: string;
+    customerId: string;
+    checkpointType: QRCheckpointType;
+  }) {
+    try {
+      await this.generateQR(payload);
+    } catch (err) {
+      this.logger.warn(`Auto QR generation failed for load ${payload.loadId}: ${(err as Error).message}`);
+    }
+  }
 
   async generateQR(data: {
     loadId: string;

@@ -2,6 +2,7 @@ import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Req, Query,
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
 import { Throttle } from '@nestjs/throttler';
+import { IsString, IsNumber, IsOptional, IsBoolean, IsArray, Min } from 'class-validator';
 import { EscrowService } from './escrow.service';
 import { WalletService } from './wallet.service';
 import { WithdrawalService } from './withdrawal.service';
@@ -12,6 +13,51 @@ import { InsuranceService } from './insurance.service';
 
 import { Roles } from '../common/roles.decorator';
 import { RolesGuard } from '../common/roles.guard';
+
+class CreateEscrowDto {
+  @IsString() loadId: string;
+  @IsString() carrierId: string;
+  @IsNumber() @Min(1) amount: number;
+  @IsOptional() @IsBoolean() isMilestone?: boolean;
+  @IsOptional() @IsNumber() totalMilestones?: number;
+  @IsOptional() @IsArray() milestonePercentages?: number[];
+  @IsOptional() @IsNumber() milestoneTimeoutHours?: number;
+  @IsOptional() @IsString() idempotencyKey?: string;
+}
+
+class OpenDisputeDto {
+  @IsString() reason: string;
+  @IsString() description: string;
+  @IsOptional() evidence?: any;
+}
+
+class ResolveDisputeDto {
+  @IsString() resolution: string;
+  @IsString() resolutionType: string;
+  @IsOptional() @IsNumber() @Min(0) refundAmount?: number;
+}
+
+class WalletDepositDto {
+  @IsNumber() @Min(1) amount: number;
+}
+
+class WalletIbanDto {
+  @IsString() iban: string;
+  @IsOptional() @IsString() bankName?: string;
+  @IsOptional() @IsString() accountHolderName?: string;
+}
+
+class WithdrawDto {
+  @IsNumber() @Min(1) amount: number;
+  @IsString() type: string;
+  @IsOptional() @IsString() iban?: string;
+  @IsOptional() @IsString() description?: string;
+}
+
+class FraudReviewDto {
+  @IsString() decision: string; // approve | reject | flag_for_dispute
+  @IsString() note: string;
+}
 
 @Controller('escrow')
 @UseGuards(AuthGuard('jwt'))
@@ -29,21 +75,16 @@ export class EscrowController {
   @Post('create')
   @UseGuards(RolesGuard)
   @Roles('yuk_veren', 'marketplace_satici', 'filo_yoneticisi', 'platform_operatoru', 'admin', 'super_admin')
-  async create(@Body() body: any, @Req() req: any) {
+  async create(@Body() body: CreateEscrowDto, @Req() req: any) {
     return this.escrowService.createEscrow({
-      loadId: body.loadId,
+      ...body,
       shipperId: req.user.id,
-      carrierId: body.carrierId,
-      amount: body.amount,
-      isMilestone: body.isMilestone,
-      totalMilestones: body.totalMilestones,
-      milestonePercentages: body.milestonePercentages,
-      milestoneTimeoutHours: body.milestoneTimeoutHours,
-      idempotencyKey: body.idempotencyKey,
     });
   }
 
   @Post('auto-refund-expired')
+  @UseGuards(RolesGuard)
+  @Roles('admin', 'super_admin')
   async autoRefundExpired() {
     return this.escrowService.autoRefundExpiredMilestones();
   }
@@ -58,14 +99,14 @@ export class EscrowController {
   @Post(':id/dispute')
   @UseGuards(RolesGuard)
   @Roles('yuk_veren', 'tasiyici', 'marketplace_satici', 'marketplace_alici', 'admin', 'super_admin')
-  async openDispute(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async openDispute(@Param('id') id: string, @Body() body: OpenDisputeDto, @Req() req: any) {
     return this.escrowService.openDispute(id, req.user.id, body.reason, body.description, body.evidence);
   }
 
   @Post('disputes/:id/resolve')
   @UseGuards(RolesGuard)
   @Roles('admin', 'super_admin', 'dispute_moderator')
-  async resolveDispute(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async resolveDispute(@Param('id') id: string, @Body() body: ResolveDisputeDto, @Req() req: any) {
     return this.escrowService.resolveDispute(id, req.user.id, body.resolution, body.resolutionType, body.refundAmount);
   }
 
@@ -88,12 +129,12 @@ export class EscrowController {
 
   @Post('wallet/deposit')
   @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 yukleme/dakika
-  async deposit(@Body() body: any, @Req() req: any) {
+  async deposit(@Body() body: WalletDepositDto, @Req() req: any) {
     return this.walletService.credit(req.user.id, body.amount, `deposit_${Date.now()}`, 'Para yükleme');
   }
 
   @Post('wallet/iban')
-  async saveIban(@Body() body: any, @Req() req: any) {
+  async saveIban(@Body() body: WalletIbanDto, @Req() req: any) {
     return this.withdrawalService.saveIban(req.user.id, body.iban, body.bankName, body.accountHolderName);
   }
 
@@ -105,36 +146,36 @@ export class EscrowController {
   // --- Withdrawals ---
 
   @Post('withdraw')
-  async withdraw(@Body() body: any, @Req() req: any) {
+  async withdraw(@Body() body: WithdrawDto, @Req() req: any) {
     return this.withdrawalService.requestWithdrawal(
       req.user.id,
       body.amount,
       WithdrawalType.STANDARD,
-      { iban: body.iban, bankName: body.bankName, accountHolderName: body.accountHolderName },
+      { iban: body.iban, bankName: body.description, accountHolderName: '' },
       undefined,
       body.description,
     );
   }
 
   @Post('withdraw/iban')
-  async withdrawIban(@Body() body: any, @Req() req: any) {
+  async withdrawIban(@Body() body: WithdrawDto, @Req() req: any) {
     return this.withdrawalService.requestIbanTransfer(
-      req.user.id, body.amount, body.iban, body.bankName, body.accountHolderName,
+      req.user.id, body.amount, body.iban || '', body.description, '',
     );
   }
 
   @Post('withdraw/fuel-advance')
-  async fuelAdvance(@Body() body: any, @Req() req: any) {
+  async fuelAdvance(@Body() body: { amount: number; loadId: string }, @Req() req: any) {
     return this.withdrawalService.fuelAdvance(req.user.id, body.amount, body.loadId);
   }
 
   @Post('withdraw/milestone-payout')
-  async milestonePayout(@Body() body: any, @Req() req: any) {
+  async milestonePayout(@Body() body: { amount: number; milestoneId: string }, @Req() req: any) {
     return this.withdrawalService.milestonePayout(req.user.id, body.amount, body.milestoneId);
   }
 
   @Post('withdraw/cashback')
-  async cashback(@Body() body: any, @Req() req: any) {
+  async cashback(@Body() body: { amount: number; referenceId: string }, @Req() req: any) {
     return this.withdrawalService.cashback(req.user.id, body.amount, body.referenceId);
   }
 
@@ -175,7 +216,7 @@ export class EscrowController {
   @Post('admin/fraud-review/:id')
   @UseGuards(RolesGuard)
   @Roles('admin', 'super_admin', 'dispute_moderator')
-  async reviewFraud(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async reviewFraud(@Param('id') id: string, @Body() body: FraudReviewDto, @Req() req: any) {
     return this.escrowService.reviewFraudCase(id, req.user.id, body.decision, body.note);
   }
 
@@ -198,7 +239,7 @@ export class EscrowController {
   @Post('admin/withdrawals/:id/reject')
   @UseGuards(RolesGuard)
   @Roles('admin', 'super_admin')
-  async rejectWithdrawal(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async rejectWithdrawal(@Param('id') id: string, @Body() body: { reason: string }, @Req() req: any) {
     return this.withdrawalService.rejectWithdrawal(id, req.user.id, body.reason);
   }
 
@@ -244,12 +285,12 @@ export class EscrowController {
   }
 
   @Post('gateway/deposit')
-  async gatewayDeposit(@Body() body: any, @Req() req: any) {
+  async gatewayDeposit(@Body() body: { amount: number; returnUrl?: string }, @Req() req: any) {
     return this.gatewayService.deposit(req.user.id, body.amount, body.returnUrl);
   }
 
   @Post('gateway/withdraw')
-  async gatewayWithdraw(@Body() body: any, @Req() req: any) {
+  async gatewayWithdraw(@Body() body: { amount: number; iban?: string }, @Req() req: any) {
     return this.gatewayService.withdraw(
       req.user.id,
       body.amount,

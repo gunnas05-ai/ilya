@@ -1,7 +1,39 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { IsString, IsNumber, IsOptional, IsBoolean, IsArray, Min, MaxLength } from 'class-validator';
 import { MarketplaceService } from './marketplace.service';
 import { VehicleType } from './vehicle-detail.entity';
+
+class CreateListingDto {
+  @IsString() @MaxLength(200) title: string;
+  @IsNumber() categoryId: number;
+  @IsNumber() @Min(0) price: number;
+  @IsString() @MaxLength(2000) description: string;
+  @IsString() fullAddress: string;
+  @IsString() city: string;
+  @IsOptional() @IsString() district?: string;
+  @IsOptional() @IsBoolean() isNegotiable?: boolean;
+  @IsOptional() @IsBoolean() isBarterAvailable?: boolean;
+  @IsOptional() @IsString() coverImageUrl?: string;
+  @IsOptional() @IsArray() imageUrls?: string[];
+  @IsOptional() vehicleDetail?: any;
+}
+
+class UpdateListingDto {
+  @IsOptional() @IsString() @MaxLength(200) title?: string;
+  @IsOptional() @IsNumber() @Min(0) price?: number;
+  @IsOptional() @IsString() @MaxLength(2000) description?: string;
+  @IsOptional() @IsBoolean() isNegotiable?: boolean;
+  @IsOptional() @IsString() status?: string;
+}
+
+class CreateOfferDto {
+  @IsString() listingId: string;
+  @IsNumber() @Min(1) offerAmount: number;
+  @IsOptional() @IsString() message?: string;
+  @IsOptional() @IsBoolean() isBarterOffer?: boolean;
+  @IsOptional() @IsArray() barterItems?: any[];
+}
 
 @Controller('marketplace')
 @UseGuards(AuthGuard('jwt'))
@@ -18,7 +50,7 @@ export class MarketplaceController {
   // ── Listings ─────────────────────────────────────────
 
   @Post('listings')
-  async createListing(@Body() body: any, @Req() req: any) {
+  async createListing(@Body() body: CreateListingDto, @Req() req: any) {
     return this.marketplaceService.createListing({ ...body, sellerId: req.user.id });
   }
 
@@ -52,7 +84,7 @@ export class MarketplaceController {
   }
 
   @Put('listings/:id')
-  async updateListing(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async updateListing(@Param('id') id: string, @Body() body: UpdateListingDto, @Req() req: any) {
     return this.marketplaceService.updateListing(id, req.user.id, body);
   }
 
@@ -71,7 +103,7 @@ export class MarketplaceController {
   // ── Offers ────────────────────────────────────────────
 
   @Post('offers')
-  async createOffer(@Body() body: any, @Req() req: any) {
+  async createOffer(@Body() body: CreateOfferDto, @Req() req: any) {
     return this.marketplaceService.createOffer({ ...body, buyerId: req.user.id });
   }
 

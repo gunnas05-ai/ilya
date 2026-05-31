@@ -101,7 +101,7 @@ export class AdminRoleController {
 
   @Post('permissions')
   @ApiOperation({ summary: 'Yeni permission olustur' })
-  async createPermission(@Body() body: any) {
+  async createPermission(@Body() body: { name: string; label: string; group?: string; description?: string }) {
     const perm = this.permRepo.create(body);
     await this.permRepo.save(perm);
     return { success: true, data: perm };

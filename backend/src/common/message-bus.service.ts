@@ -112,7 +112,7 @@ export class MessageBusService {
   }
 
   /** Request/response pattern (future: gRPC/RabbitMQ RPC) */
-  async request<TRequest, TResponse>(pattern: string, payload: TRequest): Promise<TResponse> {
+  async request<TRequest, TResponse>(pattern: string, payload: TRequest, timeoutMs = 30000): Promise<TResponse> {
     this.logger.debug(`[${this.serviceName}] RPC → ${pattern}`);
 
     if (this.kafkaAvailable && this.kafkaProducer) {
@@ -131,9 +131,15 @@ export class MessageBusService {
       }
     }
 
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        this.eventEmitter.removeListener(replyPattern, handler);
+        reject(new Error(`RPC timeout: ${pattern} (${timeoutMs}ms)`));
+      }, timeoutMs);
+
       const replyPattern = `${pattern}.reply`;
       const handler = (response: TResponse) => {
+        clearTimeout(timeout);
         this.eventEmitter.removeListener(replyPattern, handler);
         resolve(response);
       };

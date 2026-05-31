@@ -7,7 +7,7 @@
  *   - BidNotificationService (WebSocket + push bildirim)
  *   - Escrow orchestration'i ayri bir saga/state machine'e tasi
  */
-import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -33,7 +33,6 @@ export class BidsService {
     private notificationsService: NotificationsService,
     private wsGateway: WebSocketGateway,
     private eventEmitter: EventEmitter2,
-    @Inject(forwardRef(() => EscrowService))
     private escrowService: EscrowService,
     private uetdsService: UetdsService,
     private scorecardService: CarrierScorecardService,
@@ -51,26 +50,31 @@ export class BidsService {
     pickupTime?: string;
     requestEscrow?: boolean;
   }) {
-    const load = await this.loadRepo.findOne({ where: { id: data.loadId } });
+    // Paralel: load, carrier, ve scorecard tek seferde çek
+    const [load, carrier, scorecard] = await Promise.all([
+      this.loadRepo.findOne({ where: { id: data.loadId } }),
+      this.userRepo.findOne({ where: { id: data.carrierId } }),
+      this.scorecardService.getBidderScore(data.carrierId),
+    ]);
+
     if (!load) throw new NotFoundException('Yük bulunamadı');
     if (load.creatorId === data.carrierId) {
       throw new ForbiddenException('Kendi yükünüze teklif veremezsiniz');
     }
 
-    // Profile completeness check
-    const carrier = await this.userRepo.findOne({ where: { id: data.carrierId } });
     if (carrier) {
       const missingFields: string[] = [];
-      if (!carrier.licenseNumber) missingFields.push('Ehliyet Bilgisi');
-      if (!carrier.plateNumber) missingFields.push('Araç Plakası');
-      if (!carrier.vehicleType) missingFields.push('Araç Tipi');
-      if (!carrier.vehicleCapacity) missingFields.push('Araç Kapasitesi');
-      if (!carrier.tonnageCapacity) missingFields.push('Tonaj Bilgisi');
-      if (!carrier.volumeCapacity) missingFields.push('Hacim Bilgisi');
-      if (!carrier.kBelgesi) missingFields.push('K Belgesi');
-      if (!carrier.srcBelgesi) missingFields.push('SRC Belgesi');
-      if (!carrier.iban) missingFields.push('IBAN Bilgisi');
-      if (!carrier.taxNumber) missingFields.push('Vergi Bilgisi');
+      const fieldLabels: Record<string, string> = {
+        phone: 'Telefon', licenseNumber: 'Ehliyet Bilgisi', plateNumber: 'Araç Plakası',
+        vehicleType: 'Araç Tipi', vehicleCapacity: 'Araç Kapasitesi', tonnageCapacity: 'Tonaj Bilgisi',
+        volumeCapacity: 'Hacim Bilgisi', kBelgesi: 'K Belgesi', srcBelgesi: 'SRC Belgesi',
+        iban: 'IBAN', taxNumber: 'Vergi Numarası',
+      };
+      for (const field of Object.keys(fieldLabels)) {
+        if (!(carrier as any)[field]) {
+          missingFields.push(fieldLabels[field]);
+        }
+      }
 
       if (missingFields.length > 0) {
         throw new BadRequestException(
@@ -82,9 +86,6 @@ export class BidsService {
         throw new BadRequestException('Güvenli ödeme alabilmek için hesabınızı doğrulayın');
       }
     }
-
-    // EX-008: Check carrier scorecard for restrictions
-    const scorecard = await this.scorecardService.getBidderScore(data.carrierId);
     if (scorecard.escrowRequired && load.escrow !== true) {
       throw new BadRequestException(
         `Taşıyıcı skorunuz (%${scorecard.overallScore} - ${scorecard.tierLabel}) nedeniyle bu yük için Escrow (Güvenli Ödeme) zorunludur. Lütfen escrow'lu bir yük seçin.`,
@@ -95,9 +96,12 @@ export class BidsService {
       data.requestEscrow = true;
     }
 
-    const commission = Math.round(data.amount * 0.08);
-    const escrowFee = Math.round(data.amount * 0.03);
-    const vat = Math.round(data.amount * 0.20);
+    const commissionRate = parseFloat(process.env.PLATFORM_COMMISSION_RATE || '0.08');
+    const escrowFeeRate = parseFloat(process.env.ESCROW_FEE_RATE || '0.03');
+    const vatRate = parseFloat(process.env.VAT_RATE || '0.20');
+    const commission = Math.round(data.amount * commissionRate);
+    const escrowFee = Math.round(data.amount * escrowFeeRate);
+    const vat = Math.round(data.amount * vatRate);
     const netAmount = data.amount - commission - escrowFee;
 
     const bid = this.bidRepo.create({
@@ -126,14 +130,14 @@ export class BidsService {
       responseTimeMinutes: 0,
     });
 
-    // Notify load creator
-    await this.notificationsService.create({
+    // Fire-and-forget: bildirim ve WebSocket (cevap suresini bloklamaz)
+    this.notificationsService.create({
       userId: load.creatorId,
       type: 'new_bid' as any,
       title: 'Yeni Teklif',
       message: `${data.carrierName} tarafından ${data.amount.toLocaleString('tr-TR')} ₺ teklif verildi`,
       data: { loadId: data.loadId, bidId: saved.id, amount: data.amount },
-    });
+    }).catch(err => console.error('Bid notification failed:', err));
 
     this.wsGateway.sendToUser(load.creatorId, 'new_bid', {
       loadId: data.loadId,
@@ -152,22 +156,23 @@ export class BidsService {
       relations: ['carrier'],
     });
 
-    // EX-008: Enrich bids with carrier scores
-    const enriched = await Promise.all(
-      bids.map(async (bid) => {
-        const score = await this.scorecardService.getBidderScore(bid.carrierId).catch(() => null);
-        return {
-          ...bid,
-          carrierScore: score ? {
-            overallScore: score.overallScore,
-            scoreTier: score.scoreTier,
-            tierLabel: score.tierLabel,
-            tierColor: score.tierColor,
-            totalCompletedLoads: score.totalCompletedLoads,
-          } : null,
-        };
-      }),
-    );
+    // EX-008: Batch scorecard lookup (N+1 fix)
+    const carrierIds = [...new Set(bids.map(b => b.carrierId))];
+    const scoreMap = await this.scorecardService.getBidderScores(carrierIds);
+
+    const enriched = bids.map(bid => {
+      const score = scoreMap[bid.carrierId] || null;
+      return {
+        ...bid,
+        carrierScore: score ? {
+          overallScore: score.overallScore,
+          scoreTier: score.scoreTier,
+          tierLabel: score.tierLabel,
+          tierColor: score.tierColor,
+          totalCompletedLoads: score.totalCompletedLoads,
+        } : null,
+      };
+    });
 
     return enriched;
   }

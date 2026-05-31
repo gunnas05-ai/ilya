@@ -12,7 +12,7 @@ export class WarehouseController {
 
   @Post('appointment')
   @ApiOperation({ summary: 'Yukleme/bosaltma randevusu talep et' })
-  async requestAppointment(@Body() body: any) {
+  async requestAppointment(@Body() body: { warehouseId: string; loadId: string; vehiclePlate: string; requestedDate: string; dockType?: string }) {
     return this.service.requestAppointment(body);
   }
 

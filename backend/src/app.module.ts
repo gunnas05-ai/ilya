@@ -9,6 +9,13 @@ import { CacheModule } from '@nestjs/cache-manager';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { PrometheusModule } from '@willsoto/nestjs-prometheus';
 import { CommonModule } from './common/common.module';
+import { HealthModule } from './common/health.module';
+import { CrashReportModule } from './common/crash-report.module';
+import { LanguageModule } from './common/language.module';
+import { CommunityModule } from './common/community.module';
+import { WhatsAppModule } from './common/whatsapp.module';
+import { SystemSettingsModule } from './common/system-settings.module';
+import { SozlesmeModule } from './common/sozlesme.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { LoadsModule } from './loads/loads.module';
@@ -56,7 +63,7 @@ const isProduction = process.env.NODE_ENV === 'production';
 
 @Module({
   imports: [
-    ThrottlerModule.forRoot([{ ttl: 1000, limit: 5 }]),
+    ThrottlerModule.forRoot([{ ttl: 1000, limit: 30 }]),
     CacheModule.register({ isGlobal: true }),
     EventEmitterModule.forRoot(),
     PrometheusModule.register({
@@ -80,6 +87,13 @@ const isProduction = process.env.NODE_ENV === 'production';
       },
     }),
     ScheduleModule.forRoot(),
+    HealthModule,
+    CrashReportModule,
+    LanguageModule,
+    CommunityModule,
+    WhatsAppModule,
+    SystemSettingsModule,
+    SozlesmeModule,
     CommonModule,
     AuthModule,
     UsersModule,

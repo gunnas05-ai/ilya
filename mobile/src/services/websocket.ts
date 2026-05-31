@@ -3,6 +3,7 @@ import { API_BASE_URL, APP_CONFIG } from '../constants/config';
 import type { WSEventMap } from '../types/websocket';
 
 let socket: Socket | null = null;
+let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
 
 export function connectSocket(token: string, userId?: string): Socket {
   if (socket?.connected) return socket;
@@ -16,20 +17,39 @@ export function connectSocket(token: string, userId?: string): Socket {
     reconnectionAttempts: 10,
     reconnectionDelay: 1000,
     reconnectionDelayMax: 30000,
+    timeout: 20000,
   });
 
   socket.on('connect', () => {
     if (userId) {
       subscribeToUser(userId);
     }
+    // Heartbeat: 25s ping to detect silent disconnections
+    if (heartbeatTimer) clearInterval(heartbeatTimer);
+    heartbeatTimer = setInterval(() => {
+      if (socket?.connected) {
+        socket.emit('ping');
+      }
+    }, 25000);
   });
-  socket.on('disconnect', () => {});
+
+  socket.on('disconnect', () => {
+    if (heartbeatTimer) {
+      clearInterval(heartbeatTimer);
+      heartbeatTimer = null;
+    }
+  });
+
   socket.on('connect_error', (err) => console.warn('WS connect error:', err.message));
 
   return socket;
 }
 
 export function disconnectSocket() {
+  if (heartbeatTimer) {
+    clearInterval(heartbeatTimer);
+    heartbeatTimer = null;
+  }
   if (socket) {
     socket.disconnect();
     socket = null;

@@ -33,6 +33,15 @@
     "submitting": "Submitting...",
     "exit": "Exit"
   },
+  "home": {
+    "title": "KAPTAN",
+    "subtitle": "SMART LOGISTICS PORTAL",
+    "availability": "Availability",
+    "active": "🟢 Active",
+    "inactive": "⚫ Offline",
+    "join": "Join",
+    "loadError": "An error occurred while loading data."
+  },
   "auth": {
     "login": "Login",
     "register": "Register",

@@ -7,9 +7,9 @@ services:
     container_name: kaptan-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: kaptan
-      POSTGRES_PASSWORD: kaptan_dev_2026
-      POSTGRES_DB: kaptan
+      POSTGRES_USER: ${DB_USER:-kaptan}
+      POSTGRES_PASSWORD: ${DB_PASS:?err}
+      POSTGRES_DB: ${DB_NAME:-kaptan}
     ports:
       - '5433:5432'
     volumes:
@@ -20,6 +20,14 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
 
   # ── Redis ─────────────────────────────────────
   redis:
@@ -35,21 +43,37 @@ services:
       interval: 10s
       timeout: 3s
       retries: 5
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
 
   # ── MinIO (Object Storage for documents) ──────
   minio:
-    image: minio/minio:latest
+    image: minio/minio:RELEASE.2024-11-07T00-52-20Z
     container_name: kaptan-minio
     restart: unless-stopped
     command: server /data --console-address ":9001"
     environment:
-      MINIO_ROOT_USER: kaptan_admin
-      MINIO_ROOT_PASSWORD: kaptan_minio_2026
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-kaptan_admin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:?err}
     ports:
       - '9000:9000'
       - '9001:9001'
     volumes:
       - minio_data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   # ── Zookeeper (Kafka dependency) ──────────────
   zookeeper:
@@ -88,10 +112,18 @@ services:
       KAFKA_NUM_PARTITIONS: 3
     volumes:
       - kafka_data:/var/lib/kafka/data
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   # ── Kafka UI (geliştirme izleme) ─────────────
   kafka-ui:
-    image: provectuslabs/kafka-ui:latest
+    image: provectuslabs/kafka-ui:v0.7.2
     container_name: kaptan-kafka-ui
     restart: unless-stopped
     depends_on:
@@ -136,14 +168,22 @@ services:
         condition: service_started
     ports:
       - '3000:3000'
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 256M
     environment:
       NODE_ENV: production
       PORT: 3000
       DB_HOST: postgres
       DB_PORT: 5432
-      DB_USER: kaptan
-      DB_PASS: kaptan_dev_2026
-      DB_NAME: kaptan
+      DB_USER: ${DB_USER:-kaptan}
+      DB_PASS: ${DB_PASS:?err}
+      DB_NAME: ${DB_NAME:-kaptan}
       USE_POSTGIS: 'true'
       REDIS_HOST: redis
       KAFKA_BROKERS: kafka:9093
@@ -153,8 +193,8 @@ services:
       CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://localhost:8081}
       MINIO_ENDPOINT: minio
       MINIO_PORT: 9000
-      MINIO_ACCESS_KEY: kaptan_admin
-      MINIO_SECRET_KEY: kaptan_minio_2026
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-kaptan_admin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:?err}
     volumes:
       - ./backend/uploads:/app/uploads
       - ./backend/logs:/app/logs

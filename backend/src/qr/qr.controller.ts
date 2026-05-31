@@ -8,18 +8,15 @@ export class QrController {
   constructor(private qrService: QrService) {}
 
   @Post('generate')
-  async generate(@Body() body: any) {
+  async generate(@Body() body: { loadId: string; driverId: string; customerId: string; checkpointType: string; milestoneIndex?: number }) {
     return this.qrService.generateQR({
-      loadId: body.loadId,
-      driverId: body.driverId,
-      customerId: body.customerId,
-      checkpointType: body.checkpointType,
-      milestoneIndex: body.milestoneIndex,
+      loadId: body.loadId, driverId: body.driverId, customerId: body.customerId,
+      checkpointType: body.checkpointType as any, milestoneIndex: body.milestoneIndex,
     });
   }
 
   @Post('validate')
-  async validate(@Body() body: any, @Req() req: any) {
+  async validate(@Body() body: { token: string; latitude?: number; longitude?: number; accuracy?: number; speed?: number }, @Req() req: any) {
     return this.qrService.validateQR(body.token, {
       userId: req.user.id,
       latitude: body.latitude,

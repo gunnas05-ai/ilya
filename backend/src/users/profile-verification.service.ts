@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
 import { WebSocketGateway } from '../websocket/websocket.gateway';
+import { REQUIRED_CARRIER_FIELDS, REQUIRED_FIELD_LABELS } from './users.service';
 
 export interface ProfileStatusResponse {
   status: string;
@@ -17,14 +18,6 @@ export interface ProfileStatusResponse {
 export class ProfileVerificationService {
   private readonly logger = new Logger(ProfileVerificationService.name);
 
-  // Zorunlu alanlar
-  private readonly REQUIRED_FIELDS = [
-    'phone', 'licenseNumber', 'plateNumber', 'vehicleType',
-    'vehicleCapacity', 'tonnageCapacity', 'volumeCapacity',
-    'kBelgesi', 'srcBelgesi', 'iban', 'taxNumber', 'taxOffice',
-    'tcKimlikNo',
-  ];
-
   constructor(
     @InjectRepository(User) private userRepo: Repository<User>,
     private wsGateway: WebSocketGateway,
@@ -34,17 +27,17 @@ export class ProfileVerificationService {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new Error('User not found');
 
-    const missing = this.checkMissingFields(user);
-    const completionPercent = Math.round(((this.REQUIRED_FIELDS.length - missing.length) / this.REQUIRED_FIELDS.length) * 100);
+    const missing = checkMissingFields(user);
+    const completionPercent = Math.round(((REQUIRED_CARRIER_FIELDS.length - missing.length) / REQUIRED_CARRIER_FIELDS.length) * 100);
 
-    // Otomatik değerlendirme: tüm alanlar doluysa otomatik VERIFIED yap
-    if (missing.length === 0 && user.profileStatus !== 'VERIFIED') {
-      user.profileStatus = 'VERIFIED';
-      user.verifiedAt = new Date();
+    // Admin onayi zorunlu — otomatik VERIFIED YOK (PENDING_REVIEW bekler)
+    // Sadece daha once VERIFIED olan kullanicilarin durumunu koru
+    if (missing.length === 0 && user.profileStatus === 'INCOMPLETE') {
+      user.profileStatus = 'PENDING_REVIEW';
       user.missingFields = [];
       await this.userRepo.save(user);
-      this.wsGateway.sendToUser(userId, 'PROFILE_VERIFIED', { status: 'VERIFIED', verifiedAt: user.verifiedAt });
-      this.logger.log(`Profil otomatik onaylandi: ${userId}`);
+      this.wsGateway.sendToUser(userId, 'PROFILE_STATUS_CHANGE', { status: 'PENDING_REVIEW' });
+      this.logger.log(`Profil tamamlandi, admin onayi bekleniyor: ${userId}`);
     }
 
     return {
@@ -61,8 +54,7 @@ export class ProfileVerificationService {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new Error('User not found');
 
-    // Alanları güncelle
-    const allowedFields = [...this.REQUIRED_FIELDS, 'accountantName', 'accountantEmail', 'accountantPhone', 'companyTitle', 'companyName'];
+    const allowedFields = [...REQUIRED_CARRIER_FIELDS, 'accountantName', 'accountantEmail', 'accountantPhone', 'companyTitle'];
     for (const field of allowedFields) {
       if (data[field] !== undefined) {
         (user as any)[field] = data[field];
@@ -70,7 +62,7 @@ export class ProfileVerificationService {
     }
 
     user.profileStatus = 'PENDING_REVIEW';
-    user.missingFields = this.checkMissingFields(user) as any;
+    user.missingFields = checkMissingFields(user) as any;
     user.verificationNotes = null as any;
     await this.userRepo.save(user);
 
@@ -94,30 +86,23 @@ export class ProfileVerificationService {
     } else {
       user.profileStatus = 'INCOMPLETE';
       user.verificationNotes = notes || 'Bilgileriniz eksik veya hatali. Lutfen duzeltin.';
-      user.missingFields = this.checkMissingFields(user);
+      user.missingFields = checkMissingFields(user);
       this.wsGateway.sendToUser(userId, 'PROFILE_REJECTED', { status: 'INCOMPLETE', notes: user.verificationNotes });
       this.logger.log(`Admin profil reddetti: ${userId}`);
     }
 
     await this.userRepo.save(user);
   }
+}
 
-  private checkMissingFields(user: User): string[] {
-    const missing: string[] = [];
-    const fieldLabels: Record<string, string> = {
-      phone: 'Telefon', licenseNumber: 'Ehliyet Bilgisi', plateNumber: 'Araç Plakası',
-      vehicleType: 'Araç Tipi', vehicleCapacity: 'Araç Kapasitesi', tonnageCapacity: 'Tonaj Bilgisi',
-      volumeCapacity: 'Hacim Bilgisi', kBelgesi: 'K Belgesi', srcBelgesi: 'SRC Belgesi',
-      iban: 'IBAN', taxNumber: 'Vergi Numarası', taxOffice: 'Vergi Dairesi', tcKimlikNo: 'T.C. Kimlik No',
-    };
-
-    for (const field of this.REQUIRED_FIELDS) {
-      const val = (user as any)[field];
-      if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '') || (typeof val === 'number' && val <= 0)) {
-        missing.push(fieldLabels[field] || field);
-      }
+/** Shared helper — kullanici profilindeki eksik zorunlu alanlari dondurur */
+export function checkMissingFields(user: User): string[] {
+  const missing: string[] = [];
+  for (const field of REQUIRED_CARRIER_FIELDS) {
+    const val = (user as any)[field];
+    if (val === undefined || val === null || (typeof val === 'string' && val.trim() === '') || (typeof val === 'number' && val <= 0)) {
+      missing.push(REQUIRED_FIELD_LABELS[field] || field);
     }
-
-    return missing;
   }
+  return missing;
 }

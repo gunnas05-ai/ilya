@@ -14,7 +14,7 @@ export class PartMarketController {
   async getCategories(@Query('parentId') parentId?: string) { return this.service.getCategories(parentId); }
 
   @Post('listings') @ApiOperation({ summary: 'İlan oluştur' })
-  async create(@Req() req: any, @Body() body: any) { return this.service.createListing(body, req.user.id); }
+  async create(@Req() req: any, @Body() body: { title: string; categoryId: string; price: number; description: string; condition: string }) { return this.service.createListing(body, req.user.id); }
 
   @Get('listings') @ApiOperation({ summary: 'İlan listesi' })
   async list(@Query() q: any) { return this.service.getListings(q); }
@@ -23,13 +23,13 @@ export class PartMarketController {
   async getById(@Param('id') id: string) { return this.service.getListing(id); }
 
   @Put('listings/:id') @ApiOperation({ summary: 'İlan güncelle' })
-  async update(@Param('id') id: string, @Req() req: any, @Body() body: any) { return this.service.updateListing(id, req.user.id, body); }
+  async update(@Param('id') id: string, @Req() req: any, @Body() body: { title?: string; price?: number; description?: string; condition?: string; status?: string }) { return this.service.updateListing(id, req.user.id, body); }
 
   @Delete('listings/:id') @ApiOperation({ summary: 'İlan kaldır' })
   async remove(@Param('id') id: string, @Req() req: any) { await this.service.deleteListing(id, req.user.id); return { success: true }; }
 
   @Post('offers') @ApiOperation({ summary: 'Teklif ver' })
-  async createOffer(@Req() req: any, @Body() b: any) { return this.service.createOffer(b.listingId, req.user.id, b.amount, b.message); }
+  async createOffer(@Req() req: any, @Body() b: { listingId: string; amount: number; message?: string }) { return this.service.createOffer(b.listingId, req.user.id, b.amount, b.message); }
 
   @Get('offers/listing/:id') @ApiOperation({ summary: 'İlana gelen teklifler' })
   async getOffers(@Param('id') id: string, @Req() req: any) { return this.service.getOffersForListing(id, req.user.id); }

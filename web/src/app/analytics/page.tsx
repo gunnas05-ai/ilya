@@ -2,11 +2,16 @@
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
-import { TrendingUp, TrendingDown, DollarSign, Users, Package, Truck, Clock, Activity } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, Users, Package, Truck, Clock, Activity, BarChart3, PieChart } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart as RePie, Pie, Cell } from 'recharts';
+
+const COLORS = ['#FF6B00', '#10B981', '#3B82F6', '#F59E0B', '#EF4444'];
 
 export default function AnalyticsPage() {
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState<any>({});
+  const [chartData, setChartData] = useState<any[]>([]);
+  const [pieData, setPieData] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -20,16 +25,37 @@ export default function AnalyticsPage() {
         const loads = Array.isArray(loadsRes.data?.data?.data || loadsRes.data?.data) ? (loadsRes.data?.data?.data || loadsRes.data?.data) : [];
         const bids = Array.isArray(bidsRes.data?.data?.data || bidsRes.data?.data) ? (bidsRes.data?.data?.data || bidsRes.data?.data) : [];
         const users = Array.isArray(usersRes.data?.data?.data || usersRes.data?.data) ? (usersRes.data?.data?.data || usersRes.data?.data) : [];
+
+        const activeLoads = loads.filter((l: any) => l.status === 'beklemede' || l.status === 'yolda').length;
+        const completedLoads = loads.filter((l: any) => l.status === 'teslim_edildi' || l.status === 'completed').length;
+        const cancelledBids = bids.filter((b: any) => b.status === 'rejected' || b.status === 'expired').length;
+        const acceptedBids = bids.filter((b: any) => b.status === 'accepted').length;
+        const pendingBids = bids.filter((b: any) => b.status === 'pending').length;
+
         setStats({
           totalLoads: loads.length,
-          activeLoads: loads.filter((l: any) => l.status === 'active').length,
+          activeLoads,
           totalBids: bids.length,
-          acceptedBids: bids.filter((b: any) => b.status === 'accepted').length,
+          acceptedBids,
           totalUsers: users.length,
-          escrowVolume: 0,
           totalRevenue: bids.reduce((s: number, b: any) => s + Number(b.platformCommission || 0), 0),
-          completedLoads: loads.filter((l: any) => l.status === 'completed').length,
+          completedLoads,
         });
+
+        // Bar chart: load/bid/user counts
+        setChartData([
+          { name: 'Yükler', total: loads.length, active: activeLoads, completed: completedLoads },
+          { name: 'Teklifler', total: bids.length, kabul: acceptedBids, bekleyen: pendingBids },
+          { name: 'Kullanıcılar', total: users.length },
+        ]);
+
+        // Pie chart: load status distribution
+        const statusCounts: Record<string, number> = {};
+        loads.forEach((l: any) => {
+          const s = l.status || 'bilinmiyor';
+          statusCounts[s] = (statusCounts[s] || 0) + 1;
+        });
+        setPieData(Object.entries(statusCounts).map(([name, value]) => ({ name, value })));
       } catch {}
       setLoading(false);
     };
@@ -72,6 +98,37 @@ export default function AnalyticsPage() {
             <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
               <div className="flex items-center gap-3"><Clock className="text-kaptan-warning" size={24} /><span className="text-kaptan-muted text-sm">Bekleyen Teklif</span></div>
               <p className="text-2xl font-bold text-kaptan-text mt-2">{stats.totalBids - stats.acceptedBids}</p>
+            </div>
+          </div>
+
+          {/* Gerçek grafikler */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+              <h3 className="font-semibold text-kaptan-text mb-3 flex items-center gap-2"><BarChart3 size={18} /> Platform Özeti</h3>
+              <ResponsiveContainer width="100%" height={250}>
+                <BarChart data={chartData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1E293B" />
+                  <XAxis dataKey="name" stroke="#94A3B8" fontSize={12} />
+                  <YAxis stroke="#94A3B8" fontSize={12} />
+                  <Tooltip contentStyle={{ backgroundColor: '#1E293B', border: '1px solid #334155', borderRadius: 8 }} />
+                  <Bar dataKey="total" fill="#FF6B00" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+              <h3 className="font-semibold text-kaptan-text mb-3 flex items-center gap-2"><PieChart size={18} /> Yük Durumu Dağılımı</h3>
+              {pieData.length > 0 ? (
+                <ResponsiveContainer width="100%" height={250}>
+                  <RePie>
+                    <Pie data={pieData} dataKey="value" nameKey="name" cx="50%" cy="50%" outerRadius={80} label={({ name, value }) => `${name}: ${value}`}>
+                      {pieData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                    </Pie>
+                    <Tooltip contentStyle={{ backgroundColor: '#1E293B', border: '1px solid #334155', borderRadius: 8 }} />
+                  </RePie>
+                </ResponsiveContainer>
+              ) : (
+                <p className="text-kaptan-muted text-sm text-center py-10">Henüz veri yok</p>
+              )}
             </div>
           </div>
 

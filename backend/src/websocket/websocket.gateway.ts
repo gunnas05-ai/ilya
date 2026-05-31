@@ -7,6 +7,7 @@ import {
 } from '@nestjs/websockets';
 import { Server, Socket } from 'socket.io';
 import { Logger, Inject, forwardRef } from '@nestjs/common';
+import * as jwt from 'jsonwebtoken';
 import { ChatService } from '../chat/chat.service';
 
 @WSGateway({
@@ -19,6 +20,9 @@ import { ChatService } from '../chat/chat.service';
 })
 export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnect {
   private readonly logger = new Logger(WebSocketGateway.name);
+  // Per-socket message rate limiting: max messages per minute per socket
+  private readonly messageCounts = new Map<string, { count: number; resetAt: number }>();
+  private readonly MAX_WS_MESSAGES_PER_MIN = 30;
 
   constructor(
     @Inject(forwardRef(() => ChatService))
@@ -28,17 +32,65 @@ export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnec
   @WebSocketServer()
   server: Server;
 
+  private checkRateLimit(client: Socket): boolean {
+    const now = Date.now();
+    let entry = this.messageCounts.get(client.id);
+    if (!entry || now > entry.resetAt) {
+      entry = { count: 0, resetAt: now + 60_000 };
+      this.messageCounts.set(client.id, entry);
+    }
+    entry.count++;
+    if (entry.count > this.MAX_WS_MESSAGES_PER_MIN) {
+      this.logger.warn(`WS rate limit hit for socket ${client.id}`);
+      client.emit('error', { message: 'Çok fazla mesaj. Lütfen yavaşlayın.' });
+      return false;
+    }
+    return true;
+  }
+
   handleConnection(client: Socket) {
-    const userId = client.handshake.query.userId as string;
-    const role = client.handshake.query.role as string;
-    if (userId) {
+    try {
+      const token = (client.handshake.query.token as string) || (client.handshake.auth?.token as string);
+      if (!token) {
+        this.logger.warn(`WS connection rejected (no token): ${client.id}`);
+        client.emit('error', { message: 'Authentication required' });
+        client.disconnect();
+        return;
+      }
+
+      const secret = process.env.JWT_SECRET;
+      if (!secret) {
+        this.logger.error('JWT_SECRET not configured for WebSocket auth');
+        client.disconnect();
+        return;
+      }
+
+      const payload = jwt.verify(token, secret) as { sub: string; role: string; email: string };
+      const userId = payload.sub;
+      const role = payload.role;
+
+      if (!userId) {
+        client.emit('error', { message: 'Invalid token' });
+        client.disconnect();
+        return;
+      }
+
+      (client as any).userId = userId;
+      (client as any).userRole = role;
+
       client.join(`user:${userId}`);
       if (role) client.join(`role:${role}`);
-      this.logger.debug(`WS connected: user ${userId} (${role || 'unknown'})`);
+      this.logger.debug(`WS authenticated: user ${userId} (${role || 'unknown'})`);
+    } catch (err: any) {
+      this.logger.warn(`WS auth failed (${err.message}): ${client.id}`);
+      client.emit('error', { message: 'Authentication failed' });
+      client.disconnect();
     }
   }
 
   handleDisconnect(client: Socket) {
+    // Clean up rate-limit entry to prevent memory leak
+    this.messageCounts.delete(client.id);
     // Redis adapter handles room cleanup automatically
     this.logger.debug(`WS disconnected: ${client.id}`);
   }
@@ -201,7 +253,8 @@ export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnec
 
   @SubscribeMessage('send_message')
   async handleSendMessage(client: Socket, payload: { id: string; senderId: string; senderName: string; text: string; chatRoomId: string; timestamp: string; participants: string[] }) {
-    // Persist message to database via ChatService
+    if (!this.checkRateLimit(client)) return;
+    // Persist message to database FIRST, then broadcast
     try {
       await this.chatService.sendMessage({
         roomId: payload.chatRoomId,
@@ -211,9 +264,12 @@ export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnec
       });
     } catch (err) {
       this.logger.error(`Failed to persist chat message: ${err}`);
+      // Don't broadcast if persistence failed
+      client.emit('error', { message: 'Mesaj gönderilemedi, lütfen tekrar deneyin.' });
+      return;
     }
 
-    // Broadcast to room
+    // Broadcast to room (only after successful persistence)
     this.server.to(`chatroom:${payload.chatRoomId}`).emit('new_message', payload);
 
     // Also notify participants
@@ -232,7 +288,8 @@ export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnec
 
   @SubscribeMessage('create_room')
   async handleCreateRoom(client: Socket, payload: { id: string; name: string; isGroup: boolean; participants: string[]; participantNames: string[] }) {
-    // Persist room to database via ChatService
+    if (!this.checkRateLimit(client)) return;
+    // Persist room to database FIRST, then broadcast
     try {
       await this.chatService.createRoom({
         name: payload.name,
@@ -242,8 +299,11 @@ export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnec
       });
     } catch (err) {
       this.logger.error(`Failed to persist chat room: ${err}`);
+      client.emit('error', { message: 'Sohbet odası oluşturulamadı.' });
+      return;
     }
 
+    // Broadcast only after successful persistence
     if (payload.participants) {
       payload.participants.forEach(pId => {
         this.sendToUser(pId, 'NEW_CHAT_ROOM', payload);
@@ -308,6 +368,7 @@ export class WebSocketGateway implements OnGatewayConnection, OnGatewayDisconnec
 
   @SubscribeMessage('tracking_update')
   handleTrackingUpdate(client: Socket, payload: { loadId: string; driverId: string; lat: number; lng: number; speed: number; heading: number; timestamp: string }) {
+    if (!this.checkRateLimit(client)) return;
     // Broadcast to load tracking room
     this.server.to(`load:${payload.loadId}`).emit('TRACKING_UPDATE', payload);
     // Also notify load creator/shipper

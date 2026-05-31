@@ -213,6 +213,41 @@ export class CarrierScorecardService {
     };
   }
 
+  /** Batch version for N+1 avoidance — single query for multiple carrier IDs */
+  async getBidderScores(carrierIds: string[]): Promise<Record<string, any>> {
+    const unique = [...new Set(carrierIds)];
+    const scorecards = await this.scorecardRepo
+      .createQueryBuilder('sc')
+      .where('sc.carrierId IN (:...ids)', { ids: unique })
+      .getMany();
+
+    const map: Record<string, any> = {};
+    for (const sc of scorecards) {
+      map[sc.carrierId] = {
+        overallScore: sc.overallScore,
+        scoreTier: sc.scoreTier,
+        tierLabel: this.getTierLabel(sc.scoreTier),
+        tierColor: this.getTierColor(sc.scoreTier),
+        escrowRequired: sc.escrowRequired,
+        totalCompletedLoads: sc.totalCompletedLoads,
+      };
+    }
+    // Fill missing carriers with default (new carriers)
+    for (const id of unique) {
+      if (!map[id]) {
+        map[id] = {
+          overallScore: 50,
+          scoreTier: ScoreTier.FAIR,
+          tierLabel: 'Orta',
+          tierColor: '#F97316',
+          escrowRequired: false,
+          totalCompletedLoads: 0,
+        };
+      }
+    }
+    return map;
+  }
+
   /** Get leaderboard of top carriers */
   async getLeaderboard(limit = 20) {
     const scorecards = await this.scorecardRepo.find({

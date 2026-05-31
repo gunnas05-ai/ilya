@@ -75,14 +75,14 @@ export class BillingController {
 
   @Put('credits/packages/:id')
   @ApiOperation({ summary: 'Kontör paketini güncelle (Admin)' })
-  async updateCreditPackage(@Param('id') id: string, @Body() body: any) {
+  async updateCreditPackage(@Param('id') id: string, @Body() body: { name?: string; credits?: number; price?: number; isActive?: boolean }) {
     return this.creditService.updatePackage(id, body);
   }
 
   // ── Plan Yönetimi (Admin) ──
   @Put('plans/:id')
   @ApiOperation({ summary: 'Abonelik planini güncelle (Admin)' })
-  async updatePlan(@Param('id') id: string, @Body() body: any) {
+  async updatePlan(@Param('id') id: string, @Body() body: { displayName?: string; monthlyPrice?: number; maxLoads?: number; features?: Record<string, boolean>; isActive?: boolean }) {
     return this.subscriptionService.updatePlan(id, body);
   }
 

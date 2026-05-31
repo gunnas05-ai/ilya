@@ -13,12 +13,12 @@ export class TrackingController {
 
   // EX-022: Driver hours / HOS endpoints
   @Post('driver/start-driving')
-  async startDriving(@Body() body: any, @Req() req: any) {
+  async startDriving(@Body() body: { vehicleId: string; loadId: string; odometerKm?: number }, @Req() req: any) {
     return this.driverHours.startDriving(req.user.id, body.vehicleId, body.loadId, body.odometerKm);
   }
 
   @Post('driver/start-rest')
-  async startRest(@Body() body: any, @Req() req: any) {
+  async startRest(@Body() body: { odometerKm?: number }, @Req() req: any) {
     return this.driverHours.startRest(req.user.id, body.odometerKm);
   }
 
@@ -38,16 +38,10 @@ export class TrackingController {
   }
 
   @Post()
-  async recordLocation(@Body() body: any, @Req() req: any) {
+  async recordLocation(@Body() body: { loadId: string; latitude: number; longitude: number; speed?: number; heading?: number; accuracy?: number; label?: string }, @Req() req: any) {
     return this.trackingService.recordLocation({
-      loadId: body.loadId,
-      driverId: req.user.id,
-      latitude: body.latitude,
-      longitude: body.longitude,
-      speed: body.speed,
-      heading: body.heading,
-      accuracy: body.accuracy,
-      label: body.label,
+      loadId: body.loadId, driverId: req.user.id, latitude: body.latitude, longitude: body.longitude,
+      speed: body.speed, heading: body.heading, accuracy: body.accuracy, label: body.label,
     });
   }
 

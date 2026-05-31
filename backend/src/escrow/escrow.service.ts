@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, BadRequestException, Inject, forwardRef, Optional } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException, Optional } from '@nestjs/common';
 import { OnEvent } from '@nestjs/event-emitter';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
@@ -12,7 +12,6 @@ import { WebSocketGateway } from '../websocket/websocket.gateway';
 import { NotificationsService } from '../notifications/notifications.service';
 import { EscrowStateException } from '../common/exceptions';
 import { QRCheckpointType } from '../qr/qr-code.entity';
-import { QrService } from '../qr/qr.service';
 import { FraudDetectionService, RiskTier } from './fraud-detection.service';
 import { AuditLogService, AuditAction } from './audit-log.service';
 import { EscrowMetricsService } from './escrow-metrics.service';
@@ -36,8 +35,6 @@ export class EscrowService {
     private auditLogService: AuditLogService,
     private metricsService: EscrowMetricsService,
     private outboxService: OutboxService,
-    @Inject(forwardRef(() => QrService))
-    private qrService: QrService,
     @Optional() private commissionService?: any,
   ) {}
 
@@ -124,17 +121,13 @@ export class EscrowService {
       shipperId: data.shipperId, carrierId: data.carrierId,
     });
 
-    // Auto-generate pickup QR code for this load
-    try {
-      await this.qrService.generateQR({
-        loadId: data.loadId,
-        driverId: data.carrierId,
-        customerId: data.shipperId,
-        checkpointType: QRCheckpointType.PICKUP,
-      });
-    } catch {
-      // QR generation failure should not block escrow creation
-    }
+    // Emit event for QR code generation (handled by QrService — no circular dep)
+    this.eventEmitter.emit('escrow.created', {
+      loadId: data.loadId,
+      driverId: data.carrierId,
+      customerId: data.shipperId,
+      checkpointType: QRCheckpointType.PICKUP,
+    });
 
     return saved;
   }
@@ -160,164 +153,116 @@ export class EscrowService {
     return escrow;
   }
 
+  /**
+   * Orchestrate payment release: fraud check → risk handling → milestone/single release.
+   * Delegates to sub-methods for readability and testability.
+   */
   async releasePayment(escrowId: string, verificationData?: any) {
     const escrow = await this.escrowRepo.findOne({ where: { id: escrowId } });
     if (!escrow) throw new NotFoundException('Escrow işlemi bulunamadı');
 
     escrow.verificationData = verificationData;
 
-    // Run fraud assessment FIRST — before any fund release
+    // Phase 1: Fraud assessment
+    const assessment = await this.runFraudAssessment(escrow);
+    if (!assessment) return; // handled internally (HIGH/MEDIUM risk)
+
+    // Phase 2: Release funds (LOW risk)
+    if (escrow.isMilestone) {
+      return this.processMilestoneRelease(escrow);
+    }
+    return this.processSingleRelease(escrow);
+  }
+
+  // ── Private: Fraud assessment → blocks HIGH/MEDIUM, returns true for LOW ──
+  private async runFraudAssessment(escrow: EscrowTransaction): Promise<boolean> {
     const load = await this.loadRepo.findOne({ where: { id: escrow.loadId } });
-    const assessment = await this.fraudDetectionService.assess(load || new Load(), verificationData, escrow.carrierId);
+    const assessment = await this.fraudDetectionService.assess(load || new Load(), escrow.verificationData, escrow.carrierId);
     escrow.fraudScore = assessment.score;
     escrow.riskTier = assessment.tier;
     escrow.fraudDetails = { score: assessment.score, tier: assessment.tier, checks: assessment.checks, checkedAt: new Date() };
     await this.escrowRepo.save(escrow);
 
-    // ── HIGH risk: never release, always hold ──────────────────
     if (assessment.tier === RiskTier.HIGH) {
       escrow.status = EscrowStatus.ITIRAZ_SURECINDE;
       await this.escrowRepo.save(escrow);
-
       this.metricsService.recordFraudAlert();
-
       await this.auditLogService.log(AuditAction.FRAUD_ALERT_TRIGGERED, escrow.carrierId, escrow.id, 'escrow', { fraudScore: assessment.score, tier: assessment.tier });
       await this.auditLogService.log(AuditAction.PAYMENT_ON_HOLD, escrow.shipperId, escrow.id, 'escrow', { reason: 'high_fraud_risk', score: assessment.score });
-
-      await this.notificationsService.create({
-        userId: escrow.shipperId,
-        type: 'system' as any,
-        title: 'Ödeme İncelemede',
-        message: `Yüksek risk tespit edildi (puan: ${assessment.score}). Ödeme manuel incelemeye alındı.`,
-        data: { escrowId: escrow.id, fraudScore: assessment.score },
-      });
-
+      this.notificationsService.create({ userId: escrow.shipperId, type: 'system' as any, title: 'Ödeme İncelemede', message: `Yüksek risk tespit edildi (puan: ${assessment.score}). Ödeme manuel incelemeye alındı.`, data: { escrowId: escrow.id, fraudScore: assessment.score } }).catch(() => {});
       this.wsGateway.sendToShipment(escrow.loadId, 'FRAUD_ALERT_TRIGGERED', { escrowId: escrow.id, fraudScore: assessment.score, tier: assessment.tier });
-
-      return { message: 'Ödeme yüksek risk nedeniyle incelemeye alındı', escrow, fraudAssessment: assessment };
+      return false;
     }
 
-    // ── MEDIUM risk: flag for manual review, do NOT release ──
     if (assessment.tier === RiskTier.MEDIUM) {
       escrow.manualReviewRequired = true;
       escrow.status = EscrowStatus.BLOKEDE;
       await this.escrowRepo.save(escrow);
-
       this.metricsService.recordFraudAlert();
-
       await this.auditLogService.log(AuditAction.FRAUD_ALERT_TRIGGERED, escrow.carrierId, escrow.id, 'escrow', { fraudScore: assessment.score, tier: assessment.tier });
-
-      await this.notificationsService.create({
-        userId: escrow.shipperId,
-        type: 'system' as any,
-        title: 'Ödeme İnceleme Gerekli',
-        message: `Orta düzey risk (puan: ${assessment.score}). Ödeme manuel onay bekliyor.`,
-        data: { escrowId: escrow.id, fraudScore: assessment.score },
-      });
-
-      return { message: 'Ödeme manuel onay bekliyor', escrow, fraudAssessment: assessment };
+      this.notificationsService.create({ userId: escrow.shipperId, type: 'system' as any, title: 'Ödeme İnceleme Gerekli', message: `Orta düzey risk (puan: ${assessment.score}). Ödeme manuel onay bekliyor.`, data: { escrowId: escrow.id, fraudScore: assessment.score } }).catch(() => {});
+      return false;
     }
 
-    // ── LOW risk: proceed with release ───────────────────────
+    return true; // LOW risk — proceed
+  }
+
+  // ── Private: Milestone-based release ───────────────────────
+  private async processMilestoneRelease(escrow: EscrowTransaction) {
     const releaseStart = Date.now();
+    const isLastMilestone = escrow.completedMilestones + 1 >= escrow.totalMilestones;
 
-    if (escrow.isMilestone) {
-      const isLastMilestone = escrow.completedMilestones + 1 >= escrow.totalMilestones;
+    escrow.completedMilestones += 1;
+    const milestoneIndex = escrow.completedMilestones - 1;
+    const percentage = escrow.milestonePercentages?.[milestoneIndex] ?? (100 / escrow.totalMilestones);
+    const milestoneAmount = Math.round(escrow.amount * percentage / 100 * 100) / 100;
+    escrow.milestoneReleasedAmount += milestoneAmount;
 
-      escrow.completedMilestones += 1;
-      const milestoneIndex = escrow.completedMilestones - 1;
-      const percentage = escrow.milestonePercentages?.[milestoneIndex] ?? (100 / escrow.totalMilestones);
-      const milestoneAmount = Math.round(escrow.amount * percentage / 100 * 100) / 100;
-      escrow.milestoneReleasedAmount += milestoneAmount;
+    await this.walletService.releaseEscrow(escrow.carrierId, milestoneAmount, escrow.id);
+    await this.walletService.confirmRelease(escrow.carrierId, milestoneAmount, escrow.id);
 
-      // Release the milestone amount to carrier (only on LOW risk)
-      await this.walletService.releaseEscrow(escrow.carrierId, milestoneAmount, escrow.id);
-      await this.walletService.confirmRelease(escrow.carrierId, milestoneAmount, escrow.id);
+    this.wsGateway.sendToShipment(escrow.loadId, 'MILESTONE_COMPLETED', {
+      escrowId: escrow.id, milestoneIndex, percentage, amount: milestoneAmount,
+      completedMilestones: escrow.completedMilestones, totalMilestones: escrow.totalMilestones, riskTier: RiskTier.LOW,
+    });
+    await this.auditLogService.log(AuditAction.MILESTONE_COMPLETED, escrow.carrierId, escrow.id, 'escrow', { milestoneIndex, percentage, amount: milestoneAmount, riskTier: RiskTier.LOW });
 
-      this.wsGateway.sendToShipment(escrow.loadId, 'MILESTONE_COMPLETED', {
-        escrowId: escrow.id,
-        milestoneIndex,
-        percentage,
-        amount: milestoneAmount,
-        completedMilestones: escrow.completedMilestones,
-        totalMilestones: escrow.totalMilestones,
-        riskTier: RiskTier.LOW,
-      });
-
-      await this.auditLogService.log(AuditAction.MILESTONE_COMPLETED, escrow.carrierId, escrow.id, 'escrow', {
-        milestoneIndex, percentage, amount: milestoneAmount, riskTier: RiskTier.LOW,
-      });
-
-      if (!isLastMilestone) {
-        // More milestones remain
-        escrow.status = EscrowStatus.BLOKEDE;
-        await this.escrowRepo.save(escrow);
-        return { message: `Milestone ${escrow.completedMilestones}/${escrow.totalMilestones} tamamlandı (${percentage}% = ${milestoneAmount} ₺)`, escrow };
-      }
-
-      // Last milestone completed — fall through to release remaining
-      const remainingAmount = Math.round((escrow.amount - escrow.milestoneReleasedAmount) * 100) / 100;
-      if (remainingAmount > 0) {
-        await this.walletService.releaseEscrow(escrow.carrierId, remainingAmount, escrow.id);
-        await this.walletService.confirmRelease(escrow.carrierId, remainingAmount, escrow.id);
-      }
-
-      escrow.status = EscrowStatus.SERBEST_BIRAKILDI;
-      escrow.releasedAmount = (escrow.releasedAmount || 0) + escrow.amount;
+    if (!isLastMilestone) {
+      escrow.status = EscrowStatus.BLOKEDE;
       await this.escrowRepo.save(escrow);
-
-      const releaseTime = (Date.now() - releaseStart) / 1000;
-      this.metricsService.recordReleaseTime(releaseTime, RiskTier.LOW);
-
-      // Commission
-      const commissionRate = parseFloat(process.env.PLATFORM_COMMISSION_RATE || '0');
-      if (commissionRate > 0) {
-        const commissionAmount = Math.round(escrow.amount * commissionRate * 100) / 100;
-        if (commissionAmount > 0) {
-          await this.walletService.recordCommission(escrow.shipperId, commissionAmount, escrow.id, `Platform komisyonu (%${(commissionRate * 100).toFixed(1)})`);
-        }
-      }
-
-      await this.auditLogService.log(AuditAction.ESCROW_FUNDS_RELEASED, escrow.carrierId, escrow.id, 'escrow', { amount: escrow.amount, tier: 'low', releaseTime });
-
-      await this.notificationsService.create({
-        userId: escrow.carrierId,
-        type: 'payment_received' as any,
-        title: 'Ödeme Alındı',
-        message: `${escrow.amount.toLocaleString('tr-TR')} ₺ hesabınıza aktarıldı.`,
-        data: { escrowId: escrow.id, amount: escrow.amount },
-      });
-
-      this.wsGateway.sendToUser(escrow.carrierId, 'payment_released', { escrowId: escrow.id, amount: escrow.amount });
-      this.wsGateway.sendToUser(escrow.shipperId, 'payment_released', { escrowId: escrow.id, amount: escrow.amount });
-
-      await this.outboxService.emit('escrow.released', {
-        loadId: escrow.loadId, escrowId: escrow.id, amount: escrow.amount,
-        carrierId: escrow.carrierId, tier: 'low',
-      });
-
-      this.wsGateway.emitEscrowReleased(escrow.loadId, { escrowId: escrow.id, amount: escrow.amount, carrierId: escrow.carrierId });
-      this.wsGateway.sendToShipment(escrow.loadId, 'DELIVERY_CONFIRMED', { escrowId: escrow.id, amount: escrow.amount });
-
-      return { message: `Tüm milestone'lar tamamlandı. ${escrow.amount.toLocaleString('tr-TR')} ₺ serbest bırakıldı.`, escrow };
+      return { message: `Milestone ${escrow.completedMilestones}/${escrow.totalMilestones} tamamlandı (${percentage}% = ${milestoneAmount} ₺)`, escrow };
     }
 
-    // ── Non-milestone (single payment) release ────────────────
+    // Last milestone — release remaining and finalize
+    const remainingAmount = Math.round((escrow.amount - escrow.milestoneReleasedAmount) * 100) / 100;
+    if (remainingAmount > 0) {
+      await this.walletService.releaseEscrow(escrow.carrierId, remainingAmount, escrow.id);
+      await this.walletService.confirmRelease(escrow.carrierId, remainingAmount, escrow.id);
+    }
+
+    escrow.status = EscrowStatus.SERBEST_BIRAKILDI;
+    escrow.releasedAmount = (escrow.releasedAmount || 0) + escrow.amount;
+    await this.escrowRepo.save(escrow);
+
+    const releaseTime = (Date.now() - releaseStart) / 1000;
+    this.metricsService.recordReleaseTime(releaseTime, RiskTier.LOW);
+    this.emitCommissionEvent(escrow);
+    await this.finalizeRelease(escrow, escrow.amount, releaseTime);
+    return { message: `Tüm milestone'lar tamamlandı. ${escrow.amount.toLocaleString('tr-TR')} ₺ serbest bırakıldı.`, escrow };
+  }
+
+  // ── Private: Single-payment release ────────────────────────
+  private async processSingleRelease(escrow: EscrowTransaction) {
+    const releaseStart = Date.now();
+    const amount = escrow.amount;
+
     escrow.status = EscrowStatus.TESLIMAT_BEKLENIYOR;
     await this.escrowRepo.save(escrow);
 
-    const amount = escrow.amount;
     await this.walletService.releaseEscrow(escrow.carrierId, amount, escrow.id);
     await this.walletService.confirmRelease(escrow.carrierId, amount, escrow.id);
 
-    // Commission
-    const commissionRate = parseFloat(process.env.PLATFORM_COMMISSION_RATE || '0');
-    if (commissionRate > 0) {
-      const commissionAmount = Math.round(amount * commissionRate * 100) / 100;
-      if (commissionAmount > 0) {
-        await this.walletService.recordCommission(escrow.shipperId, commissionAmount, escrow.id, `Platform komisyonu (%${(commissionRate * 100).toFixed(1)})`);
-      }
-    }
+    this.emitCommissionEvent(escrow);
 
     escrow.status = EscrowStatus.SERBEST_BIRAKILDI;
     escrow.releasedAmount = (escrow.releasedAmount || 0) + amount;
@@ -325,29 +270,32 @@ export class EscrowService {
 
     const releaseTime = (Date.now() - releaseStart) / 1000;
     this.metricsService.recordReleaseTime(releaseTime, RiskTier.LOW);
+    await this.finalizeRelease(escrow, amount, releaseTime);
+    return { message: 'Ödeme başarıyla serbest bırakıldı', escrow };
+  }
 
+  // ── Shared helpers ─────────────────────────────────────────
+  private emitCommissionEvent(escrow: EscrowTransaction) {
+    const commissionRate = parseFloat(process.env.PLATFORM_COMMISSION_RATE || '0');
+    if (commissionRate > 0) {
+      const commissionAmount = Math.round(escrow.amount * commissionRate * 100) / 100;
+      if (commissionAmount > 0) {
+        this.eventEmitter.emit('commission.charged', {
+          escrowId: escrow.id, amount: escrow.amount, commission: commissionAmount,
+          carrierId: escrow.carrierId, shipperId: escrow.shipperId,
+        });
+      }
+    }
+  }
+
+  private async finalizeRelease(escrow: EscrowTransaction, amount: number, releaseTime: number) {
     await this.auditLogService.log(AuditAction.ESCROW_FUNDS_RELEASED, escrow.carrierId, escrow.id, 'escrow', { amount, tier: 'low', releaseTime });
-
-    await this.notificationsService.create({
-      userId: escrow.carrierId,
-      type: 'payment_received' as any,
-      title: 'Ödeme Alındı',
-      message: `${amount.toLocaleString('tr-TR')} ₺ hesabınıza aktarıldı.`,
-      data: { escrowId: escrow.id, amount },
-    });
-
+    this.notificationsService.create({ userId: escrow.carrierId, type: 'payment_received' as any, title: 'Ödeme Alındı', message: `${amount.toLocaleString('tr-TR')} ₺ hesabınıza aktarıldı.`, data: { escrowId: escrow.id, amount } }).catch(() => {});
     this.wsGateway.sendToUser(escrow.carrierId, 'payment_released', { escrowId: escrow.id, amount });
     this.wsGateway.sendToUser(escrow.shipperId, 'payment_released', { escrowId: escrow.id, amount });
-
-    await this.outboxService.emit('escrow.released', {
-      loadId: escrow.loadId, escrowId: escrow.id, amount,
-      carrierId: escrow.carrierId, tier: 'low',
-    });
-
+    await this.outboxService.emit('escrow.released', { loadId: escrow.loadId, escrowId: escrow.id, amount, carrierId: escrow.carrierId, tier: 'low' });
     this.wsGateway.emitEscrowReleased(escrow.loadId, { escrowId: escrow.id, amount, carrierId: escrow.carrierId });
     this.wsGateway.sendToShipment(escrow.loadId, 'DELIVERY_CONFIRMED', { escrowId: escrow.id, amount });
-
-    return { message: 'Ödeme başarıyla serbest bırakıldı', escrow };
   }
 
   async openDispute(escrowId: string, userId: string, reason: DisputeReason, description: string, evidence?: any) {
@@ -659,17 +607,6 @@ export class EscrowService {
     }
 
     throw new BadRequestException('Geçersiz karar (approve/reject/flag_for_dispute)');
-  }
-
-  private calculateFraudScore(verificationData?: any): number {
-    // Simplified fraud detection - in production use AI/ML
-    if (!verificationData) return 0;
-    let score = 0;
-    if (verificationData.gpsMismatch) score += 30;
-    if (verificationData.speedAnomaly) score += 20;
-    if (verificationData.locationJump) score += 25;
-    if (verificationData.duplicateScan) score += 15;
-    return Math.min(score, 99);
   }
 
   @OnEvent('delivery.completed.verified')

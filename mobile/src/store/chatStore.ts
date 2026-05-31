@@ -9,6 +9,7 @@ import {
 } from '../services/websocket';
 
 const CHAT_ROOMS_KEY = '@chat_rooms_list';
+const MAX_MESSAGES_PER_ROOM = 200; // Prevent unbounded AsyncStorage growth
 
 export interface ChatMessage {
   id: string;
@@ -127,7 +128,16 @@ export const useChatStore = create<ChatState>((set, get) => ({
       timestamp: new Date().toISOString()
     };
 
-    // Emit over socket
+    // Optimistic update: hemen local state'e ekle
+    const updatedMessages = [...room.messages, message].slice(-MAX_MESSAGES_PER_ROOM);
+    const updatedRoom = { ...room, messages: updatedMessages };
+    const updatedRooms = { ...chatRooms, [chatRoomId]: updatedRoom };
+    set({ chatRooms: updatedRooms });
+
+    // Persist ve broadcast
+    AsyncStorage.setItem(CHAT_ROOMS_KEY, JSON.stringify(updatedRooms)).catch(() => {});
+
+    // Emit over socket (other participants receive via receiveMessage)
     sendChatMessage({
       ...message,
       chatRoomId,
@@ -141,10 +151,11 @@ export const useChatStore = create<ChatState>((set, get) => ({
     const room = chatRooms[chatRoomId];
     if (!room) return;
 
-    // Check if message is already appended
+    // Skip echo: mesaj zaten sendMessage ile optimistik olarak eklendiyse atla
     if (room.messages.some(m => m.id === msg.id)) return;
 
-    const updatedMessages = [...room.messages, msg];
+    // Cap messages: keep only the most recent MAX_MESSAGES_PER_ROOM
+    const updatedMessages = [...room.messages, msg].slice(-MAX_MESSAGES_PER_ROOM);
     const isCurrentActive = activeRoomId === chatRoomId;
     const currentUnread = room.unreadCount || 0;
 

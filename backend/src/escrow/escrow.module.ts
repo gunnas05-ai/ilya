@@ -1,4 +1,4 @@
-import { Module, forwardRef } from '@nestjs/common';
+import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { MulterModule } from '@nestjs/platform-express';
 import { memoryStorage } from 'multer';
@@ -8,7 +8,6 @@ import { Dispute } from './dispute.entity';
 import { DisputeEvidence } from './dispute-evidence.entity';
 import { Load } from '../loads/load.entity';
 import { TrackingRecord } from '../tracking/tracking.entity';
-import { QRCode } from '../qr/qr-code.entity';
 import { WithdrawalRequest } from './withdrawal-request.entity';
 import { AuditLog } from './audit-log.entity';
 import { OutboxEvent } from './outbox.entity';
@@ -29,15 +28,12 @@ import { InsuranceService } from './insurance.service';
 import { QuickPayService } from './quickpay.service';
 import { WebSocketModule } from '../websocket/websocket.module';
 import { NotificationsModule } from '../notifications/notifications.module';
-import { QrModule } from '../qr/qr.module';
-
 @Module({
   imports: [
-    TypeOrmModule.forFeature([EscrowTransaction, Wallet, WalletTransaction, Dispute, DisputeEvidence, Load, TrackingRecord, QRCode, WithdrawalRequest, AuditLog, OutboxEvent, InsurancePolicy]),
+    TypeOrmModule.forFeature([EscrowTransaction, Wallet, WalletTransaction, Dispute, DisputeEvidence, Load, TrackingRecord, WithdrawalRequest, AuditLog, OutboxEvent, InsurancePolicy]),
     MulterModule.register({ storage: memoryStorage() }),
     WebSocketModule,
     NotificationsModule,
-    forwardRef(() => QrModule),
   ],
   controllers: [EscrowController],
   providers: [

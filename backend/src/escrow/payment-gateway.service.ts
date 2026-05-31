@@ -226,14 +226,25 @@ export class PaymentGatewayService {
     );
 
     this.logger.log(`Commission applied: ${commission} TRY for escrow ${escrowTxId}`);
+  }
 
-    this.eventEmitter.emit('commission.charged', {
-      escrowId: escrowTxId,
-      amount: escrow.amount,
-      commission,
-      carrierId: escrow.carrierId,
-      shipperId: escrow.shipperId,
-    });
+  /** Handle commission event from escrow service — record audit trail (no double-charge) */
+  @OnEvent('commission.charged')
+  async handleCommissionCharged(payload: {
+    escrowId: string;
+    amount: number;
+    commission: number;
+    carrierId: string;
+    shipperId: string;
+  }) {
+    // Only record audit trail — actual deduction happens in WalletService.releaseEscrow
+    await this.walletService.recordCommission(
+      payload.shipperId,
+      payload.commission,
+      payload.escrowId,
+      `Platform komisyonu (%${this.config.platformCommissionRate}) — Escrow #${payload.escrowId.substring(0, 8)}`,
+      `comm_${payload.escrowId}`,
+    );
   }
 
   /** EX-004: Quick Pay — auto-release funds after delivery verification (Convoy model) */
@@ -298,9 +309,9 @@ export class PaymentGatewayService {
   /** Get payment gateway dashboard data */
   async getGatewayStats() {
     const [totalDeposits, totalWithdrawals, totalCommissions] = await Promise.all([
-      this.txRepo.sum('amount', { type: TransactionType.CREDIT } as any),
-      this.txRepo.sum('amount', { type: TransactionType.WITHDRAWAL } as any),
-      this.txRepo.sum('amount', { type: TransactionType.COMMISSION } as any),
+      this.txRepo.sum('amount', { type: TransactionType.CREDIT }),
+      this.txRepo.sum('amount', { type: TransactionType.WITHDRAWAL }),
+      this.txRepo.sum('amount', { type: TransactionType.COMMISSION }),
     ]);
 
     return {

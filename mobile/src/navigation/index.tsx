@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { View, Text } from 'react-native';
+import React, { useEffect, Suspense } from 'react';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { useTheme } from '../hooks/useTheme';
@@ -11,6 +11,7 @@ import CustomBackButton from './CustomBackButton';
 import MainTabs, { PersistentTabBar } from './MainTabs';
 import FinanceNavigator from './FinanceNavigator';
 import HeyKaptan from '../components/HeyKaptan';
+import ErrorBoundary from '../components/shared/ErrorBoundary';
 import LoginScreen from '../screens/LoginScreen';
 import LoadCreateWizard from '../screens/load-create/LoadCreateWizard';
 import LoadTrackingScreen from '../screens/tracking/LoadTrackingScreen';
@@ -19,24 +20,15 @@ import LoadAcceptDetail from '../screens/load-accept/LoadAcceptDetail';
 import MyBidsScreen from '../screens/load-accept/MyBidsScreen';
 import CarrierProfileScreen from '../screens/CarrierProfileScreen';
 import ReturnLoadScreen from '../screens/ReturnLoadScreen';
-import InvoiceListScreen from '../screens/gib/InvoiceListScreen';
-import InvoiceCreateScreen from '../screens/gib/InvoiceCreateScreen';
-import InvoiceDetailScreen from '../screens/gib/InvoiceDetailScreen';
-import AccountantDashboardScreen from '../screens/gib/AccountantDashboardScreen';
+
+// Ağır ekranlar: lazy-load ile bundle boyutunu azalt
+const InvoiceListScreen = React.lazy(() => import('../screens/gib/InvoiceListScreen'));
+const InvoiceCreateScreen = React.lazy(() => import('../screens/gib/InvoiceCreateScreen'));
+const InvoiceDetailScreen = React.lazy(() => import('../screens/gib/InvoiceDetailScreen'));
+const AccountantDashboardScreen = React.lazy(() => import('../screens/gib/AccountantDashboardScreen'));
 import TaxDashboardScreen from '../screens/TaxDashboardScreen';
 import WebhookManagementScreen from '../screens/settings/WebhookManagementScreen';
 import ApiKeyManagementScreen from '../screens/settings/ApiKeyManagementScreen';
-import AnalyticsDashboardScreen from '../screens/AnalyticsDashboardScreen';
-import AdminPanelScreen from '../screens/AdminPanelScreen';
-import TestCenterScreen from '../screens/TestCenterScreen';
-import PermissionMatrixScreen from '../screens/PermissionMatrixScreen';
-import AuditLogScreen from '../screens/AuditLogScreen';
-import SecurityCenterScreen from '../screens/SecurityCenterScreen';
-import SystemSettingsScreen from '../screens/SystemSettingsScreen';
-import FuelStationsScreen from '../screens/FuelStationsScreen';
-import RestaurantsScreen from '../screens/RestaurantsScreen';
-import RoutePlannerScreen from '../screens/RoutePlannerScreen';
-import DocumentCenterScreen from '../screens/DocumentCenterScreen';
 import ChatListScreen from '../screens/chat/ChatListScreen';
 import ChatCreateScreen from '../screens/chat/ChatCreateScreen';
 import ChatRoomScreen from '../screens/chat/ChatRoomScreen';
@@ -58,18 +50,38 @@ import SavedCardsScreen from '../screens/payment/SavedCardsScreen';
 import SubscriptionScreen from '../screens/billing/SubscriptionScreen';
 import BillingHistoryScreen from '../screens/billing/BillingHistoryScreen';
 import CreditShopScreen from '../screens/billing/CreditShopScreen';
-import CommissionConfigScreen from '../screens/admin/CommissionConfigScreen';
-import PlanManagementScreen from '../screens/admin/PlanManagementScreen';
-import CreditPackageScreen from '../screens/admin/CreditPackageScreen';
-import PartMarketHomeScreen from '../screens/part-market/PartMarketHomeScreen';
-import PartMarketSearchScreen from '../screens/part-market/PartMarketSearchScreen';
-import PartListingDetailScreen from '../screens/part-market/PartListingDetailScreen';
-import PartListingCreateScreen from '../screens/part-market/PartListingCreateScreen';
-import MyPartListingsScreen from '../screens/part-market/MyPartListingsScreen';
-import PartOffersScreen from '../screens/part-market/PartOffersScreen';
-import PartTransactionScreen from '../screens/part-market/PartTransactionScreen';
-import PartDisputeScreen from '../screens/part-market/PartDisputeScreen';
-import PartReviewsScreen from '../screens/part-market/PartReviewsScreen';
+
+// Ağır ekranlar: lazy-load ile bundle boyutunu azalt (harita, grafik, kompleks formlar)
+const AnalyticsDashboardScreen = React.lazy(() => import('../screens/AnalyticsDashboardScreen'));
+const AdminPanelScreen = React.lazy(() => import('../screens/AdminPanelScreen'));
+const TestCenterScreen = React.lazy(() => import('../screens/TestCenterScreen'));
+const PermissionMatrixScreen = React.lazy(() => import('../screens/PermissionMatrixScreen'));
+const AuditLogScreen = React.lazy(() => import('../screens/AuditLogScreen'));
+const SecurityCenterScreen = React.lazy(() => import('../screens/SecurityCenterScreen'));
+const SystemSettingsScreen = React.lazy(() => import('../screens/SystemSettingsScreen'));
+const FuelStationsScreen = React.lazy(() => import('../screens/FuelStationsScreen'));
+const RestaurantsScreen = React.lazy(() => import('../screens/RestaurantsScreen'));
+const RoutePlannerScreen = React.lazy(() => import('../screens/RoutePlannerScreen'));
+const DocumentCenterScreen = React.lazy(() => import('../screens/DocumentCenterScreen'));
+const CommissionConfigScreen = React.lazy(() => import('../screens/admin/CommissionConfigScreen'));
+const PlanManagementScreen = React.lazy(() => import('../screens/admin/PlanManagementScreen'));
+const CreditPackageScreen = React.lazy(() => import('../screens/admin/CreditPackageScreen'));
+const PartMarketHomeScreen = React.lazy(() => import('../screens/part-market/PartMarketHomeScreen'));
+const PartMarketSearchScreen = React.lazy(() => import('../screens/part-market/PartMarketSearchScreen'));
+const PartListingDetailScreen = React.lazy(() => import('../screens/part-market/PartListingDetailScreen'));
+const PartListingCreateScreen = React.lazy(() => import('../screens/part-market/PartListingCreateScreen'));
+const MyPartListingsScreen = React.lazy(() => import('../screens/part-market/MyPartListingsScreen'));
+const PartOffersScreen = React.lazy(() => import('../screens/part-market/PartOffersScreen'));
+const PartTransactionScreen = React.lazy(() => import('../screens/part-market/PartTransactionScreen'));
+const PartDisputeScreen = React.lazy(() => import('../screens/part-market/PartDisputeScreen'));
+const PartReviewsScreen = React.lazy(() => import('../screens/part-market/PartReviewsScreen'));
+
+// Lazy fallback
+const LazyFallback = () => (
+  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+    <ActivityIndicator size="large" />
+  </View>
+);
 import i18n from '../i18n';
 import type { RootStackParamList } from './types';
 
@@ -141,6 +153,22 @@ const SCREEN_CONFIGS: Omit<ScreenConfig, 'options'>[] = [
   { name: 'PartDispute', component: PartDisputeScreen, i18nKey: 'nav.partDispute' },
   { name: 'PartReviews', component: PartReviewsScreen, i18nKey: 'nav.partReviews' },
 ];
+
+// Her screen'i ErrorBoundary + Suspense ile sar (bir ekranin cokmesi tum uygulamayi cokertmez)
+function withScreenProtection(Component: React.ComponentType<any>): React.ComponentType<any> {
+  const isLazy = (Component as any).$$typeof === Symbol.for('react.lazy');
+  return (props: any) => (
+    <ErrorBoundary>
+      {isLazy ? (
+        <Suspense fallback={<LazyFallback />}>
+          <Component {...props} />
+        </Suspense>
+      ) : (
+        <Component {...props} />
+      )}
+    </ErrorBoundary>
+  );
+}
 
 function buildScreenOptions(config: Omit<ScreenConfig, 'options'>, t: typeof i18n.t): Record<string, any> {
   const base: Record<string, any> = { animation: 'slide_from_right' };
@@ -268,7 +296,7 @@ export default function Navigation() {
                 <Stack.Screen
                   key={screen.name}
                   name={screen.name}
-                  component={screen.component}
+                  component={withScreenProtection(screen.component)}
                   options={buildScreenOptions(screen, t)}
                 />
               ))}

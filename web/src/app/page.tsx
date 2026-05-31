@@ -109,37 +109,19 @@ export default function PortalPage() {
     else showToast(`${label} sayfası hazırlanıyor...`);
   };
 
-  // Otomatik giriş — admin sayfalarına erişim için token oluştur
-  const ensureAuth = async () => {
-    const token = localStorage.getItem('admin_token');
-    if (!token) {
-      try {
-        const res = await fetch('/api/v1/auth/login', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: 'ilyas_duran@hotmail.com', password: 'Alp5326741416' }),
-        });
-        const data = await res.json();
-        if (data.data?.accessToken) {
-          localStorage.setItem('admin_token', data.data.accessToken);
-          if (data.data.refreshToken) localStorage.setItem('admin_refresh', data.data.refreshToken);
-          if (data.data.user) localStorage.setItem('admin_user', JSON.stringify(data.data.user));
-        }
-      } catch (e) {
-        // Backend kapalıysa mock token ile devam et
-        localStorage.setItem('admin_token', 'portal-guest-token');
-        localStorage.setItem('admin_user', JSON.stringify({ fullName: 'Portal Ziyaretçisi', role: 'admin', email: 'ziyaretci@kaptan.com' }));
-      }
-    }
-  };
-
-  // Kategori tıklama — önce auth, sonra sayfaya yönlendir
+  // Kategori tıklama — auth kontrolü, yoksa login sayfasına yönlendir
   const handleCategoryClick = async (cat: any) => {
     console.log(`[Category] ${cat.label}`);
     setActiveCategory(cat.id);
     setDynamicTitle(`${cat.icon} ${cat.label}`);
     if (cat.href) {
-      await ensureAuth();
+      const token = localStorage.getItem('admin_token');
+      if (!token) {
+        // Kullanici giris yapmamissa login sayfasina yonlendir
+        showToast('Bu bölüme erişmek için giriş yapmalısınız.');
+        router.push('/login');
+        return;
+      }
       router.push(cat.href);
     }
   };

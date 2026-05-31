@@ -18,7 +18,7 @@ export class ProfileVerificationController {
 
   @Post('submit')
   @ApiOperation({ summary: 'Profili incelemeye gonder' })
-  async submit(@Req() req: any, @Body() body: any) {
+  async submit(@Req() req: any, @Body() body: Record<string, any>) {
     return this.service.submitProfile(req.user.id, body);
   }
 

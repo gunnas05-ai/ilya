@@ -33,6 +33,15 @@
     "submitting": "Gönderiliyor...",
     "exit": "Çık"
   },
+  "home": {
+    "title": "KAPTAN",
+    "subtitle": "AKILLI LOJİSTİK PORTALI",
+    "availability": "Müsaitlik Durumu",
+    "active": "🟢 Aktif",
+    "inactive": "⚫ Kapalı",
+    "join": "Üye Ol",
+    "loadError": "Veriler yüklenirken bir hata oluştu."
+  },
   "auth": {
     "login": "Giriş Yap",
     "register": "Kayıt Ol",

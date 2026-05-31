@@ -24,6 +24,8 @@ export default function LoadAcceptDetail({ navigation, route }: any) {
   const [showBid, setShowBid] = useState(false);
   const [bidAmount, setBidAmount] = useState('');
   const [bidNote, setBidNote] = useState('');
+  const [bidDays, setBidDays] = useState('3');
+  const [bidReturnLoad, setBidReturnLoad] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [instantStatus, setInstantStatus] = useState<any>(null);
   const [instantBooking, setInstantBooking] = useState(false);
@@ -32,7 +34,7 @@ export default function LoadAcceptDetail({ navigation, route }: any) {
   const fetchLoad = () => {
     setLoading(true); setError(null);
     loadService.getById(loadId).then((data) => { setLoad(data); setRateData(null); }).catch((e) => { handleError(e, { screen: 'LoadAcceptDetail' }); setError('Yük detayı yüklenirken bir hata oluştu.'); }).finally(() => setLoading(false));
-    apiClient.get(`/instant-book/${loadId}/status`).then(r => { setInstantStatus(r.data || r); }).catch(() => {});
+    apiClient.get(`/instant-book/${loadId}/status`).then(r => { setInstantStatus(r.data || r); }).catch((e) => console.warn('Instant book durumu alinamadi:', e?.message));
   };
 
   useEffect(() => { fetchLoad(); }, [loadId]);
@@ -41,7 +43,7 @@ export default function LoadAcceptDetail({ navigation, route }: any) {
     if (!load?.fromCity || !load?.toCity) return;
     apiClient.get(`/rates/route?from=${encodeURIComponent(load.fromCity)}&to=${encodeURIComponent(load.toCity)}`)
       .then(r => setRateData(r.data || r))
-      .catch(() => {});
+      .catch((e) => console.warn('Rota fiyat verisi alinamadi:', e?.message));
   }, [load?.fromCity, load?.toCity]);
 
   const handleTakeLoad = async () => {
@@ -50,7 +52,8 @@ export default function LoadAcceptDetail({ navigation, route }: any) {
     if (!amount || amount <= 0) { Alert.alert('Uyarı', 'Geçerli bir teklif giriniz.'); return; }
     hapticMedium(); setSubmitting(true);
     try {
-      await placeBid(loadId, amount, bidNote || 'Teklif', 3, false, 1440);
+      const days = parseInt(bidDays, 10) || 3;
+      await placeBid(loadId, amount, bidNote || 'Teklif', days, bidReturnLoad, 1440);
       hapticSuccess();
       Alert.alert('✅ Teklif Gönderildi', 'Yük sahibi teklifinizi değerlendirecek.', [{ text: 'Tamam', onPress: () => navigation.goBack() }]);
     } catch (err: any) { Alert.alert('Hata', err.response?.data?.message || 'Teklif gönderilemedi.'); }
@@ -69,13 +72,19 @@ export default function LoadAcceptDetail({ navigation, route }: any) {
         '⚡ Yük Rezerve Edildi!',
         `Bu yük 5 dakikalığına size kilitlendi.\n\nFiyat: ${Number(data.instantPrice || 0).toLocaleString('tr-TR')} ₺\nKomisyon: ${Number(data.platformCommission || 0).toLocaleString('tr-TR')} ₺\nNet Kazanç: ${netEarnings.toLocaleString('tr-TR')} ₺\n\nOnaylıyor musunuz?`,
         [
-          { text: 'Vazgeç', style: 'cancel', onPress: async () => { await apiClient.post(`/instant-book/${loadId}/release`).catch(() => {}); } },
+          { text: 'Vazgeç', style: 'cancel', onPress: async () => {
+            try { await apiClient.post(`/instant-book/${loadId}/release`); }
+            catch { Alert.alert('Uyarı', 'Rezervasyon iptal edilemedi. Yük 5 dakika sonra otomatik serbest kalacak.'); }
+          }},
           { text: '✅ Onayla', onPress: async () => {
             try {
               await apiClient.post(`/instant-book/${loadId}/confirm`);
               hapticSuccess();
               Alert.alert('🎉 Başarılı!', 'Yük kesin olarak size rezerve edildi. Teslimat bilgileriniz hazır.', [{ text: 'Tamam', onPress: () => navigation.goBack() }]);
-            } catch { Alert.alert('Hata', 'Onaylama başarısız. Lütfen tekrar deneyin.'); }
+            } catch (err: any) {
+              const msg = err?.response?.data?.message || 'Onaylama başarısız. Lütfen tekrar deneyin.';
+              Alert.alert('Hata', msg);
+            }
           }},
         ],
       );
@@ -87,13 +96,10 @@ export default function LoadAcceptDetail({ navigation, route }: any) {
   };
 
   if (loading) return <View style={[styles.container, { backgroundColor: colors.background }, styles.center]}><ActivityIndicator color={colors.primary} size="large" /></View>;
-  if (!load) return <View style={[styles.container, { backgroundColor: colors.background }, styles.center]}><Text style={{ color: colors.textSecondary }}>Yük bulunamadı</Text></View>;
-
-  const typeLabel = LOAD_TYPE_LABELS[load.loadType] || load.loadType;
-
-  if (loading) return <View style={[styles.container, { backgroundColor: colors.background }]}><ListSkeleton count={3} /></View>;
   if (error) return <View style={[styles.container, { backgroundColor: colors.background }]}><ErrorState message={error} onRetry={fetchLoad} /></View>;
   if (!load) return <View style={[styles.container, { backgroundColor: colors.background }]}><ErrorState message="Yük bulunamadı." /></View>;
+
+  const typeLabel = LOAD_TYPE_LABELS[load.loadType] || load.loadType;
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -225,6 +231,28 @@ export default function LoadAcceptDetail({ navigation, route }: any) {
               placeholderTextColor={colors.textTertiary}
               keyboardType="decimal-pad"
             />
+            <View style={{ flexDirection: 'row', gap: spacing.sm, marginTop: spacing.sm }}>
+              <View style={{ flex: 1 }}>
+                <Text style={[typography.small, { color: colors.textTertiary, marginBottom: 4 }]}>Teslimat (gün)</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text }]}
+                  value={bidDays}
+                  onChangeText={setBidDays}
+                  keyboardType="number-pad"
+                  placeholder="3"
+                  placeholderTextColor={colors.textTertiary}
+                />
+              </View>
+              <TouchableOpacity
+                style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}
+                onPress={() => setBidReturnLoad(!bidReturnLoad)}
+              >
+                <View style={[styles.checkbox, { borderColor: colors.border, backgroundColor: bidReturnLoad ? colors.primary : 'transparent' }]}>
+                  {bidReturnLoad && <Text style={{ color: '#FFF', fontSize: 12 }}>✓</Text>}
+                </View>
+                <Text style={[typography.small, { color: colors.textSecondary }]}>Dönüş yükü var</Text>
+              </TouchableOpacity>
+            </View>
             <TextInput
               style={[styles.input, { backgroundColor: colors.surface, borderColor: colors.border, color: colors.text, marginTop: spacing.sm, minHeight: 60 }]}
               value={bidNote}
@@ -286,4 +314,5 @@ const styles = StyleSheet.create({
   input: { paddingVertical: spacing.sm, paddingHorizontal: spacing.md, borderRadius: radius.md, borderWidth: 1, fontSize: 15, minHeight: 48 },
   bottomBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: spacing.lg, paddingVertical: spacing.md, borderTopWidth: 1 },
   takeBtn: { paddingVertical: spacing.md, paddingHorizontal: spacing.xl, borderRadius: radius.md, minWidth: 120, alignItems: 'center' },
+  checkbox: { width: 20, height: 20, borderRadius: 4, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
 });

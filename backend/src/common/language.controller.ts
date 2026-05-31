@@ -1,12 +1,14 @@
 import { Controller, Get, Post, Body, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { LanguageService } from './language.service';
+import { Roles } from './roles.decorator';
+import { RolesGuard } from './roles.guard';
 
 @Controller('language')
 export class LanguageController {
   constructor(private languageService: LanguageService) {}
 
-  /** Public: Get available languages (respects admin flag) */
+  /** Public: Get available languages */
   @Get('available')
   async getAvailable() {
     return this.languageService.getAvailableLanguages();
@@ -14,21 +16,17 @@ export class LanguageController {
 
   /** Admin: Toggle multi-language support */
   @Post('admin/toggle')
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'super_admin')
   async toggleMultiLanguage(@Body() body: { enabled: boolean }, @Req() req: any) {
-    if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-      return { success: false, message: 'Yetkisiz erişim' };
-    }
     return this.languageService.setMultiLanguageEnabled(body.enabled, req.user.id);
   }
 
   /** Admin: Get all system language settings */
   @Get('admin/settings')
-  @UseGuards(AuthGuard('jwt'))
-  async getSettings(@Req() req: any) {
-    if (req.user.role !== 'admin' && req.user.role !== 'super_admin') {
-      return { success: false, message: 'Yetkisiz erişim' };
-    }
+  @UseGuards(AuthGuard('jwt'), RolesGuard)
+  @Roles('admin', 'super_admin')
+  async getSettings() {
     const enabled = await this.languageService.isMultiLanguageEnabled();
     return {
       multiLanguageEnabled: enabled,

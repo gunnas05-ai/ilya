@@ -12,7 +12,7 @@ export class CustomsController {
 
   @Post('declaration')
   @ApiOperation({ summary: 'Gumruk beyannamesi olustur' })
-  async create(@Body() body: any) {
+  async create(@Body() body: { loadId: string; declarationType: string; goodsDescription: string; value: number; originCountry: string; destCountry: string }) {
     return this.service.createDeclaration(body);
   }
 

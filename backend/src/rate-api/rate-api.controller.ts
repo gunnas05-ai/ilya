@@ -12,7 +12,7 @@ export class RateApiController {
 
   @Post('quote')
   @ApiOperation({ summary: 'Tekil fiyat sorgusu' })
-  async quote(@Body() body: any) {
+  async quote(@Body() body: { fromCity: string; toCity: string; vehicleType?: string; tonnage?: number; loadType?: string }) {
     return this.service.getQuote(body);
   }
 

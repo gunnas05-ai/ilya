@@ -1,10 +1,52 @@
 import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { IsString, IsNumber, IsOptional, IsBoolean, Min, MaxLength } from 'class-validator';
 import { LoadsService } from './loads.service';
 import { PriceEstimateService } from './price-estimate.service';
 import { EpdkScraperService } from './epdk-scraper.service';
 import { Roles } from '../common/roles.decorator';
 import { RolesGuard } from '../common/roles.guard';
+
+class CreateLoadDto {
+  @IsString() @MaxLength(200) title: string;
+  @IsString() loadType: string;
+  @IsString() fromCity: string;
+  @IsString() toCity: string;
+  @IsOptional() @IsString() fromDistrict?: string;
+  @IsOptional() @IsString() toDistrict?: string;
+  @IsOptional() @IsString() pickupDate?: string;
+  @IsOptional() @IsString() deliveryDate?: string;
+  @IsOptional() @IsString() vehicleType?: string;
+  @IsOptional() @IsString() trailerType?: string;
+  @IsOptional() @IsNumber() totalTonnage?: number;
+  @IsOptional() @IsNumber() volume?: number;
+  @IsOptional() @IsNumber() totalPrice?: number;
+  @IsOptional() @IsString() pricingType?: string;
+  @IsOptional() @IsNumber() pricePerTon?: number;
+  @IsOptional() @IsBoolean() escrow?: boolean;
+  @IsOptional() @IsBoolean() coldChain?: boolean;
+  @IsOptional() @IsBoolean() isAuction?: boolean;
+  @IsOptional() @IsString() urgency?: string;
+  @IsOptional() @IsString() @MaxLength(300) description?: string;
+  @IsOptional() @IsNumber() pickupLatitude?: number;
+  @IsOptional() @IsNumber() pickupLongitude?: number;
+  @IsOptional() @IsNumber() deliveryLatitude?: number;
+  @IsOptional() @IsNumber() deliveryLongitude?: number;
+}
+
+class UpdateLoadDto {
+  @IsOptional() @IsString() @MaxLength(200) title?: string;
+  @IsOptional() @IsString() fromCity?: string;
+  @IsOptional() @IsString() toCity?: string;
+  @IsOptional() @IsString() fromDistrict?: string;
+  @IsOptional() @IsString() toDistrict?: string;
+  @IsOptional() @IsString() pickupDate?: string;
+  @IsOptional() @IsString() deliveryDate?: string;
+  @IsOptional() @IsNumber() totalTonnage?: number;
+  @IsOptional() @IsNumber() totalPrice?: number;
+  @IsOptional() @IsString() @MaxLength(300) description?: string;
+  @IsOptional() @IsBoolean() escrow?: boolean;
+}
 
 @Controller('loads')
 export class LoadsController {
@@ -16,7 +58,7 @@ export class LoadsController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
-  async create(@Body() body: any, @Req() req: any) {
+  async create(@Body() body: CreateLoadDto, @Req() req: any) {
     return this.loadsService.create(body, req.user.id);
   }
 
@@ -158,7 +200,7 @@ export class LoadsController {
 
   @Put(':id')
   @UseGuards(AuthGuard('jwt'))
-  async update(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async update(@Param('id') id: string, @Body() body: UpdateLoadDto, @Req() req: any) {
     return this.loadsService.update(id, body, req.user.id);
   }
 

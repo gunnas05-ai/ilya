@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { User, UserRole } from '../users/user.entity';
 import { UIRole, RegisterDto } from './auth.controller';
 
@@ -32,8 +33,18 @@ export class AuthService {
     return Math.floor(100000 + Math.random() * 900000).toString();
   }
 
+  private hashOtp(otp: string): string {
+    return crypto.createHash('sha256').update(otp).digest('hex');
+  }
+
   private async sendOtpMock(phone: string, otp: string): Promise<void> {
-    // MOCK: In production, integrate Netgsm/Twilio here
+    if (process.env.NODE_ENV === 'production') {
+      this.logger.error(
+        `[SMS] PRODUCTION MODE but no SMS provider configured! ` +
+        `Set SMS_PROVIDER (netgsm|twilio) and related credentials. ` +
+        `Phone: ${phone} — OTP NOT SENT.`,
+      );
+    }
     this.logger.log(`[MOCK SMS] Telefon: ${phone} → OTP: ${otp} (5 dk geçerli)`);
   }
 
@@ -50,11 +61,27 @@ export class AuthService {
       throw new BadRequestException('Bu email veya telefon zaten kayıtlı');
     }
 
+    // Per-email domain rapid registration check (basic bot detection)
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+    const recentCount = await this.userRepo
+      .createQueryBuilder('u')
+      .where('u.createdAt > :since', { since: oneHourAgo })
+      .andWhere('(u.email LIKE :domain OR u.phone LIKE :prefix)', {
+        domain: `%@${dto.email.split('@')[1]}`,
+        prefix: `${dto.phone.substring(0, 6)}%`,
+      })
+      .getCount();
+    if (recentCount >= 5) {
+      this.logger.warn(`High registration volume from domain/prefix: ${dto.email.split('@')[1]} / ${dto.phone.substring(0, 6)}`);
+      throw new BadRequestException('Çok fazla kayıt denemesi. Lütfen daha sonra tekrar deneyin.');
+    }
+
     const passwordHash = await bcrypt.hash(dto.password, 12);
     const dbRole = this.mapUIRole(dto.uiRole);
 
     const otpCode = this.generateOtp();
     const otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes
+    const otpHash = this.hashOtp(otpCode);
 
     const user = this.userRepo.create({
       email: dto.email,
@@ -64,7 +91,7 @@ export class AuthService {
       role: dbRole,
       registrationStep: 'otp_sent',
       isPhoneVerified: false,
-      otpCode,
+      otpCode: otpHash,
       otpExpiresAt,
       // FIRMA fields
       companyTitle: dto.companyTitle,
@@ -98,7 +125,7 @@ export class AuthService {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user) throw new UnauthorizedException('Kullanıcı bulunamadı');
 
-    if (user.otpCode !== otpCode) {
+    if (user.otpCode !== this.hashOtp(otpCode)) {
       throw new BadRequestException('OTP kodu hatalı');
     }
 
@@ -122,7 +149,7 @@ export class AuthService {
     if (!user) throw new UnauthorizedException('Kullanıcı bulunamadı');
 
     const otpCode = this.generateOtp();
-    user.otpCode = otpCode;
+    user.otpCode = this.hashOtp(otpCode);
     user.otpExpiresAt = new Date(Date.now() + 5 * 60 * 1000);
     await this.userRepo.save(user);
     await this.sendOtpMock(user.phone, otpCode);
@@ -177,6 +204,10 @@ export class AuthService {
     const user = await this.userRepo.findOne({ where: { id: userId } });
     if (!user || !user.isActive) throw new UnauthorizedException('Kullanıcı bulunamadı');
     return user;
+  }
+
+  async logout(userId: string) {
+    await this.userRepo.update(userId, { refreshToken: null as any });
   }
 
   async updateDeviceFingerprint(userId: string, fingerprint: string) {

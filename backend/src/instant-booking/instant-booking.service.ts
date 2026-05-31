@@ -6,9 +6,9 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { InstantBooking, BookingStatus } from './instant-booking.entity';
 import { WebSocketGateway } from '../websocket/websocket.gateway';
 
-const LOCK_TIMEOUT_MINUTES = 5;       // FCFS kilit süresi
-const PLATFORM_COMMISSION = 3.5;      // %3.5 platform komisyonu
-const ESCROW_FEE_PCT = 2.0;           // %2 escrow hizmet bedeli
+const LOCK_TIMEOUT_MINUTES = parseInt(process.env.INSTANT_BOOK_LOCK_MINUTES || '5', 10);
+const PLATFORM_COMMISSION = parseFloat(process.env.PLATFORM_COMMISSION_RATE || '0.035') * 100; // % olarak
+const ESCROW_FEE_PCT = parseFloat(process.env.ESCROW_FEE_RATE || '0.02') * 100;
 
 @Injectable()
 export class InstantBookingService {

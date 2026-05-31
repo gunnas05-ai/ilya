@@ -1,6 +1,9 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './user.entity';
+import { CarrierProfile } from './carrier-profile.entity';
+import { CompanyProfile } from './company-profile.entity';
+import { MfaSettings } from './mfa-settings.entity';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
 import { AdminRoleController } from './admin-role.controller';
@@ -12,7 +15,7 @@ import { RequireVerifiedGuard } from './require-verified.guard';
 import { WebSocketModule } from '../websocket/websocket.module';
 
 @Module({
-  imports: [TypeOrmModule.forFeature([User]), WebSocketModule],
+  imports: [TypeOrmModule.forFeature([User, CarrierProfile, CompanyProfile, MfaSettings]), WebSocketModule],
   controllers: [UsersController, AdminRoleController, VerificationController, ProfileVerificationController],
   providers: [UsersService, VerificationService, ProfileVerificationService, RequireVerifiedGuard],
   exports: [UsersService, VerificationService, ProfileVerificationService, RequireVerifiedGuard],

@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, TextInput, StyleSheet, RefreshControl, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -35,14 +35,22 @@ export default function LoadAcceptScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(0);
   const [search, setSearch] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
+  const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locating, setLocating] = useState(true);
+
+  const handleSearchChange = (text: string) => {
+    setSearch(text);
+    if (searchTimer.current) clearTimeout(searchTimer.current);
+    searchTimer.current = setTimeout(() => setDebouncedSearch(text), 300);
+  };
 
   const fetchLoads = useCallback(async () => {
     try {
       setError(null);
       const [data, aiData] = await Promise.all([
-        loadService.getAll({ limit: 100, sortBy: 'pickupDate', sortOrder: 'DESC' }),
+        loadService.getAll({ page: 1, limit: 50, sortBy: 'pickupDate', sortOrder: 'DESC' }),
         loadService.getRecommended().catch(() => null),
       ]);
       let list = Array.isArray(data?.loads) ? data.loads : Array.isArray(data) ? data : [];
@@ -72,12 +80,12 @@ export default function LoadAcceptScreen() {
     apiClient.get('/users/profile/status').then(r => {
       const d = r.data?.data || r.data;
       setProfileVerified(d?.canAccessLoads === true);
-    }).catch(() => setProfileVerified(true));
+    }).catch((e) => { console.warn('Profil durumu kontrol edilemedi:', e?.message); setProfileVerified(null); });
   }, []);
 
   useEffect(() => {
     fetchLoads();
-    getCurrentLocation().then((loc) => setUserLocation({ lat: loc.latitude, lng: loc.longitude })).catch(() => {}).finally(() => setLocating(false));
+    getCurrentLocation().then((loc) => setUserLocation({ lat: loc.latitude, lng: loc.longitude })).catch((e) => console.warn('Konum alinamadi:', e?.message)).finally(() => setLocating(false));
   }, []);
 
   // Profil onaylanmamissa tam ekran yonlendirme karti goster (super admin haric)
@@ -93,8 +101,8 @@ export default function LoadAcceptScreen() {
     return distA - distB;
   });
 
-  const filtered = search ? sorted.filter((l: any) =>
-    `${l.fromCity} ${l.toCity} ${l.title} ${l.loadType}`.toLowerCase().includes(search.toLowerCase())
+  const filtered = debouncedSearch ? sorted.filter((l: any) =>
+    `${l.fromCity} ${l.toCity} ${l.title} ${l.loadType}`.toLowerCase().includes(debouncedSearch.toLowerCase())
   ) : sorted;
 
   const getDistance = (load: any) => {
@@ -125,7 +133,7 @@ export default function LoadAcceptScreen() {
         <TextInput
           style={[styles.searchInput, { backgroundColor: colors.card, borderColor: colors.border, color: colors.text }]}
           value={search}
-          onChangeText={setSearch}
+          onChangeText={handleSearchChange}
           placeholder="Şehir, yük tipi ara..."
           placeholderTextColor={colors.textTertiary}
         />
@@ -160,7 +168,7 @@ export default function LoadAcceptScreen() {
         <EmptyState emoji="📦" message="Uygun yük bulunamadı." />
       ) : (
         <>
-          {pagedLoads.filter((l: any) => !search || (l.title || '').toLowerCase().includes(search.toLowerCase()) || (l.fromCity || '').toLowerCase().includes(search.toLowerCase())).map((load: any) => (
+          {pagedLoads.map((load: any) => (
             <LoadCard
               key={load.loadId || load.id}
               load={load}

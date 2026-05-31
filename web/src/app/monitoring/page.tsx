@@ -4,16 +4,29 @@ import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
 import { Activity, Server, Database, Wifi, Cpu, HardDrive, Clock, RefreshCw, CheckCircle, AlertTriangle } from 'lucide-react';
 
+function formatUptime(seconds: number): string {
+  const d = Math.floor(seconds / 86400);
+  const h = Math.floor((seconds % 86400) / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  if (d > 0) return `${d}g ${h}s`;
+  if (h > 0) return `${h}s ${m}d`;
+  return `${m} dk`;
+}
+
+function formatMemory(bytes: number): string {
+  return `${Math.round(bytes / 1024 / 1024)}MB`;
+}
+
 export default function MonitoringPage() {
   const [health, setHealth] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [metrics, setMetrics] = useState({ uptime: '99.9%', apiLatency: '45ms', dbConnections: 12, wsConnections: 0, memoryUsage: '256MB', cpuUsage: '15%' });
 
   const fetchHealth = async () => {
     setLoading(true);
     try {
       const res = await api.get('/health');
-      setHealth(res.data?.data || res.data);
+      const data = res.data?.data || res.data;
+      setHealth(data);
     } catch { setHealth(null); }
     setLoading(false);
   };
@@ -22,9 +35,9 @@ export default function MonitoringPage() {
 
   const services = [
     { name: 'API Sunucusu', icon: Server, status: health?.status === 'HEALTHY', key: 'api' },
-    { name: 'Veritabanı', icon: Database, status: health?.services?.database === 'healthy', key: 'database' },
-    { name: 'Redis', icon: Cpu, status: health?.services?.redis === 'healthy', key: 'redis' },
-    { name: 'WebSocket', icon: Wifi, status: health?.services?.websocket === 'healthy', key: 'websocket' },
+    { name: 'Veritabanı', icon: Database, status: health?.services?.database?.status === 'healthy', key: 'database' },
+    { name: 'Redis', icon: Cpu, status: health?.services?.redis?.status !== 'down', key: 'redis' },
+    { name: 'WebSocket', icon: Wifi, status: health?.services?.websocket?.status === 'healthy', key: 'websocket' },
   ];
 
   return (
@@ -48,15 +61,15 @@ export default function MonitoringPage() {
         ))}
       </div>
 
-      {/* Metrikler */}
+      {/* Metrikler — canli health verisinden turetilir */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {[
-          { label: 'Uptime', value: metrics.uptime, icon: Clock, color: 'text-kaptan-success' },
-          { label: 'API p95 Gecikme', value: metrics.apiLatency, icon: Activity, color: 'text-kaptan-primary' },
-          { label: 'DB Bağlantı', value: metrics.dbConnections, icon: Database, color: 'text-kaptan-text' },
-          { label: 'WS Bağlantı', value: metrics.wsConnections, icon: Wifi, color: 'text-kaptan-primary' },
-          { label: 'Bellek', value: metrics.memoryUsage, icon: HardDrive, color: 'text-kaptan-warning' },
-          { label: 'CPU', value: metrics.cpuUsage, icon: Cpu, color: 'text-kaptan-text' },
+          { label: 'Uptime', value: health?.uptime ? formatUptime(health.uptime) : '—', icon: Clock, color: 'text-kaptan-success' },
+          { label: 'API Durumu', value: health?.status || '—', icon: Activity, color: health?.status === 'HEALTHY' ? 'text-kaptan-success' : 'text-kaptan-danger' },
+          { label: 'DB Gecikme', value: health?.services?.database?.latency ? `${health.services.database.latency}ms` : '—', icon: Database, color: 'text-kaptan-text' },
+          { label: 'Ortam', value: health?.environment || '—', icon: Wifi, color: 'text-kaptan-primary' },
+          { label: 'Bellek', value: health?.memory ? formatMemory(health.memory) : '—', icon: HardDrive, color: 'text-kaptan-warning' },
+          { label: 'CPU Load', value: health?.cpu ? health.cpu.toFixed(1) : '—', icon: Cpu, color: 'text-kaptan-text' },
         ].map(m => (
           <div key={m.label} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
             <div className="text-xs text-kaptan-muted mb-1">{m.label}</div>
@@ -68,37 +81,37 @@ export default function MonitoringPage() {
         ))}
       </div>
 
-      {/* Prometheus & DevOps bilgi */}
+      {/* API metrikleri — health endpoint'inden canli */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
-          <h3 className="font-semibold text-kaptan-text mb-3">API Metrikleri</h3>
+          <h3 className="font-semibold text-kaptan-text mb-3">Servis Durumları</h3>
           <div className="space-y-3">
-            {[
-              { label: 'Ortalama Yanıt Süresi', value: '45ms', pct: 30 },
-              { label: 'p95 Yanıt Süresi', value: '120ms', pct: 45 },
-              { label: 'p99 Yanıt Süresi', value: '250ms', pct: 65 },
-              { label: 'Hata Oranı', value: '%0.12', pct: 5 },
-              { label: 'İstek/Dakika', value: '1,250', pct: 40 },
-            ].map(item => (
-              <div key={item.label}>
-                <div className="flex justify-between text-sm mb-1"><span className="text-kaptan-muted">{item.label}</span><span className="text-kaptan-text font-medium">{item.value}</span></div>
-                <div className="w-full bg-kaptan-dark rounded-full h-1.5"><div className="bg-kaptan-primary h-1.5 rounded-full" style={{ width: `${item.pct}%` }} /></div>
+            {health?.services ? Object.entries(health.services).map(([key, svc]: any) => (
+              <div key={key}>
+                <div className="flex justify-between text-sm mb-1">
+                  <span className="text-kaptan-muted capitalize">{key}</span>
+                  <span className={`font-medium ${svc.status === 'healthy' ? 'text-kaptan-success' : svc.status === 'degraded' ? 'text-kaptan-warning' : 'text-kaptan-danger'}`}>
+                    {svc.status || 'unknown'}
+                  </span>
+                </div>
+                <div className="w-full bg-kaptan-dark rounded-full h-1.5">
+                  <div className={`h-1.5 rounded-full ${svc.status === 'healthy' ? 'bg-kaptan-success' : svc.status === 'degraded' ? 'bg-kaptan-warning' : 'bg-kaptan-danger'}`}
+                    style={{ width: svc.status === 'healthy' ? '100%' : svc.status === 'degraded' ? '50%' : '20%' }} />
+                </div>
               </div>
-            ))}
+            )) : <p className="text-kaptan-muted text-sm">Health verisi yüklenemedi</p>}
           </div>
         </div>
         <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
           <h3 className="font-semibold text-kaptan-text mb-3">Sistem Bilgisi</h3>
           <div className="space-y-3 text-sm">
-            <div className="flex justify-between"><span className="text-kaptan-muted">Backend Versiyonu</span><span className="text-kaptan-text">v1.0.0</span></div>
-            <div className="flex justify-between"><span className="text-kaptan-muted">Node.js</span><span className="text-kaptan-text">v24.15.0</span></div>
-            <div className="flex justify-between"><span className="text-kaptan-muted">NestJS</span><span className="text-kaptan-text">v10.4</span></div>
-            <div className="flex justify-between"><span className="text-kaptan-muted">Veritabanı</span><span className="text-kaptan-text">PostgreSQL 15 + PostGIS</span></div>
-            <div className="flex justify-between"><span className="text-kaptan-muted">Redis</span><span className="text-kaptan-text">v7</span></div>
-            <div className="flex justify-between"><span className="text-kaptan-muted">Kafka</span><span className="text-kaptan-text">Devre Dışı (EventEmitter2)</span></div>
-            <div className="flex justify-between"><span className="text-kaptan-muted">API Gateway</span><span className="text-kaptan-text">APISIX :9080</span></div>
-            <div className="flex justify-between"><span className="text-kaptan-muted">Ortam</span><span className="text-kaptan-text">{process.env.NODE_ENV || 'development'}</span></div>
-            <div className="flex justify-between"><span className="text-kaptan-muted">Prometheus</span><span className="text-kaptan-success text-xs">Aktif</span></div>
+            <div className="flex justify-between"><span className="text-kaptan-muted">Backend Versiyonu</span><span className="text-kaptan-text">{health?.version || 'v1.0.0'}</span></div>
+            <div className="flex justify-between"><span className="text-kaptan-muted">Ortam</span><span className="text-kaptan-text">{health?.environment || 'development'}</span></div>
+            <div className="flex justify-between"><span className="text-kaptan-muted">Uptime</span><span className="text-kaptan-text">{health?.uptime ? formatUptime(health.uptime) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-kaptan-muted">Bellek (Heap)</span><span className="text-kaptan-text">{health?.memory ? formatMemory(health.memory) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-kaptan-muted">CPU Load Avg</span><span className="text-kaptan-text">{health?.cpu ? health.cpu.toFixed(2) : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-kaptan-muted">Timestamp</span><span className="text-kaptan-text text-xs">{health?.timestamp ? new Date(health.timestamp).toLocaleString('tr-TR') : '—'}</span></div>
+            <div className="flex justify-between"><span className="text-kaptan-muted">Metrics</span><span className="text-kaptan-success text-xs">Prometheus /metrics</span></div>
           </div>
         </div>
       </div>

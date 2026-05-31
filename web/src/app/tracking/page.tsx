@@ -1,8 +1,79 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
 import { Search, MapPin, Navigation, Clock, Truck } from 'lucide-react';
+
+// Leaflet only loads in browser
+function LiveMap({ positions }: { positions: any[] }) {
+  const mapRef = useRef<any>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const markersRef = useRef<any[]>([]);
+  const [L, setL] = useState<any>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    import('leaflet').then(mod => {
+      if (cancelled) return;
+      setL(mod.default || mod);
+    }).catch(() => {});
+    return () => { cancelled = true; };
+  }, []);
+
+  useEffect(() => {
+    if (!L || !containerRef.current || mapRef.current) return;
+
+    // Initialize map centered on Turkey
+    const map = L.map(containerRef.current).setView([39.0, 35.0], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors',
+      maxZoom: 19,
+    }).addTo(map);
+    mapRef.current = map;
+
+    return () => { map.remove(); mapRef.current = null; };
+  }, [L]);
+
+  useEffect(() => {
+    if (!L || !mapRef.current) return;
+    const map = mapRef.current;
+
+    // Clear old markers
+    markersRef.current.forEach(m => map.removeLayer(m));
+    markersRef.current = [];
+
+    // Add position markers
+    const validPositions = positions.filter((p: any) => p.latitude && p.longitude);
+    if (validPositions.length === 0) return;
+
+    validPositions.forEach((pos: any) => {
+      const marker = L.marker([pos.latitude, pos.longitude])
+        .addTo(map)
+        .bindPopup(`<b>${pos.plateNumber || 'Araç'}</b><br/>${pos.driverName || ''}<br/>Hız: ${pos.speed || 0} km/s`);
+      markersRef.current.push(marker);
+    });
+
+    // Fit bounds if we have markers
+    const group = L.featureGroup(markersRef.current);
+    if (markersRef.current.length > 0) {
+      map.fitBounds(group.getBounds().pad(0.1));
+    }
+  }, [positions, L]);
+
+  return (
+    <div
+      ref={containerRef}
+      className="bg-kaptan-dark border border-kaptan-border rounded-lg h-[400px]"
+      style={{ zIndex: 1 }}
+    >
+      {!L && (
+        <div className="h-full flex items-center justify-center text-kaptan-muted">
+          <MapPin size={48} className="mx-auto mb-2 opacity-30" />
+        </div>
+      )}
+    </div>
+  );
+}
 
 export default function TrackingPage() {
   const [records, setRecords] = useState<any[]>([]);
@@ -48,17 +119,7 @@ export default function TrackingPage() {
                 placeholder="Yük, sürücü veya plaka ara..." value={search} onChange={e => setSearch(e.target.value)} />
             </div>
 
-            <div className="bg-kaptan-dark border border-kaptan-border rounded-lg h-[400px] flex items-center justify-center relative overflow-hidden">
-              <div className="text-center text-kaptan-muted">
-                <MapPin size={48} className="mx-auto mb-2 opacity-30" />
-                <p className="text-sm">Harita görünümü — aktif araç pozisyonları</p>
-                <p className="text-xs mt-1">OpenStreetMap entegrasyonu</p>
-              </div>
-              {positions.slice(0, 10).map((pos: any, i: number) => (
-                <div key={i} className="absolute w-3 h-3 bg-kaptan-primary rounded-full animate-pulse shadow-lg shadow-kaptan-primary/50"
-                  style={{ left: `${20 + Math.random() * 60}%`, top: `${20 + Math.random() * 60}%` }} />
-              ))}
-            </div>
+            <LiveMap positions={positions} />
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

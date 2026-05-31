@@ -11,13 +11,13 @@ export class RestaurantsController {
 
   @Post()
   @UseGuards(AuthGuard('jwt'))
-  async create(@Body() body: any, @Req() req: any) {
+  async create(@Body() body: { name: string; city: string; district: string; address: string; hasTirParking?: boolean }, @Req() req: any) {
     return this.service.create(body, req.user.id);
   }
 
   @Put(':id')
   @UseGuards(AuthGuard('jwt'))
-  async update(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async update(@Param('id') id: string, @Body() body: { name?: string; city?: string; district?: string; address?: string; hasTirParking?: boolean; isActive?: boolean }, @Req() req: any) {
     return this.service.update(id, body, req.user.id);
   }
 

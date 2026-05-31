@@ -1,10 +1,39 @@
 import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { IsString, IsNumber, IsOptional, IsEnum, Min } from 'class-validator';
 import { GibService } from './gib.service';
 import { BlockchainService } from './blockchain.service';
 import { InvoiceType, InvoiceStatus } from './invoice.entity';
 import { Roles } from '../common/roles.decorator';
 import { RolesGuard } from '../common/roles.guard';
+
+class AddCustomerDto {
+  @IsString() name: string;
+  @IsOptional() @IsString() taxNumber?: string;
+  @IsOptional() @IsString() taxOffice?: string;
+  @IsOptional() @IsString() email?: string;
+  @IsOptional() @IsString() phone?: string;
+  @IsOptional() @IsString() address?: string;
+}
+
+class UpdateCompanyDto {
+  @IsOptional() @IsString() companyTitle?: string;
+  @IsOptional() @IsString() taxNumber?: string;
+  @IsOptional() @IsString() taxOffice?: string;
+  @IsOptional() @IsString() address?: string;
+  @IsOptional() @IsString() phone?: string;
+  @IsOptional() @IsString() email?: string;
+}
+
+class CreateInvoiceDto {
+  @IsEnum(InvoiceType) invoiceType: InvoiceType;
+  @IsString() customerId: string;
+  @IsNumber() @Min(0) totalAmount: number;
+  @IsOptional() @IsNumber() vatAmount?: number;
+  @IsOptional() items?: Array<{ name: string; quantity: number; unitPrice: number; vatRate?: number }>;
+  @IsOptional() @IsString() description?: string;
+  @IsOptional() @IsString() loadId?: string;
+}
 
 @Controller('invoice')
 @UseGuards(AuthGuard('jwt'), RolesGuard)
@@ -23,7 +52,7 @@ export class GibController {
   }
 
   @Post('customer/frequent')
-  async addCustomer(@Body() body: any, @Req() req: any) {
+  async addCustomer(@Body() body: AddCustomerDto, @Req() req: any) {
     return this.gibService.addCustomer({ ...body, companyId: req.user.companyId || req.user.id });
   }
 
@@ -35,7 +64,7 @@ export class GibController {
 
   @Put('company/profile')
   @Roles('admin', 'muhasebe')
-  async updateCompanyProfile(@Body() body: any, @Req() req: any) {
+  async updateCompanyProfile(@Body() body: UpdateCompanyDto, @Req() req: any) {
     return this.gibService.updateCompanyProfile(req.user.companyId || req.user.id, body);
   }
 
@@ -88,7 +117,7 @@ export class GibController {
   // ── Invoice CRUD ───────────────────────────────────────
   @Post('create')
   @Roles('yuk_veren', 'tasiyici', 'isletme', 'muhasebe', 'admin', 'super_admin')
-  async create(@Body() body: any, @Req() req: any) {
+  async create(@Body() body: CreateInvoiceDto, @Req() req: any) {
     return this.gibService.createInvoice({ ...body, companyId: req.user.companyId || req.user.id });
   }
 

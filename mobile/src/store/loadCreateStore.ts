@@ -49,11 +49,17 @@ export const useLoadCreateStore = create<LoadCreateState>((set, get) => ({
   prevStep: () => set((s) => ({ step: Math.max(s.step - 1, 1) })),
   updateFormData: (data) => {
     set((s) => ({ formData: { ...s.formData, ...data } }));
-    // Auto-save draft on each update
-    const { formData } = get();
-    if (Object.keys(formData).length > 1) {
-      AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(formData)).catch(() => {});
-    }
+    // Debounced auto-save: her degisimde AsyncStorage yazmak yerine
+    // 2 saniye icinde yeni degisiklik olmazsa kaydet
+    const debounceKey = '_draftDebounce';
+    const existing = (updateFormData as any)[debounceKey];
+    if (existing) clearTimeout(existing);
+    (updateFormData as any)[debounceKey] = setTimeout(() => {
+      const { formData } = get();
+      if (Object.keys(formData).length > 1) {
+        AsyncStorage.setItem(DRAFT_KEY, JSON.stringify(formData)).catch(() => {});
+      }
+    }, 2000);
   },
   setPriceSummary: (summary) => set({ priceSummary: summary }),
   setSubmitting: (val) => set({ isSubmitting: val }),

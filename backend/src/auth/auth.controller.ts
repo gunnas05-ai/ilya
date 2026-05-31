@@ -128,6 +128,7 @@ export class AuthController {
   @UseGuards(AuthGuard('jwt'))
   @HttpCode(HttpStatus.OK)
   async logout(@Req() req: any) {
+    await this.authService.logout(req.user.id);
     return { message: 'Başarıyla çıkış yapıldı' };
   }
 

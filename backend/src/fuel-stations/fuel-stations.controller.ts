@@ -49,7 +49,7 @@ export class FuelStationsController {
   @Post()
   @UseGuards(AuthGuard('jwt'))
   async create(
-    @Body() body: any,
+    @Body() body: { name: string; city: string; district: string; brand: string; latitude: number; longitude: number; is247?: boolean; hasCharging?: boolean },
     @Req() req: any,
     @Headers('x-device-fingerprint') deviceFingerprint?: string,
   ) {

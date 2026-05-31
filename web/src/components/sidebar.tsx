@@ -1,9 +1,10 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Users, CreditCard, Percent, FileText, Settings, LogOut, Shield, Banknote, UserPlus, Palette, Wrench, Package, Gavel, MapPin, Truck, Utensils, Fuel, ShoppingCart, Bell, Radio, Warehouse, Ship, Plug, QrCode, TrendingUp, RotateCcw, Send, FileBadge, Camera, ClipboardCheck, Globe, Sun, Moon, MessageSquare, Wallet, Activity, UserCheck, Brain, BarChart3, Trophy, ClipboardList,
+  LayoutDashboard, Users, CreditCard, Percent, FileText, Settings, LogOut, Shield, Banknote, UserPlus, Palette, Wrench, Package, Gavel, MapPin, Truck, Utensils, Fuel, ShoppingCart, Bell, Radio, Warehouse, Ship, Plug, QrCode, TrendingUp, RotateCcw, Send, FileBadge, Camera, ClipboardCheck, Globe, Sun, Moon, MessageSquare, Wallet, Activity, UserCheck, Brain, BarChart3, Trophy, ClipboardList, Menu, X,
 } from 'lucide-react';
 import { useTheme } from '@/lib/useTheme';
 
@@ -98,11 +99,33 @@ const navSections = [
 export function Sidebar() {
   const pathname = usePathname();
   const { theme, toggle } = useTheme();
+  const [mobileOpen, setMobileOpen] = useState(false);
+
+  const closeMobile = () => setMobileOpen(false);
 
   return (
-    <aside className="w-64 bg-kaptan-card border-r border-kaptan-border flex flex-col h-screen overflow-y-auto">
-      <div className="p-4 border-b border-kaptan-border sticky top-0 bg-kaptan-card z-10">
-        <h1 className="text-xl font-bold text-kaptan-primary tracking-wider">KAPTAN</h1>
+    <>
+      {/* Hamburger button — visible only on mobile */}
+      <button
+        onClick={() => setMobileOpen(!mobileOpen)}
+        className="lg:hidden fixed top-4 left-4 z-50 p-2 rounded-lg bg-kaptan-card border border-kaptan-border text-kaptan-text"
+        aria-label="Menü"
+      >
+        {mobileOpen ? <X size={20} /> : <Menu size={20} />}
+      </button>
+
+      {/* Overlay for mobile */}
+      {mobileOpen && (
+        <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={closeMobile} />
+      )}
+
+      <aside className={`
+        w-64 bg-kaptan-card border-r border-kaptan-border flex flex-col h-screen overflow-y-auto
+        fixed lg:static inset-y-0 left-0 z-40 transition-transform duration-200
+        ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+      `}>
+        <div className="p-4 border-b border-kaptan-border sticky top-0 bg-kaptan-card z-10">
+          <h1 className="text-xl font-bold text-kaptan-primary tracking-wider">KAPTAN</h1>
         {(() => {
           try {
             const raw = localStorage.getItem('admin_user');
@@ -132,6 +155,7 @@ export function Sidebar() {
                   <Link
                     key={item.href}
                     href={item.href}
+                    onClick={closeMobile}
                     className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                       isActive
                         ? 'bg-kaptan-primary/15 text-kaptan-primary'
@@ -156,12 +180,13 @@ export function Sidebar() {
           {theme === 'dark' ? 'Aydınlık Mod' : 'Karanlık Mod'}
         </button>
         <button
-          onClick={() => { localStorage.removeItem('admin_token'); localStorage.removeItem('admin_refresh'); localStorage.removeItem('admin_user'); window.location.href = '/login'; }}
+          onClick={() => { localStorage.removeItem('admin_token'); localStorage.removeItem('admin_refresh'); localStorage.removeItem('admin_user'); document.cookie = 'admin_session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; window.location.href = '/login'; }}
           className="flex items-center gap-2 text-kaptan-muted hover:text-kaptan-danger text-sm w-full px-3 py-2 transition-colors rounded-lg"
         >
           <LogOut size={16} /> Çıkış Yap
         </button>
       </div>
     </aside>
+    </>
   );
 }
