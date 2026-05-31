@@ -27,14 +27,14 @@ describe('WalletService', () => {
       findOne: jest.fn().mockResolvedValue(mockWallet),
       create: jest.fn().mockReturnValue(mockWallet),
       save: jest.fn().mockResolvedValue(mockWallet),
-    };
+    } as any;
 
     txRepo = {
       findOne: jest.fn().mockResolvedValue(null),
       create: jest.fn().mockReturnValue({}),
       save: jest.fn().mockResolvedValue({}),
       find: jest.fn().mockResolvedValue([]),
-    };
+    } as any;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
