@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { User } from '../users/user.entity';
 
 export enum LoadType {
@@ -39,9 +39,11 @@ export class Load {
   loadNo: string;
 
   @Column({ type: 'simple-enum', enum: LoadType })
+  @Index()
   loadType: LoadType;
 
   @Column()
+  @Index()
   fromCity: string;
 
   @Column()
@@ -51,6 +53,7 @@ export class Load {
   fromAddress: string;
 
   @Column()
+  @Index()
   toCity: string;
 
   @Column()
@@ -95,6 +98,7 @@ export class Load {
 
   // Load type specific fields
   @Column({ nullable: true })
+  @Index()
   vehicleType: string;
 
   @Column({ nullable: true })

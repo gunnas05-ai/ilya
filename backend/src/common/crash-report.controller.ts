@@ -16,11 +16,15 @@ export class CrashReportController {
   ) {}
 
   @Post()
-  @ApiOperation({ summary: 'Mobil uygulamadan crash raporu gonder' })
+  @ApiOperation({ summary: 'Mobil uygulamadan crash raporu gonder (public, JWT opsiyonel)' })
   async submit(@Body() body: {
     errorMessage: string; stackTrace?: string; screen?: string;
-    platform?: string; appVersion?: string; userId?: string; userEmail?: string;
+    platform?: string; appVersion?: string;
   }, @Req() req: any) {
+    // userId/email JWT'den al — client'in gonderdigine guvenme
+    const userId = req.user?.id || null;
+    const userEmail = req.user?.email || null;
+
     // Ayni hatanin tekrar gelmesi durumunda occurrenceCount artir
     const existing = await this.crashRepo.findOne({
       where: { errorMessage: body.errorMessage, status: 'new' },
@@ -40,8 +44,8 @@ export class CrashReportController {
       screen: body.screen || undefined,
       platform: body.platform || 'unknown',
       appVersion: body.appVersion || undefined,
-      userId: body.userId || undefined,
-      userEmail: body.userEmail || undefined,
+      userId,
+      userEmail,
       environment: process.env.NODE_ENV || 'development',
     } as any);
 

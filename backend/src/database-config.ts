@@ -27,12 +27,14 @@ export function getDatabaseConfig(): TypeOrmModuleOptions {
     };
   }
 
-  logger.log('📦 SQLite (geliştirme)');
+  logger.log('📦 SQLite (geliştirme) — migrations kullaniliyor');
   return {
     type: 'sqlite',
     database: './data/kaptan.db',
     entities: ALL_ENTITIES,
-    synchronize: true,
+    synchronize: false,
+    migrations: ['dist/migrations/*.js'],
+    migrationsRun: true,
     logging: !isProduction ? ['error', 'warn'] : ['error'],
   };
 }

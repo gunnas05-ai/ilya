@@ -45,9 +45,7 @@ export const crashReporting = {
         stackTrace: error.stack?.substring(0, 2000) || null,
         screen: context.screen || null,
         platform: Platform.OS,
-        appVersion: null, // expo-constants'tan alinabilir
-        userId: currentUser?.id || context.userId || null,
-        userEmail: currentUser?.email || null,
+        appVersion: null,
       });
     } catch {
       // Sessizce devam et
