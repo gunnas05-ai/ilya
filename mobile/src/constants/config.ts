@@ -40,7 +40,7 @@ function buildConfig(): AppConfig {
   return {
     env,
     apiBaseUrl: api,
-    wsUrl: api.replace(/\/api.*$/, ''),
+    wsUrl: env === 'development' ? 'http://192.168.1.34:3000' : 'https://api.kaptanlojistik.com',
     sentryDsn: null,
     logLevel: env === 'development' ? 'debug' : 'error',
     featureFlags: {

@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { Load } from '../loads/load.entity';
 
 export enum EscrowStatus {
@@ -16,6 +16,7 @@ export class EscrowTransaction {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column()
   loadId: string;
 
@@ -23,9 +24,11 @@ export class EscrowTransaction {
   @JoinColumn({ name: 'loadId' })
   load: Load;
 
+  @Index()
   @Column()
   shipperId: string;
 
+  @Index()
   @Column()
   carrierId: string;
 

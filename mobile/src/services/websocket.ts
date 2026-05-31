@@ -1,5 +1,5 @@
 import { io, Socket } from 'socket.io-client';
-import { API_BASE_URL } from '../constants/config';
+import { API_BASE_URL, APP_CONFIG } from '../constants/config';
 import type { WSEventMap } from '../types/websocket';
 
 let socket: Socket | null = null;
@@ -7,7 +7,7 @@ let socket: Socket | null = null;
 export function connectSocket(token: string, userId?: string): Socket {
   if (socket?.connected) return socket;
 
-  const wsUrl = API_BASE_URL.replace(/\/api.*$/, '');
+  const wsUrl = APP_CONFIG.wsUrl || API_BASE_URL.replace(/\/api.*$/, '');
   socket = io(`${wsUrl}/ws`, {
     auth: { token },
     query: userId ? { userId } : undefined,
