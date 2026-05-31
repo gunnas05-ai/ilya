@@ -34,6 +34,34 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideUp = useRef(new Animated.Value(100)).current;
 
+  // Ambient floating particles
+  const particles = useRef(
+    Array.from({ length: 12 }, (_, i) => ({
+      id: i,
+      x: Math.random() * SW,
+      y: Math.random() * SH,
+      size: 2 + Math.random() * 4,
+      speed: 15 + Math.random() * 25,
+      opacity: 0.1 + Math.random() * 0.25,
+      anim: new Animated.Value(0),
+    })),
+  ).current;
+
+  useEffect(() => {
+    if (visible) {
+      particles.forEach(p => {
+        const loop = Animated.loop(
+          Animated.timing(p.anim, {
+            toValue: 1, duration: p.speed * 1000,
+            easing: Easing.linear, useNativeDriver: true,
+          }),
+        );
+        loop.start();
+        return () => loop.stop();
+      });
+    }
+  }, [visible]);
+
   // Entry animation
   useEffect(() => {
     if (visible) {
@@ -77,22 +105,29 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
     hapticLight();
 
     try {
-      const SpeechRecognition = require('expo-speech-recognition');
-      if (SpeechRecognition?.default) {
+      let SpeechRecognition: any = null;
+      try { SpeechRecognition = require('expo-speech-recognition'); } catch {}
+
+      if (SpeechRecognition?.default?.start) {
         const result = await SpeechRecognition.default.start({ lang: 'tr-TR', interimResults: false });
         const text = result?.[0]?.transcript || '';
         if (text.trim()) {
           setConversation(prev => [...prev, { role: 'user', text }]);
           await processCommand(text);
         } else {
-          respondWithText('Sesinizi alamadım. Lütfen tekrar deneyin veya yazabilirsiniz.');
+          respondWithText('Sesinizi alamadım. Lütfen tekrar deneyin veya yazarak devam edin.');
           setAvatarState('idle');
         }
       } else {
-        respondWithText('Ses tanıma şu anda kullanılamıyor.');
+        // Fallback: Ses tanıma yoksa, kullanıcıya yazmasını söyle
+        respondWithText('Ses tanıma şu anda kullanılamıyor. Lütfen komutunuzu yazarak iletin veya AiDialog sayfasına gidin.');
         setAvatarState('idle');
+        setTimeout(() => {
+          onClose();
+          onNavigate('AiDialog');
+        }, 2000);
       }
-    } catch {
+    } catch (err: any) {
       respondWithText('Ses tanıma başlatılamadı. Lütfen tekrar deneyin.');
       setAvatarState('idle');
     }
@@ -158,6 +193,18 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
         {/* Dark overlay */}
         <View style={styles.darkBg} />
 
+        {/* Ambient particles */}
+        {particles.map(p => (
+          <Animated.View
+            key={p.id}
+            style={[styles.particle, {
+              left: p.x, width: p.size, height: p.size, borderRadius: p.size / 2,
+              backgroundColor: '#FF6B00', opacity: p.opacity,
+              transform: [{ translateY: p.anim.interpolate({ inputRange: [0, 1], outputRange: [SH, -50] }) }],
+            }]}
+          />
+        ))}
+
         {/* Close button */}
         <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
           <Text style={styles.closeText}>✕</Text>
@@ -207,4 +254,5 @@ const styles = StyleSheet.create({
   aiMsgText: { color: '#E2E8F0' },
   listenBtn: { position: 'absolute', bottom: 100, paddingHorizontal: 30, paddingVertical: 16, borderRadius: 30, backgroundColor: '#FF6B00', shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 10, elevation: 8 },
   listenBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  particle: { position: 'absolute' },
 });
