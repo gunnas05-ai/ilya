@@ -1,6 +1,19 @@
 import { Controller, Get, Post, Put, Body, Param, UseGuards, Req } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
+import { IsNumber, IsString, IsOptional, IsBoolean, Min, Max } from 'class-validator';
 import { BidsService } from './bids.service';
+
+class PlaceBidDto {
+  @IsString() loadId: string;
+  @IsNumber() @Min(1) amount: number;
+  @IsOptional() @IsString() note?: string;
+  @IsOptional() @IsNumber() @Min(1) @Max(30) estimatedDeliveryDays?: number;
+  @IsOptional() @IsBoolean() hasReturnLoad?: boolean;
+  @IsOptional() @IsString() pickupTime?: string;
+  @IsOptional() @IsBoolean() requestEscrow?: boolean;
+  @IsOptional() @IsNumber() @Min(60) validDuration?: number;
+}
 
 @Controller('bids')
 @UseGuards(AuthGuard('jwt'))
@@ -8,19 +21,15 @@ export class BidsController {
   constructor(private bidsService: BidsService) {}
 
   @Post()
-  async placeBid(@Body() body: any, @Req() req: any) {
-    return this.bidsService.placeBid({
-      loadId: body.loadId,
-      carrierId: req.user.id,
-      carrierName: req.user.fullName,
-      amount: body.amount,
-      note: body.note,
-      estimatedDeliveryDays: body.estimatedDeliveryDays || 3,
-      hasReturnLoad: body.hasReturnLoad || false,
-      pickupTime: body.pickupTime,
-      requestEscrow: body.requestEscrow,
-      validDuration: body.validDuration || 1440,
-    });
+  @Throttle({ default: { limit: 10, ttl: 60000 } }) // 10 teklif/dakika
+  async placeBid(@Body() body: PlaceBidDto, @Req() req: any) {
+    return this.bidsService.placeBid({ ...body, carrierId: req.user.id, carrierName: req.user.fullName });
+  }
+
+  @Put(':id/accept')
+  @Throttle({ default: { limit: 20, ttl: 60000 } })
+  async acceptBid(@Param('id') id: string, @Req() req: any) {
+    return this.bidsService.acceptBid(id, req.user.id);
   }
 
   @Get('my')

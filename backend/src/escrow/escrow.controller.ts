@@ -1,6 +1,7 @@
 import { Controller, Get, Post, Put, Delete, Body, Param, UseGuards, Req, Query, UseInterceptors, UploadedFile, Headers, Ip } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { AuthGuard } from '@nestjs/passport';
+import { Throttle } from '@nestjs/throttler';
 import { EscrowService } from './escrow.service';
 import { WalletService } from './wallet.service';
 import { WithdrawalService } from './withdrawal.service';
@@ -86,6 +87,7 @@ export class EscrowController {
   }
 
   @Post('wallet/deposit')
+  @Throttle({ default: { limit: 5, ttl: 60000 } }) // 5 yukleme/dakika
   async deposit(@Body() body: any, @Req() req: any) {
     return this.walletService.credit(req.user.id, body.amount, `deposit_${Date.now()}`, 'Para yükleme');
   }
