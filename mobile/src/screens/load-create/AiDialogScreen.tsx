@@ -36,27 +36,38 @@ export default function AiDialogScreen({ navigation, route }: any) {
   }]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const [extractedFields, setExtractedFields] = useState<Record<string, any>>({});
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number; city?: string; district?: string } | null>(null);
 
+  // Ses tanıma başlat
+  const startVoiceRecognition = async () => {
+    if (isListening || loading) return;
+    setIsListening(true);
+    try {
+      const SpeechRecognition = require('expo-speech-recognition');
+      if (SpeechRecognition?.default) {
+        const result = await SpeechRecognition.default.start({ lang: 'tr-TR', interimResults: false });
+        const text = result?.[0]?.transcript || '';
+        if (text.trim()) {
+          setInputText(text);
+          await handleSendWithText(text);
+        } else {
+          addMessage({ id: Date.now().toString(), role: 'assistant', text: '🎤 Ses algılanamadı. Lütfen tekrar deneyin veya yazabilirsiniz.' });
+        }
+      }
+    } catch {
+      addMessage({ id: Date.now().toString(), role: 'assistant', text: '🎤 Ses tanıma şu anda kullanılamıyor. Lütfen yazarak devam edin.' });
+    } finally {
+      setIsListening(false);
+    }
+  };
+
   // HeyKaptan'dan gelindiyse otomatik dinlemeye başla
   useEffect(() => {
     if (initialMsg) {
-      const timer = setTimeout(() => {
-        try {
-          const SpeechRecognition = require('expo-speech-recognition');
-          if (SpeechRecognition?.default) {
-            SpeechRecognition.default.start({ lang: 'tr-TR', interimResults: false }).then((r: any) => {
-              const text = r?.[0]?.transcript || '';
-              if (text.trim()) {
-                setInputText(text);
-                handleSendWithText(text);
-              }
-            }).catch(() => {});
-          }
-        } catch {}
-      }, 2500); // Selamlama konuşması bittikten sonra dinlemeye başla
+      const timer = setTimeout(() => { startVoiceRecognition(); }, 2500);
       return () => clearTimeout(timer);
     }
   }, [initialMsg]);
@@ -404,14 +415,24 @@ export default function AiDialogScreen({ navigation, route }: any) {
 
         {/* Input Bar */}
         <View style={[styles.inputBar, { backgroundColor: colors.card, borderTopColor: colors.border }]}>
+          {/* Mikrofon butonu */}
+          <TouchableOpacity
+            style={[styles.micBtn, { backgroundColor: isListening ? '#EF4444' : colors.primary + '15', borderColor: isListening ? '#EF4444' : colors.primary + '30' }]}
+            onPress={startVoiceRecognition}
+            disabled={isListening || loading}
+            activeOpacity={0.7}
+          >
+            <Text style={{ fontSize: 20 }}>{isListening ? '🔴' : '🎤'}</Text>
+          </TouchableOpacity>
+
           <TextInput
             value={inputText}
             onChangeText={setInputText}
-            placeholder="Yük bilgilerini söyleyin veya yazın..."
+            placeholder={isListening ? 'Dinleniyor...' : 'Yük bilgilerini söyleyin veya yazın...'}
             placeholderTextColor={colors.textTertiary}
-            style={[styles.input, { backgroundColor: colors.background, borderColor: colors.border, color: colors.text }]}
+            style={[styles.input, { backgroundColor: colors.background, borderColor: isListening ? '#EF4444' : colors.border, color: colors.text }]}
             multiline
-            editable={!loading}
+            editable={!loading && !isListening}
             returnKeyType="send"
             onSubmitEditing={handleSend}
           />
@@ -424,6 +445,13 @@ export default function AiDialogScreen({ navigation, route }: any) {
             <Text style={{ color: inputText.trim() && !loading ? '#FFF' : colors.textTertiary, fontSize: 20, fontWeight: '700' }}>➤</Text>
           </TouchableOpacity>
         </View>
+
+        {/* Dinleniyor göstergesi */}
+        {isListening && (
+          <View style={{ backgroundColor: '#EF4444' + '15', paddingVertical: 6, alignItems: 'center' }}>
+            <Text style={[typography.caption, { color: '#EF4444', fontWeight: '700' }]}>🎤 Dinleniyor... Konuşabilirsiniz</Text>
+          </View>
+        )}
       </KeyboardAvoidingView>
     </View>
   );
@@ -433,4 +461,5 @@ const styles = StyleSheet.create({
   inputBar: { flexDirection: 'row', alignItems: 'flex-end', paddingHorizontal: spacing.md, paddingVertical: spacing.sm, borderTopWidth: 1, gap: spacing.sm },
   input: { flex: 1, paddingHorizontal: spacing.md, paddingVertical: 10, borderRadius: radius.md, borderWidth: 1, fontSize: 14, maxHeight: 100, minHeight: 44 },
   sendBtn: { width: 48, height: 48, borderRadius: radius.md, alignItems: 'center', justifyContent: 'center', marginBottom: 2 },
+  micBtn: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, marginRight: 4, marginBottom: 2 },
 });
