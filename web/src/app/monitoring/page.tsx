@@ -36,7 +36,7 @@ export default function MonitoringPage() {
   const services = [
     { name: 'API Sunucusu', icon: Server, status: health?.status === 'HEALTHY', key: 'api' },
     { name: 'Veritabanı', icon: Database, status: health?.services?.database?.status === 'healthy', key: 'database' },
-    { name: 'Redis', icon: Cpu, status: health?.services?.redis?.status !== 'down', key: 'redis' },
+    { name: 'Redis', icon: Cpu, status: health?.services?.redis?.status === 'healthy', key: 'redis' },
     { name: 'WebSocket', icon: Wifi, status: health?.services?.websocket?.status === 'healthy', key: 'websocket' },
   ];
 

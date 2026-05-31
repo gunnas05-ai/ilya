@@ -4,6 +4,7 @@ import type { WSEventMap } from '../types/websocket';
 
 let socket: Socket | null = null;
 let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+let pongTimeout: ReturnType<typeof setTimeout> | null = null;
 
 export function connectSocket(token: string, userId?: string): Socket {
   if (socket?.connected) return socket;
@@ -24,20 +25,28 @@ export function connectSocket(token: string, userId?: string): Socket {
     if (userId) {
       subscribeToUser(userId);
     }
-    // Heartbeat: 25s ping to detect silent disconnections
     if (heartbeatTimer) clearInterval(heartbeatTimer);
     heartbeatTimer = setInterval(() => {
       if (socket?.connected) {
         socket.emit('ping');
+        // 5s timeout: pong gelmezse baglantiyi koparip yeniden baglan
+        if (pongTimeout) clearTimeout(pongTimeout);
+        pongTimeout = setTimeout(() => {
+          console.warn('WS heartbeat timeout — reconnecting...');
+          socket?.disconnect();
+          socket?.connect();
+        }, 5000);
       }
     }, 25000);
   });
 
+  socket.on('pong', () => {
+    if (pongTimeout) { clearTimeout(pongTimeout); pongTimeout = null; }
+  });
+
   socket.on('disconnect', () => {
-    if (heartbeatTimer) {
-      clearInterval(heartbeatTimer);
-      heartbeatTimer = null;
-    }
+    if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+    if (pongTimeout) { clearTimeout(pongTimeout); pongTimeout = null; }
   });
 
   socket.on('connect_error', (err) => console.warn('WS connect error:', err.message));
@@ -46,14 +55,9 @@ export function connectSocket(token: string, userId?: string): Socket {
 }
 
 export function disconnectSocket() {
-  if (heartbeatTimer) {
-    clearInterval(heartbeatTimer);
-    heartbeatTimer = null;
-  }
-  if (socket) {
-    socket.disconnect();
-    socket = null;
-  }
+  if (heartbeatTimer) { clearInterval(heartbeatTimer); heartbeatTimer = null; }
+  if (pongTimeout) { clearTimeout(pongTimeout); pongTimeout = null; }
+  if (socket) { socket.disconnect(); socket = null; }
 }
 
 export function getSocket(): Socket | null {

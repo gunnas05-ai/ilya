@@ -5,6 +5,7 @@ import { Repository, LessThan, MoreThan, FindOptionsWhere } from 'typeorm';
 import { v4 as uuidv4 } from 'uuid';
 import * as QRCode from 'qrcode';
 import { Invoice, InvoiceType, InvoiceStatus } from './invoice.entity';
+import { ICreditService } from '../common/service-interfaces';
 import { InvoiceItem } from './invoice-item.entity';
 import { InvoiceLog } from './invoice-log.entity';
 import { Customer } from './customer.entity';
@@ -86,7 +87,7 @@ export class GibService {
     private loadRepo: Repository<Load>,
     private gibApiService: GibApiService,
     private emailService: EmailService,
-    @Optional() private creditService?: any,
+    @Optional() private creditService?: ICreditService,
   ) {}
 
   // ── Customer ──────────────────────────────────────────

@@ -1,14 +1,16 @@
-import { Controller, Get, Post, Body, Query, Req } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Req, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { AiMatchingService } from './ai-matching.service';
 import { FeedbackAction } from './matching-feedback.entity';
 
 @Controller({ path: 'matching', version: '1' })
+@UseGuards(AuthGuard('jwt'))
 export class AiMatchingController {
   constructor(private readonly service: AiMatchingService) {}
 
   /** Geri bildirim kaydet */
   @Post('feedback')
-  async recordFeedback(@Body() body: any, @Req() req: any) {
+  async recordFeedback(@Body() body: { loadId: string; action: string; comment?: string; rating?: number }, @Req() req: any) {
     return this.service.recordFeedback({ ...body, carrierId: body.carrierId || req.user?.id });
   }
 

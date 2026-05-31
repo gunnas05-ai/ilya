@@ -14,7 +14,7 @@ async function seed() {
     host: process.env.DB_HOST || '127.0.0.1',
     port: parseInt(process.env.DB_PORT || '5433'),
     username: process.env.DB_USER || 'kaptan',
-    password: process.env.DB_PASS || 'kaptan_dev_2026',
+    password: process.env.DB_PASS || 'change-me',
     database: process.env.DB_NAME || 'kaptan',
     entities: [SubscriptionPlan, CreditPackage, CommissionConfig],
     synchronize: true,

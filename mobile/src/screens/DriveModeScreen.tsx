@@ -10,6 +10,7 @@ import { spacing, radius, typography } from '../theme';
 import { hapticMedium, hapticSuccess, hapticError } from '../utils/haptic';
 import { queueRequest } from '../services/offlineQueue';
 import { loadService } from '../services/loadService';
+import { APP_CONFIG } from '../constants/config';
 import { useDrivingTimer } from '../hooks/useDrivingTimer';
 
 interface ActiveLoad {
@@ -146,7 +147,7 @@ export default function DriveModeScreen() {
     hapticMedium();
     setStatusMessage('Operasyon: 0850 KAPTAN');
     speak('Operasyon merkezini arıyorum.');
-    Linking.openURL('tel:08505227826').catch(() => {});
+    Linking.openURL(`tel:${APP_CONFIG.supportPhone}`).catch((e) => console.warn('Phone call failed:', e?.message));
   };
 
   const handleVoiceCommand = async () => {

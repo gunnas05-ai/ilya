@@ -1,13 +1,15 @@
-import { Controller, Get, Post, Param, Body, Query } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { DocumentService } from './document.service';
 import { DocumentType } from './shipment-document.entity';
 
 @Controller({ path: 'documents', version: '1' })
+@UseGuards(AuthGuard('jwt'))
 export class DocumentController {
   constructor(private readonly service: DocumentService) {}
 
   @Post('upload')
-  async upload(@Body() body: any) {
+  async upload(@Body() body: { shipmentId?: string; documentType?: string; fileUrl: string; fileName?: string }) {
     return { data: await this.service.upload(body) };
   }
 

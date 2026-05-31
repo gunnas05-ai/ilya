@@ -72,8 +72,6 @@ export function useRealtimeEvents() {
       }),
     );
 
-    unsubs.current.push(subscribeToEvent('CHAT_NOTIFICATION', () => {}));
-
     unsubs.current.push(
       subscribeToEvent('new_message', (payload: any) => {
         receiveMessage(payload);

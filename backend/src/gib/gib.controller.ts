@@ -156,7 +156,7 @@ export class GibController {
 
   @Post(':id/issue-cancel')
   @Roles('admin', 'muhasebe')
-  async issueCancelInvoice(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async issueCancelInvoice(@Param('id') id: string, @Body() body: { reason: string }, @Req() req: any) {
     return this.gibService.issueCancelInvoice(id, req.user.id, body.reason);
   }
 

@@ -105,7 +105,7 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
   const otpRef = useRef<TextInput>(null);
 
   // Step 1: Role selection
-  const { control: c1, watch: w1, formState: { errors: e1 } } = useForm({ resolver: zodResolver(step1Schema), defaultValues: { selectedRole: undefined as UIRole | undefined } });
+  const { control: c1, watch: w1, setValue: setRole, formState: { errors: e1 } } = useForm({ resolver: zodResolver(step1Schema), defaultValues: { selectedRole: undefined as UIRole | undefined } });
   const selectedRole = w1('selectedRole');
 
   // Step 2: Common info
@@ -234,9 +234,8 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
           {e1.selectedRole && <Text style={styles.fieldErrorCenter}>{e1.selectedRole.message}</Text>}
           {ROLE_CARDS.map((card) => {
             const isActive = selectedRole === card.id;
-            const ctrl = c1;
             return (
-              <TouchableOpacity key={card.id} style={[styles.roleCard, { backgroundColor: colors.card, borderColor: isActive ? colors.primary : colors.border }]} onPress={() => ctrl._form.setValue('selectedRole', card.id, { shouldValidate: true })} activeOpacity={0.85}>
+              <TouchableOpacity key={card.id} style={[styles.roleCard, { backgroundColor: colors.card, borderColor: isActive ? colors.primary : colors.border }]} onPress={() => setRole('selectedRole', card.id, { shouldValidate: true })} activeOpacity={0.85}>
                 <Text style={styles.roleIcon}>{card.icon}</Text>
                 <View style={{ flex: 1 }}>
                   <Text style={[typography.body, { color: colors.text, fontWeight: '700' }]}>{card.title}</Text>

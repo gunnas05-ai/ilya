@@ -2,12 +2,13 @@ import { Injectable, NestInterceptor, ExecutionContext, CallHandler, Optional } 
 import { Observable } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { StructuredLogger } from './structured-logger.service';
+import { IMetricsService } from './service-interfaces';
 
 @Injectable()
 export class ApiLatencyInterceptor implements NestInterceptor {
   constructor(
     private logger: StructuredLogger,
-    @Optional() private metricsService?: any, // Generic metrics interface (not escrow-specific)
+    @Optional() private metricsService?: IMetricsService, // Generic metrics interface (not escrow-specific)
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler): Observable<any> {

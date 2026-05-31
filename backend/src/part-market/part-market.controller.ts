@@ -44,10 +44,10 @@ export class PartMarketController {
   async myFavs(@Req() req: any) { return this.service.getMyFavorites(req.user.id); }
 
   @Post('reviews') @ApiOperation({ summary: 'Değerlendirme yap' })
-  async createReview(@Req() req: any, @Body() b: any) { return this.service.createReview({ ...b, reviewerId: req.user.id }); }
+  async createReview(@Req() req: any, @Body() b: { listingId: string; rating: number; comment?: string }) { return this.service.createReview({ ...b, reviewerId: req.user.id }); }
 
   @Post('disputes') @ApiOperation({ summary: 'Sorun bildir' })
-  async createDispute(@Req() req: any, @Body() b: any) { return this.service.createDispute({ ...b, openedBy: req.user.id }); }
+  async createDispute(@Req() req: any, @Body() b: { transactionId: string; reason: string; description: string }) { return this.service.createDispute({ ...b, openedBy: req.user.id }); }
 
   @Get('admin/pending') @ApiOperation({ summary: 'Onay bekleyen ilanlar (Admin)' })
   async pendingListings() { return this.service.getPendingListings(); }
@@ -62,13 +62,13 @@ export class PartMarketController {
   async rejectOffer(@Param('id') id: string) { return this.service.rejectOffer(id); }
 
   @Put('offers/:id/counter') @ApiOperation({ summary: 'Karşı teklif yap' })
-  async counterOffer(@Param('id') id: string, @Body() b: any) { return this.service.counterOffer(id, b.amount, b.message); }
+  async counterOffer(@Param('id') id: string, @Body() b: { amount: number; message?: string }) { return this.service.counterOffer(id, b.amount, b.message); }
 
   @Get('offers/my') @ApiOperation({ summary: 'Verdiğim teklifler' })
   async myOffers(@Req() req: any) { return this.service.getMyOffers(req.user.id); }
 
   @Post('transactions') @ApiOperation({ summary: 'Satın al' })
-  async createTransaction(@Req() req: any, @Body() b: any) { return this.service.createTransaction(b.listingId, req.user.id); }
+  async createTransaction(@Req() req: any, @Body() b: { listingId: string }) { return this.service.createTransaction(b.listingId, req.user.id); }
 
   @Post('transactions/:id/confirm') @ApiOperation({ summary: 'Teslim aldım' })
   async confirmDelivery(@Param('id') id: string) { return this.service.confirmDelivery(id); }
@@ -77,7 +77,7 @@ export class PartMarketController {
   async myListings(@Req() req: any) { return this.service.getMyListings(req.user.id); }
 
   @Post('listings/:id/boost') @ApiOperation({ summary: 'İlanı öne çıkar' })
-  async boost(@Param('id') id: string, @Req() req: any, @Body() b: any) { return this.service.boostListing(id, req.user.id, b.plan); }
+  async boost(@Param('id') id: string, @Req() req: any, @Body() b: { plan: string }) { return this.service.boostListing(id, req.user.id, b.plan); }
 
   @Get('boosts/my') @ApiOperation({ summary: 'Aktif öne çıkarmalarım' })
   async myBoosts(@Req() req: any) { return this.service.getMyBoosts(req.user.id); }

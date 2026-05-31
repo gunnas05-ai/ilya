@@ -238,7 +238,7 @@ export class FuelStationsController {
 
   @Post('filters')
   @UseGuards(AuthGuard('jwt'))
-  async createFilter(@Body() body: any, @Req() req: any) {
+  async createFilter(@Body() body: { name: string; city?: string; brand?: string; fuelType?: string; maxPrice?: number }, @Req() req: any) {
     return this.service.createFilter(req.user.id, body);
   }
 
@@ -250,7 +250,7 @@ export class FuelStationsController {
 
   @Put('filters/:id')
   @UseGuards(AuthGuard('jwt'))
-  async updateFilter(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async updateFilter(@Param('id') id: string, @Body() body: { name?: string; city?: string; brand?: string; fuelType?: string; maxPrice?: number }, @Req() req: any) {
     return this.service.updateFilter(id, req.user.id, body);
   }
 
@@ -274,7 +274,7 @@ export class FuelStationsController {
   @UseGuards(AuthGuard('jwt'))
   async update(
     @Param('id') id: string,
-    @Body() body: any,
+    @Body() body: { name?: string; city?: string; district?: string; address?: string; latitude?: number; longitude?: number; is247?: boolean; hasCharging?: boolean },
     @Req() req: any,
     @Headers('x-device-fingerprint') deviceFingerprint?: string,
   ) {
@@ -423,7 +423,7 @@ export class FuelStationsController {
 
   @Post(':id/favorite')
   @UseGuards(AuthGuard('jwt'))
-  async addFavorite(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async addFavorite(@Param('id') id: string, @Body() body: { label?: string }, @Req() req: any) {
     return this.service.addFavorite(req.user.id, id, body?.note);
   }
 
@@ -455,7 +455,7 @@ export class FuelStationsController {
 
   @Post('alerts')
   @UseGuards(AuthGuard('jwt'))
-  async createAlert(@Body() body: any, @Req() req: any) {
+  async createAlert(@Body() body: { stationId: string; fuelType: string; maxPrice: number; city?: string }, @Req() req: any) {
     return this.service.createAlert(body, req.user.id);
   }
 
@@ -485,7 +485,7 @@ export class FuelStationsController {
 
   @Post('fuel-cards')
   @UseGuards(AuthGuard('jwt'))
-  async registerFuelCard(@Body() body: any, @Req() req: any) {
+  async registerFuelCard(@Body() body: { cardNumber: string; provider: string; expiryDate?: string }, @Req() req: any) {
     return this.fuelCardService.registerCard({ ...body, userId: req.user.id });
   }
 

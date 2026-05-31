@@ -30,7 +30,7 @@ export class CustomsController {
 
   @Post('declaration/:id/document')
   @ApiOperation({ summary: 'Beyannameye belge ekle' })
-  async addDocument(@Param('id') id: string, @Body() body: any) {
+  async addDocument(@Param('id') id: string, @Body() body: { type: string; url: string; name?: string }) {
     return this.service.addDocument(id, body);
   }
 

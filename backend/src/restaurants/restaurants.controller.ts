@@ -73,7 +73,7 @@ export class RestaurantsController {
 
   @Post(':id/menus')
   @UseGuards(AuthGuard('jwt'))
-  async createMenu(@Param('id') id: string, @Body() body: any) {
+  async createMenu(@Param('id') id: string, @Body() body: { name: string; description?: string }) {
     return this.service.createMenu(id, body);
   }
 
@@ -84,13 +84,13 @@ export class RestaurantsController {
 
   @Post('menus/:menuId/items')
   @UseGuards(AuthGuard('jwt'))
-  async addMenuItem(@Param('menuId') menuId: string, @Body() body: any) {
+  async addMenuItem(@Param('menuId') menuId: string, @Body() body: { name: string; price: number; description?: string; category?: string }) {
     return this.service.addMenuItem(menuId, body);
   }
 
   @Put('menu-items/:id')
   @UseGuards(AuthGuard('jwt'))
-  async updateMenuItem(@Param('id') id: string, @Body() body: any) {
+  async updateMenuItem(@Param('id') id: string, @Body() body: { name?: string; price?: number; description?: string; isAvailable?: boolean }) {
     return this.service.updateMenuItem(id, body);
   }
 
@@ -113,7 +113,7 @@ export class RestaurantsController {
 
   @Post('reviews/:reviewId/reply')
   @UseGuards(AuthGuard('jwt'))
-  async addReviewReply(@Param('reviewId') reviewId: string, @Body() body: any, @Req() req: any) {
+  async addReviewReply(@Param('reviewId') reviewId: string, @Body() body: { content: string }, @Req() req: any) {
     return this.service.addReviewReply(reviewId, req.user.id, body.message);
   }
 
@@ -136,7 +136,7 @@ export class RestaurantsController {
 
   @Post(':id/reservations')
   @UseGuards(AuthGuard('jwt'))
-  async createReservation(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async createReservation(@Param('id') id: string, @Body() body: { date: string; time: string; partySize: number; specialRequests?: string }, @Req() req: any) {
     return this.service.createReservation(id, req.user.id, body);
   }
 
@@ -186,7 +186,8 @@ export class RestaurantsController {
   // ── Table Management ───────────────────────────────
 
   @Post(':id/tables')
-  async addTable(@Param('id') id: string, @Body() body: any) {
+  @UseGuards(AuthGuard('jwt'))
+  async addTable(@Param('id') id: string, @Body() body: { number: string; capacity: number; location?: string }) {
     return this.service.addTable(id, body);
   }
 
@@ -196,6 +197,7 @@ export class RestaurantsController {
   }
 
   @Delete(':id/tables/:tableId')
+  @UseGuards(AuthGuard('jwt'))
   async removeTable(@Param('tableId') tableId: string) {
     return this.service.removeTable(tableId);
   }
@@ -203,7 +205,8 @@ export class RestaurantsController {
   // ── Capacity Config ────────────────────────────────
 
   @Post(':id/capacity-config')
-  async setCapacityConfig(@Param('id') restaurantId: string, @Body() body: any) {
+  @UseGuards(AuthGuard('jwt'))
+  async setCapacityConfig(@Param('id') restaurantId: string, @Body() body: { maxCapacity?: number; reservationInterval?: number }) {
     return this.service.setCapacityConfig(restaurantId, body);
   }
 

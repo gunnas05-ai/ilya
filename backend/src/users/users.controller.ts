@@ -35,7 +35,7 @@ class UpdateProfileDto {
   @IsOptional() @IsString() adrClass?: string;
   @IsOptional() @IsString() trailerType?: string;
   @IsOptional() @IsBoolean() hasRefrigeration?: boolean;
-  @IsOptional() @IsBoolean() escrowAccountVerified?: boolean;
+  // escrowAccountVerified sadece admin tarafindan guncellenebilir
 }
 
 @Controller('users')

@@ -97,16 +97,23 @@ async function seed() {
   await escrowRepo.query('DELETE FROM wallet_transactions');
   await loadRepo.query('DELETE FROM loads');
   await expenseRepo.query('DELETE FROM expenses');
-  // Truncate all user-data tables using a dynamic CASCADE approach
-  await userRepo.query(`
-    DO $$ DECLARE
-      r RECORD;
-    BEGIN
-      FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT IN ('migrations', 'typeorm_metadata')) LOOP
-        EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE';
-      END LOOP;
-    END $$;
-  `);
+  // Truncate all user-data tables
+  const dbType = userRepo.manager.connection.options.type;
+  if (dbType === 'postgres') {
+    await userRepo.query(`
+      DO $$ DECLARE r RECORD; BEGIN
+        FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'public' AND tablename NOT IN ('migrations','typeorm_metadata','kaptan_migrations')) LOOP
+          EXECUTE 'TRUNCATE TABLE ' || quote_ident(r.tablename) || ' CASCADE';
+        END LOOP;
+      END $$;
+    `);
+  } else {
+    // SQLite fallback: delete from known tables
+    const tables = ['escrow_transactions','disputes','wallet_transactions','loads','bids','invoices','invoice_items','expenses','incomes','tracking_record','notifications','chat_messages','chat_rooms','qr_codes','withdrawal_requests','user_subscriptions'];
+    for (const t of tables) {
+      try { await userRepo.query('DELETE FROM ' + t); } catch {}
+    }
+  }
 
   const passwordHash = await bcrypt.hash('123456', 12);
   const superAdminPasswordHash = await bcrypt.hash('Alp5326741416', 12);

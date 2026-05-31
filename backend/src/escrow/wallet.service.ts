@@ -6,6 +6,7 @@ import { EventEmitter2 } from '@nestjs/event-emitter';
 import { Wallet, WalletTransaction, TransactionType } from './wallet.entity';
 import { AuditLogService, AuditAction } from './audit-log.service';
 import { OutboxService } from './outbox.service';
+import { ICommissionService } from '../common/service-interfaces';
 
 let _txSigningKey: string | null = null;
 
@@ -32,7 +33,7 @@ export class WalletService {
     private eventEmitter: EventEmitter2,
     private auditLogService: AuditLogService,
     private outboxService: OutboxService,
-    @Optional() private commissionService?: any,
+    @Optional() private commissionService?: ICommissionService,
   ) {}
 
   async getOrCreateWallet(userId: string): Promise<Wallet> {

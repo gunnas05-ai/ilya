@@ -15,8 +15,8 @@ const CATEGORIES = [
 async function seed() {
   const ds = new DataSource({
     type: 'postgres', host: process.env.DB_HOST || '127.0.0.1', port: parseInt(process.env.DB_PORT || '5433'),
-    username: process.env.DB_USER || 'kaptan', password: process.env.DB_PASS || 'kaptan_dev_2026',
-    database: process.env.DB_NAME || 'kaptan', entities: [PartCategory, PartCommissionConfig], synchronize: true,
+    username: process.env.DB_USER || 'kaptan', password: process.env.DB_PASS || 'change-me',
+    database: process.env.DB_NAME || 'kaptan', entities: [PartCategory, PartCommissionConfig], synchronize: false,
   });
   await ds.initialize();
   console.log('📦 Part Market seed başlıyor...\n');

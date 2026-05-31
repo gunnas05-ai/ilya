@@ -32,7 +32,7 @@ export class IntegrationsController {
   }
 
   @Put('webhooks/:id')
-  async updateWebhook(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async updateWebhook(@Param('id') id: string, @Body() body: { url?: string; events?: string[]; isActive?: boolean; secret?: string }, @Req() req: any) {
     return this.webhookService.update(id, req.user.id, body);
   }
 

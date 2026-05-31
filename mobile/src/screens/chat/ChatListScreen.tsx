@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { View, Text, TouchableOpacity, FlatList, StyleSheet, Platform } from 'react-native';
+import { View, Text, TouchableOpacity, FlatList, StyleSheet, Platform, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../hooks/useTheme';
 import { useChatStore } from '../../store/chatStore';
@@ -21,7 +21,7 @@ const BOTTOM_TAB_HEIGHT = 48;
 export default function ChatListScreen() {
   const { colors, isDark } = useTheme();
   const navigation = useNavigation<any>();
-  const { chatRooms } = useChatStore();
+  const { chatRooms, isLoading } = useChatStore();
   const [activeFilter, setActiveFilter] = useState<ChatFilter>('all');
 
   const roomsList = useMemo(() => {
@@ -43,9 +43,12 @@ export default function ChatListScreen() {
     [chatRooms],
   );
 
+  if (chatRooms && Object.keys(chatRooms).length === 0 && isLoading) {
+    return <View style={{ flex: 1, backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center' }}><ActivityIndicator size="large" color={colors.primary} /></View>;
+  }
+
   return (
     <View style={{ flex: 1, backgroundColor: colors.background }}>
-      {/* ▸ Yeni Sohbet butonu — header'ın altında ince bir aksiyon çubuğu */}
       <View style={[styles.actionStrip, {
         backgroundColor: colors.card,
         borderBottomColor: colors.border,

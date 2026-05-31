@@ -8,6 +8,16 @@ const PUBLIC_PATHS = ['/', '/login'];
 const ADMIN_PATHS = [
   '/admin', '/admins', '/audit', '/settings', '/users',
   '/commission', '/monitoring', '/revenue',
+  '/loads', '/bids', '/tracking', '/analytics', '/finance',
+  '/escrow', '/wallet', '/payment', '/chat', '/whatsapp',
+  '/marketplace', '/integrations', '/documents', '/pod',
+  '/fuel-stations', '/restaurants', '/warehouse',
+  '/carrier-api', '/shipper-api', '/gib', '/billing',
+  '/notifications', '/announcements', '/qr',
+  '/part-market', '/vehicles', '/return-loads',
+  '/carrier-profiles', '/carrier-quality', '/rates',
+  '/reloads', '/odeme', '/uetds', '/erp', '/customs',
+  '/white-label', '/matching',
 ];
 
 export function middleware(request: NextRequest) {

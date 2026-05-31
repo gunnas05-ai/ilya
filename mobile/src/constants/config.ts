@@ -10,6 +10,7 @@ interface AppConfig {
   apiBaseUrl: string;
   wsUrl: string;
   sentryDsn: string | null;
+  supportPhone: string;
   logLevel: 'debug' | 'info' | 'warn' | 'error';
   featureFlags: {
     enableAIMatching: boolean;
@@ -42,6 +43,7 @@ function buildConfig(): AppConfig {
     apiBaseUrl: api,
     wsUrl: env === 'development' ? 'http://192.168.1.34:3000' : 'https://api.kaptanlojistik.com',
     sentryDsn: null,
+    supportPhone: '08505227826',
     logLevel: env === 'development' ? 'debug' : 'error',
     featureFlags: {
       enableAIMatching: true,

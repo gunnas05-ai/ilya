@@ -15,8 +15,8 @@ export class IyzicoProvider implements IPaymentProvider {
   private readonly baseUrl: string;
 
   constructor() {
-    this.apiKey = process.env.IYZICO_API_KEY || 'sandbox-api-key';
-    this.secretKey = process.env.IYZICO_SECRET_KEY || 'sandbox-secret-key';
+    this.apiKey = process.env.IYZICO_API_KEY || (process.env.NODE_ENV === 'production' ? (() => { throw new Error('IYZICO_API_KEY is required in production'); })() : 'sandbox-api-key');
+    this.secretKey = process.env.IYZICO_SECRET_KEY || (process.env.NODE_ENV === 'production' ? (() => { throw new Error('IYZICO_SECRET_KEY is required in production'); })() : 'sandbox-secret-key');
     this.baseUrl = process.env.IYZICO_BASE_URL || 'https://sandbox-api.iyzipay.com';
   }
 

@@ -13,7 +13,7 @@ export class CommunityController {
 
   @Post('feed')
   @UseGuards(AuthGuard('jwt'))
-  async createPost(@Body() body: any, @Req() req: any) {
+  async createPost(@Body() body: { content: string; imageUrl?: string; latitude?: number; longitude?: number; locationName?: string }, @Req() req: any) {
     return this.community.createPost({
       authorId: req.user.id,
       authorName: req.user.fullName || 'Sürücü',
@@ -38,7 +38,7 @@ export class CommunityController {
 
   @Post('feed/:id/comments')
   @UseGuards(AuthGuard('jwt'))
-  async addComment(@Param('id') id: string, @Body() body: any, @Req() req: any) {
+  async addComment(@Param('id') id: string, @Body() body: { content: string }, @Req() req: any) {
     return this.community.addComment({
       postId: id,
       authorId: req.user.id,
@@ -54,7 +54,7 @@ export class CommunityController {
 
   @Post('road-reports')
   @UseGuards(AuthGuard('jwt'))
-  async reportRoad(@Body() body: any) {
+  async reportRoad(@Body() body: { latitude: number; longitude: number; type: string; description?: string }) {
     return this.community.reportRoadCondition(body);
   }
 

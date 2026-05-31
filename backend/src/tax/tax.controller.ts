@@ -75,7 +75,7 @@ export class TaxController {
   }
 
   @Post('tevkifat/calculate-invoice')
-  async calculateInvoiceWithholding(@Body() invoice: any) {
+  async calculateInvoiceWithholding(@Body() invoice: { totalAmount: number; vatAmount: number; serviceType: string; buyerType: string; sellerType: string }) {
     return this.tevkifatEngine.calculateWithholdingFromInvoice(invoice);
   }
 
@@ -259,19 +259,19 @@ export class TaxController {
   async getChartOfAccounts() { return { accounts: this.accountingService.getChartOfAccounts() }; }
 
   @Post('journal/sales-invoice')
-  async generateSalesJournal(@Body() body: any) {
+  async generateSalesJournal(@Body() body: Record<string, any>) {
     const journals = this.accountingService.generateSalesInvoiceJournal(body);
     return { journals, balance: this.accountingService.verifyTrialBalance(journals) };
   }
 
   @Post('journal/purchase-invoice')
-  async generatePurchaseJournal(@Body() body: any) {
+  async generatePurchaseJournal(@Body() body: Record<string, any>) {
     const journals = this.accountingService.generatePurchaseInvoiceJournal(body);
     return { journals, balance: this.accountingService.verifyTrialBalance(journals) };
   }
 
   @Post('journal/fuel-expense')
-  async generateFuelJournal(@Body() body: any) {
+  async generateFuelJournal(@Body() body: Record<string, any>) {
     const journals = this.accountingService.generateFuelExpenseJournal(body);
     return { journals, balance: this.accountingService.verifyTrialBalance(journals) };
   }

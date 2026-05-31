@@ -92,7 +92,7 @@ export class EscrowController {
   @Post(':id/release')
   @UseGuards(RolesGuard)
   @Roles('admin', 'super_admin', 'dispute_moderator', 'yuk_veren', 'platform_operatoru')
-  async release(@Param('id') id: string, @Body() body: any) {
+  async release(@Param('id') id: string, @Body() body: { verificationData?: any }) {
     return this.escrowService.releasePayment(id, body.verificationData);
   }
 

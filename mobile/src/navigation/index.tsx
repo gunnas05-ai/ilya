@@ -154,10 +154,10 @@ const SCREEN_CONFIGS: Omit<ScreenConfig, 'options'>[] = [
   { name: 'PartReviews', component: PartReviewsScreen, i18nKey: 'nav.partReviews' },
 ];
 
-// Her screen'i ErrorBoundary + Suspense ile sar (bir ekranin cokmesi tum uygulamayi cokertmez)
-function withScreenProtection(Component: React.ComponentType<any>): React.ComponentType<any> {
+// Her screen'i ErrorBoundary + Suspense ile sar — precompute ederek render'da yeni kimlik olusmasini engelle
+function wrapScreen(Component: React.ComponentType<any>): React.ComponentType<any> {
   const isLazy = (Component as any).$$typeof === Symbol.for('react.lazy');
-  return (props: any) => (
+  const Wrapped = (props: any) => (
     <ErrorBoundary>
       {isLazy ? (
         <Suspense fallback={<LazyFallback />}>
@@ -168,7 +168,15 @@ function withScreenProtection(Component: React.ComponentType<any>): React.Compon
       )}
     </ErrorBoundary>
   );
+  Wrapped.displayName = `Protected(${(Component as any).displayName || Component.name || 'Screen'})`;
+  return Wrapped;
 }
+
+// Precompute wrapped components (static — tek sefer hesaplanir)
+const WRAPPED_SCREENS = SCREEN_CONFIGS.map(s => ({
+  ...s,
+  component: wrapScreen(s.component),
+}));
 
 function buildScreenOptions(config: Omit<ScreenConfig, 'options'>, t: typeof i18n.t): Record<string, any> {
   const base: Record<string, any> = { animation: 'slide_from_right' };
@@ -292,11 +300,11 @@ export default function Navigation() {
           ) : (
             <>
               <Stack.Screen name="MainTabs" component={MainTabs} options={{ headerShown: false }} />
-              {SCREEN_CONFIGS.map((screen) => (
+              {WRAPPED_SCREENS.map((screen) => (
                 <Stack.Screen
                   key={screen.name}
                   name={screen.name}
-                  component={withScreenProtection(screen.component)}
+                  component={screen.component}
                   options={buildScreenOptions(screen, t)}
                 />
               ))}

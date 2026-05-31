@@ -1,6 +1,6 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, Index } from 'typeorm';
 
-@Entity('vehicle_positions', { synchronize: true })
+@Entity('vehicle_positions')
 @Index(['shipmentId', 'timestamp'])
 export class VehiclePosition {
   @PrimaryGeneratedColumn('uuid')

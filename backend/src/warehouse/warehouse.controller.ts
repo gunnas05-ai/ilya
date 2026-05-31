@@ -24,7 +24,7 @@ export class WarehouseController {
 
   @Patch('appointment/:id')
   @ApiOperation({ summary: 'Randevuyu guncelle / iptal et' })
-  async updateAppointment(@Param('id') id: string, @Body() body: any) {
+  async updateAppointment(@Param('id') id: string, @Body() body: { status?: string; dockId?: string; notes?: string }) {
     return this.service.updateAppointment(id, body);
   }
 }

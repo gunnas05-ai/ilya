@@ -1,7 +1,9 @@
-import { Controller, Get, Post, Param, Body, Req } from '@nestjs/common';
+import { Controller, Get, Post, Param, Body, Req, UseGuards } from '@nestjs/common';
+import { AuthGuard } from '@nestjs/passport';
 import { InstantBookingService } from './instant-booking.service';
 
 @Controller({ path: 'instant-book', version: '1' })
+@UseGuards(AuthGuard('jwt'))
 export class InstantBookingController {
   constructor(private readonly service: InstantBookingService) {}
 

@@ -32,15 +32,11 @@ export class PodController {
   @UseGuards(AuthGuard('jwt'))
   async uploadPhoto(
     @Param('loadId') loadId: string,
-    @Body() body: any,
+    @Body() body: { photoUrl: string; latitude?: number; longitude?: number },
     @Req() req: any,
   ) {
     return this.podService.savePhoto({
-      loadId,
-      driverId: req.user.id,
-      photoUrl: body.photoUrl,
-      latitude: body.latitude,
-      longitude: body.longitude,
+      loadId, driverId: req.user.id, photoUrl: body.photoUrl, latitude: body.latitude, longitude: body.longitude,
     });
   }
 
@@ -48,17 +44,13 @@ export class PodController {
   @UseGuards(AuthGuard('jwt'))
   async createDamageReport(
     @Param('loadId') loadId: string,
-    @Body() body: any,
+    @Body() body: { damageTypes?: string[]; driverNote?: string; photoUrls?: string[]; latitude?: number; longitude?: number },
     @Req() req: any,
   ) {
     return this.podService.saveDamageReport({
-      loadId,
-      driverId: req.user.id,
-      damageTypes: body.damageTypes || [],
-      driverNote: body.driverNote || '',
-      photoUrls: body.photoUrls || [],
-      latitude: body.latitude,
-      longitude: body.longitude,
+      loadId, driverId: req.user.id,
+      damageTypes: body.damageTypes || [], driverNote: body.driverNote || '', photoUrls: body.photoUrls || [],
+      latitude: body.latitude, longitude: body.longitude,
     });
   }
 }

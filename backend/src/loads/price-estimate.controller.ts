@@ -17,7 +17,7 @@ export class PriceEstimateController {
 
   @Post('price-estimate')
   @UseGuards(AuthGuard('jwt'))
-  async estimatePrice(@Body() body: any) {
+  async estimatePrice(@Body() body: { fromCity: string; toCity: string; loadType?: string; tonnage?: number; vehicleType?: string; distance?: number }) {
     return this.priceEstimateService.calculate(body);
   }
 

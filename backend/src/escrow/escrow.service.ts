@@ -13,6 +13,7 @@ import { NotificationsService } from '../notifications/notifications.service';
 import { EscrowStateException } from '../common/exceptions';
 import { QRCheckpointType } from '../qr/qr-code.entity';
 import { FraudDetectionService, RiskTier } from './fraud-detection.service';
+import { ICommissionService } from '../common/service-interfaces';
 import { AuditLogService, AuditAction } from './audit-log.service';
 import { EscrowMetricsService } from './escrow-metrics.service';
 import { OutboxService } from './outbox.service';
@@ -35,7 +36,7 @@ export class EscrowService {
     private auditLogService: AuditLogService,
     private metricsService: EscrowMetricsService,
     private outboxService: OutboxService,
-    @Optional() private commissionService?: any,
+    @Optional() private commissionService?: ICommissionService,
   ) {}
 
   async createEscrow(data: {

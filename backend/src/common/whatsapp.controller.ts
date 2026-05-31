@@ -19,7 +19,7 @@ export class WhatsAppController {
   }
 
   @Put('settings')
-  async updateSettings(@Body() body: any) {
+  async updateSettings(@Body() body: { apiKey?: string; phoneNumberId?: string; businessAccountId?: string; webhookVerifyToken?: string; isActive?: boolean }) {
     return { data: await this.service.updateSettings(body) };
   }
 

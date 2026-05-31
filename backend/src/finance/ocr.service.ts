@@ -65,7 +65,8 @@ export class OcrService {
 
   private async performOcrCall(doc: OcrDocument) {
     try {
-      const apiKey = process.env.OCR_SPACE_API_KEY || 'helloworld';
+      const apiKey = process.env.OCR_SPACE_API_KEY;
+      if (!apiKey) { this.logger.warn('OCR_SPACE_API_KEY not set — OCR disabled'); return null; }
       const formData = new URLSearchParams();
       formData.append('url', doc.fileUrl);
       formData.append('apikey', apiKey);
