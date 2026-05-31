@@ -7,13 +7,19 @@ import { Wallet, WalletTransaction, TransactionType } from './wallet.entity';
 import { AuditLogService, AuditAction } from './audit-log.service';
 import { OutboxService } from './outbox.service';
 
-const TX_SIGNING_KEY = crypto.createHash('sha256').update(
-  process.env.TX_SIGNING_SECRET || (() => { throw new Error('TX_SIGNING_SECRET env var is required for transaction security'); })()
-).digest('hex');
+let _txSigningKey: string | null = null;
+
+function getTxSigningKey(): string {
+  if (_txSigningKey) return _txSigningKey;
+  const secret = process.env.TX_SIGNING_SECRET;
+  if (!secret) throw new Error('TX_SIGNING_SECRET env var is required for transaction security');
+  _txSigningKey = crypto.createHash('sha256').update(secret).digest('hex');
+  return _txSigningKey;
+}
 
 function signTransaction(walletId: string, type: TransactionType, amount: number, balanceBefore: number, balanceAfter: number, referenceId: string): string {
   const payload = `${walletId}|${type}|${amount}|${balanceBefore}|${balanceAfter}|${referenceId}|${Date.now()}`;
-  return crypto.createHmac('sha256', TX_SIGNING_KEY).update(payload).digest('hex');
+  return crypto.createHmac('sha256', getTxSigningKey()).update(payload).digest('hex');
 }
 
 @Injectable()
