@@ -28,7 +28,7 @@ export default function AiDialogScreen({ navigation }: any) {
 
   const [messages, setMessages] = useState<Message[]>([{
     id: '0', role: 'assistant',
-    text: '🎤 Merhaba! Yükünüzü sesli komutla oluşturmak için konuşabilir veya yazabilirsiniz.\n\nÖrnek: "Samsun\'dan Mersin Mezitli ilçesine 27 ton buğday götüreceğim. Bugün saat 14:00\'te yükleyip 48 saat içinde teslim edeceğim. Teslim alacak kişi Kazım Kartal 050576645405"\n\n"Bulunduğum konum" derseniz GPS\'ten konumunuzu alırım.',
+    text: '🎤 Merhaba! Ben Kaptan AI Asistan. Şunları yapabilirim:\n\n📦 **Yük Ekle:** "İstanbul\'dan İzmir\'e 27 ton ham demir"\n🔍 **Yük Ara:** "En yakın yükleri sırala" veya "İstanbul\'daki 10 ton üstü yükleri göster"\n🚛 **Araç Ara:** "4 milyonluk araç arıyorum" veya "Ankara\'da kamyon ilanları"\n💰 **Gider Yaz:** "500 TL yemek gideri yaz"\n⛽ **Yakıt Kaydet:** "OPET\'ten 350 litre mazot aldım litre fiyatı 20 TL"\n🗺️ **Gezin:** "Profili aç", "Finans sayfasına git", "Cüzdanı göster"\n\n"Bulunduğum konum" derseniz GPS\'ten alırım.',
   }]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -93,7 +93,9 @@ export default function AiDialogScreen({ navigation }: any) {
 
       const res = await apiClient.post('/voice/ai-dialog', { message: enhancedMsg });
       const data = res.data?.data?.data || res.data?.data || res.data || {};
+      const intent = data.intent || 'CREATE_LOAD';
       const fields = data.extracted || {};
+      const params = data.params || {};
 
       // GPS şehir bilgisi varsa ekle
       if (hasGpsRef && gpsLocation?.city && !fields.originCity) {
@@ -101,6 +103,53 @@ export default function AiDialogScreen({ navigation }: any) {
         if (gpsLocation.district) fields.originDistrict = gpsLocation.district;
       }
 
+      // Intent'e gore aksiyon
+      if (intent === 'NAVIGATE' && params.screen) {
+        addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'Yönlendiriliyorsunuz...' });
+        hapticSuccess();
+        setTimeout(() => navigation.navigate(params.screen), 800);
+        setLoading(false);
+        return;
+      }
+
+      if (intent === 'CREATE_EXPENSE' || intent === 'LOG_FUEL') {
+        if (params.amount && params.category) {
+          addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'Gider kaydediliyor...' });
+          hapticSuccess();
+          // Gideri kaydet ve finans ekranina yonlendir
+          setTimeout(() => {
+            apiClient.post('/finance/expenses', params).then(() => {
+              navigation.navigate('Finance');
+            }).catch(() => {});
+          }, 600);
+        } else {
+          addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'Gider bilgisi anlasilamadi.' });
+        }
+        setLoading(false);
+        return;
+      }
+
+      if (intent === 'SEARCH_LOADS') {
+        addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'Yükler aranıyor...' });
+        hapticSuccess();
+        setTimeout(() => {
+          navigation.navigate('LoadAccept', params);
+        }, 600);
+        setLoading(false);
+        return;
+      }
+
+      if (intent === 'SEARCH_MARKETPLACE') {
+        addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'Araç ilanları aranıyor...' });
+        hapticSuccess();
+        setTimeout(() => {
+          navigation.navigate('ListingsBrowse', params);
+        }, 600);
+        setLoading(false);
+        return;
+      }
+
+      // Default: CREATE_LOAD
       if (Object.keys(fields).length >= 2) {
         // Şehir sıralamasını düzelt: "X'den Y'ye" → X=kalkış, Y=varış
         if (fields.originCity && fields.destCity) {

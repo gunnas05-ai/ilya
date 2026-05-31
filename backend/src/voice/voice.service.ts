@@ -91,16 +91,59 @@ export class VoiceService {
     ].filter(Boolean).join('. ');
   }
 
-  // Process an AI dialog message for load creation
-  parseAiDialogMessage(message: string): { success: boolean; extracted: Record<string, any>; response: string } {
+  // Process an AI dialog message — detects intent and delegates to specialized parser
+  parseAiDialogMessage(message: string): { success: boolean; intent: string; action?: string; params?: Record<string, any>; extracted: Record<string, any>; response: string } {
     const extracted: Record<string, any> = {};
-    // Encoding fix: HTTP'de İ→i(I+combining dot) olarak gelebilir
     const msg = (message || '')
       .normalize('NFD').replace(/[̀-ͯ]/g, '')
       .replace(/İ/gi, 'i').replace(/I/gi, 'i')
       .normalize('NFC');
+    const msgLower = this.turkishToAscii(msg);
 
-    // ===== TURKISH CITY LIST =====
+    // ── Intent Detection ──────────────────────────────
+    const intent = this.detectIntent(msg, msgLower);
+    extracted._intent = intent;
+
+    if (intent === 'CREATE_EXPENSE') return this.parseExpense(msg, msgLower, extracted);
+    if (intent === 'LOG_FUEL') return this.parseFuelLog(msg, msgLower, extracted);
+    if (intent === 'SEARCH_LOADS') return this.parseLoadSearch(msg, msgLower, extracted);
+    if (intent === 'SEARCH_MARKETPLACE') return this.parseMarketplaceSearch(msg, msgLower, extracted);
+    if (intent === 'NAVIGATE') return this.parseNavigation(msg, msgLower, extracted);
+    // Default: CREATE_LOAD
+    return this.parseLoadCreation(msg, msgLower, extracted);
+  }
+
+  private turkishToAscii(s: string): string {
+    return s.replace(/[İI]/gi, 'i').replace(/[ĞÜŞÖÇığüşöç]/g, c => ({ 'Ğ':'g','Ü':'u','Ş':'s','Ö':'o','Ç':'c','ı':'i','ğ':'g','ü':'u','ş':'s','ö':'o','ç':'c' }[c] || c)).toLowerCase();
+  }
+
+  private detectIntent(msg: string, msgLower: string): string {
+    // Expense/fuel patterns
+    if (/(?:gider|harcama|masraf)\s+(?:olarak\s+)?(?:yaz|kaydet|ekle)/i.test(msg)) return 'CREATE_EXPENSE';
+    if (/(?:mazot|motorin|yak[ıi]t|benzin|LPG)\s+(?:ald[ıi]m|al[ıi]nd[ıi]|doldurdum)/i.test(msg)) return 'LOG_FUEL';
+    if (/(?:gider|harcama)\s+(?:yaz|kaydet)/i.test(msg)) return 'CREATE_EXPENSE';
+
+    // Search patterns
+    if (/(?:en\s+yak[ıi]n|yak[ıi]n[ıi]mdaki|etraf[ıi]mdaki|çevredeki)\s+y[üu]k/i.test(msg)) return 'SEARCH_LOADS';
+    if (/(?:y[üu]k\s+ara|y[üu]k\s+bul|y[üu]kleri\s+(?:s[ıi]rala|g[oö]ster|listele))/i.test(msg)) return 'SEARCH_LOADS';
+    if (/(?:ara[çc]|kamyon|t[ıi]r|araç)\s+(?:ar[ıi]yorum|bak[ıi]yorum|bul)/i.test(msg)) return 'SEARCH_MARKETPLACE';
+    if (/(\d+)\s*(?:milyon|milyar|bin|TL|₺)\s*(?:luk|tl|alt[ıi]|üst[üu]).*(?:ara[çc]|kamyon|t[ıi]r)/i.test(msg)) return 'SEARCH_MARKETPLACE';
+    if (/(?:ilan|sat[ıi]l[ıi]k|ikinci\s*el).*(?:ara[çc]|kamyon|t[ıi]r)/i.test(msg)) return 'SEARCH_MARKETPLACE';
+
+    // Navigation patterns
+    if (/(?:git|a[çc]|g[oö]ster|g[oö]r[üu]nt[üu]le)\s+(?:ana\s*sayfa|profili|finans|c[üu]zdan|ayarlar|harita)/i.test(msg)) return 'NAVIGATE';
+
+    // Default: load creation (has ton/kg + city pattern or explicit "yük ekle")
+    if (/(?:y[üu]k\s*(?:ekle|olu[şs]tur|ver|a[çc])|y[üu]k[üu]m\s*var)/i.test(msg)) return 'CREATE_LOAD';
+    if (/(\d+)\s*(?:ton|kg|kilogram)/i.test(msg) && /(?:'|’)(?:dan|den|a|e|ya|ye)/i.test(msg)) return 'CREATE_LOAD';
+
+    return 'CREATE_LOAD'; // fallback
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: CREATE_LOAD
+  // ═══════════════════════════════════════════════════════════
+  private parseLoadCreation(msg: string, msgLower: string, extracted: Record<string, any>): any {
     const CITIES = [
       'Adana','Adıyaman','Afyonkarahisar','Ağrı','Amasya','Ankara','Antalya','Artvin','Aydın','Balıkesir',
       'Bilecik','Bingöl','Bitlis','Bolu','Burdur','Bursa','Çanakkale','Çankırı','Çorum','Denizli',
@@ -282,18 +325,191 @@ export class VoiceService {
 
     if (fieldCount >= 2) {
       return {
-        success: true,
+        success: true, intent: 'CREATE_LOAD', action: 'FILL_LOAD_FORM',
         extracted,
         response: `Anladım! ${fieldCount} alan otomatik dolduruldu. ${this.describeExtracted(extracted)} Devam etmek ister misiniz?`,
       };
     }
 
     return {
-      success: false,
+      success: false, intent: 'CREATE_LOAD',
       extracted,
       response: fieldCount > 0
         ? `Bazı bilgileri aldım ama yeterli değil. ${this.describeExtracted(extracted)} Lütfen kalkış noktası, varış noktası ve diğer detayları da belirtin.`
         : 'Üzgünüm, mesajınızdan yeterli bilgi çıkaramadım. Lütfen kalkış ve varış şehirlerini belirterek tekrar deneyin. Örnek: "İstanbul\'dan Ankara\'ya 5 ton un"',
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: CREATE_EXPENSE
+  // ═══════════════════════════════════════════════════════════
+  private parseExpense(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    // Amount
+    const amountMatch = msg.match(/(\d+\.?\d*)\s*(?:TL|₺|lira|tl)/i);
+    if (amountMatch) extracted.amount = parseFloat(amountMatch[1]);
+    // Category
+    if (/mazot|motorin|yak[ıi]t|benzin|LPG|akaryak[ıi]t/i.test(msg)) extracted.category = 'Akaryakıt';
+    else if (/yemek|lokanta|restoran|mutfak/i.test(msg)) extracted.category = 'Yemek';
+    else if (/tamir|bak[ıi]m|lastik|servis/i.test(msg)) extracted.category = 'Araç Bakım';
+    else if (/k[ıi]rtasiye|ofis|b[üu]ro/i.test(msg)) extracted.category = 'Ofis';
+    else if (/personel|maa[şs]|çal[ıi][şs]an/i.test(msg)) extracted.category = 'Personel';
+    else extracted.category = 'Genel Gider';
+    // Description
+    const descMatch = msg.match(/(?:gider|harcama|masraf)\s*(?:olarak\s+)?(?:yaz|kaydet|ekle)\s*:?\s*(.+)/i);
+    if (descMatch) extracted.description = descMatch[1].trim();
+    else extracted.description = `${extracted.category} gideri`;
+    // Date
+    if (/bugün|bugun/i.test(msg)) extracted.date = new Date().toISOString().slice(0, 10);
+
+    extracted.title = extracted.description || `${extracted.category} - ${extracted.amount || 0} ₺`;
+
+    const hasData = extracted.amount || extracted.category;
+    return {
+      success: hasData, intent: 'CREATE_EXPENSE', action: 'OPEN_EXPENSE_FORM',
+      params: { amount: extracted.amount, category: extracted.category, description: extracted.description, date: extracted.date },
+      extracted,
+      response: hasData
+        ? `${extracted.amount ? extracted.amount + ' ₺ ' : ''}${extracted.category} gideri kaydediliyor. Onaylıyor musunuz?`
+        : 'Gider bilgisi anlaşılamadı. Örnek: "500 TL yemek gideri yaz"',
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: LOG_FUEL
+  // ═══════════════════════════════════════════════════════════
+  private parseFuelLog(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    // Station
+    const brandMatch = msg.match(/(OPET|Shell|BP|Total|Petrol Ofisi|Aytemiz|Lukoil|GO|Alpet)/i);
+    if (brandMatch) extracted.station = brandMatch[1];
+    // Liters
+    const literMatch = msg.match(/(\d+\.?\d*)\s*(?:litre|lt|l)/i);
+    if (literMatch) extracted.liters = parseFloat(literMatch[1]);
+    // Price per liter
+    const priceMatch = msg.match(/(?:litre\s*fiyat[ıi]|fiyat[ıi]?)\s*:?\s*(\d+\.?\d*)/i);
+    if (priceMatch) extracted.pricePerLiter = parseFloat(priceMatch[1]);
+    // Total
+    if (extracted.liters && extracted.pricePerLiter) {
+      extracted.totalAmount = Math.round(extracted.liters * extracted.pricePerLiter);
+    }
+    // Date
+    if (/bugün|bugun/i.test(msg)) extracted.date = new Date().toISOString().slice(0, 10);
+
+    const hasData = extracted.liters || extracted.station;
+    return {
+      success: hasData, intent: 'LOG_FUEL', action: 'OPEN_EXPENSE_FORM',
+      params: {
+        amount: extracted.totalAmount || (extracted.liters * (extracted.pricePerLiter || 0)),
+        category: 'Akaryakıt',
+        description: `${extracted.station || 'Akaryakıt'} - ${extracted.liters || '?'} lt${extracted.pricePerLiter ? ' x ' + extracted.pricePerLiter + ' ₺/lt' : ''}`,
+        date: extracted.date,
+      },
+      extracted,
+      response: hasData
+        ? `${extracted.station || ''} ${extracted.liters} litre${extracted.pricePerLiter ? ' x ' + extracted.pricePerLiter + ' ₺' : ''}${extracted.totalAmount ? ' = ' + extracted.totalAmount + ' ₺' : ''} yakıt gideri kaydediliyor.`
+        : 'Yakıt bilgisi anlaşılamadı. Örnek: "OPET den 350 litre mazot aldım litre fiyatı 20 TL"',
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: SEARCH_LOADS
+  // ═══════════════════════════════════════════════════════════
+  private parseLoadSearch(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    // City filter
+    const CITIES = ['İstanbul','Ankara','İzmir','Bursa','Antalya','Konya','Adana','Mersin','Gaziantep','Kayseri','Samsun','Trabzon','Diyarbakır','Eskişehir','Kocaeli'];
+    for (const city of CITIES) {
+      if (msgLower.includes(this.turkishToAscii(city))) { extracted.city = city; break; }
+    }
+    // Tonnage filter
+    const tonMatch = msg.match(/(\d+)\s*ton/i);
+    if (tonMatch) extracted.minTonnage = parseInt(tonMatch[1]);
+    // Radius
+    const kmMatch = msg.match(/(\d+)\s*km/i);
+    if (kmMatch) extracted.radiusKm = parseInt(kmMatch[1]);
+    // Escrow
+    if (/escrow|g[üu]venli\s*[oö]deme/i.test(msg)) extracted.escrow = true;
+    // Sort
+    extracted.sortBy = 'pickupDate';
+    extracted.action = 'SEARCH_LOADS';
+    if (/yak[ıi]n|en\s*yak[ıi]n/i.test(msg)) { extracted.sortBy = 'distance'; extracted.action = 'FILTER_NEARBY'; }
+
+    const parts: string[] = [];
+    if (extracted.city) parts.push(`${extracted.city} bölgesinde`);
+    if (extracted.minTonnage) parts.push(`${extracted.minTonnage} ton`);
+    if (extracted.escrow) parts.push('escrow garantili');
+    const desc = parts.join(' ') || 'tüm';
+
+    return {
+      success: true, intent: 'SEARCH_LOADS', action: extracted.action,
+      params: { city: extracted.city, minTonnage: extracted.minTonnage, radiusKm: extracted.radiusKm, escrow: extracted.escrow, sortBy: extracted.sortBy },
+      extracted,
+      response: `${desc} yükler listeleniyor.`,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: SEARCH_MARKETPLACE
+  // ═══════════════════════════════════════════════════════════
+  private parseMarketplaceSearch(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    // Vehicle type
+    if (/t[ıi]r|çekici|kamyon/i.test(msg)) extracted.vehicleType = 'Çekici (TIR)';
+    else if (/kamyonet|panelvan/i.test(msg)) extracted.vehicleType = 'Kamyonet';
+    else if (/binek|otomobil|araba/i.test(msg)) extracted.vehicleType = 'Otomobil';
+    else extracted.vehicleType = 'Tümü';
+    // Price filter
+    const priceMatch = msg.match(/(\d+)\s*(?:milyon|M)/i);
+    if (priceMatch) {
+      extracted.maxPrice = parseInt(priceMatch[1]) * 1000000;
+    } else {
+      const tlMatch = msg.match(/(\d+)\s*(?:bin|B)\s*TL/i);
+      if (tlMatch) extracted.maxPrice = parseInt(tlMatch[1]) * 1000;
+    }
+    // City
+    const CITIES = ['İstanbul','Ankara','İzmir','Bursa','Antalya','Konya','Adana'];
+    for (const city of CITIES) {
+      if (msgLower.includes(this.turkishToAscii(city))) { extracted.city = city; break; }
+    }
+
+    const parts: string[] = [];
+    if (extracted.vehicleType) parts.push(extracted.vehicleType);
+    if (extracted.maxPrice) parts.push(`${(extracted.maxPrice).toLocaleString('tr-TR')} ₺ altı`);
+    if (extracted.city) parts.push(`${extracted.city}'de`);
+
+    return {
+      success: true, intent: 'SEARCH_MARKETPLACE', action: 'SEARCH_MARKETPLACE',
+      params: { vehicleType: extracted.vehicleType, maxPrice: extracted.maxPrice, city: extracted.city },
+      extracted,
+      response: `${parts.join(' ') || 'Tüm'} araç ilanları listeleniyor.`,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: NAVIGATE
+  // ═══════════════════════════════════════════════════════════
+  private parseNavigation(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    const routes: Record<string, { screen: string; label: string }> = {
+      'ana sayfa|anasayfa|home|ana ekran': { screen: 'MainTabs', label: 'Ana Sayfa' },
+      'profil|hesab[ıi]m|bilgilerim|profilim': { screen: 'CarrierProfile', label: 'Profil' },
+      'finans|gelir.*gider|muhasebe': { screen: 'Finance', label: 'Finans' },
+      'c[üu]zdan|bakiye|param': { screen: 'Wallet', label: 'Cüzdan' },
+      'ayarlar|settings': { screen: 'SystemSettings', label: 'Ayarlar' },
+      'harita|map': { screen: 'RoutePlanner', label: 'Harita' },
+      'y[üu]klerim|takip': { screen: 'LoadTracking', label: 'Yüklerim' },
+      'teklif|tekliflerim': { screen: 'MyBids', label: 'Tekliflerim' },
+      'lokanta|restoran|yemek': { screen: 'Restaurants', label: 'Restoranlar' },
+      'akaryak[ıi]t|benzinlik|yak[ıi]t': { screen: 'FuelStations', label: 'Akaryakıt' },
+    };
+    for (const [pattern, route] of Object.entries(routes)) {
+      if (new RegExp(pattern, 'i').test(msg)) {
+        extracted.screen = route.screen;
+        extracted.label = route.label;
+        break;
+      }
+    }
+    return {
+      success: true, intent: 'NAVIGATE', action: 'NAVIGATE',
+      params: { screen: extracted.screen || 'MainTabs' },
+      extracted,
+      response: extracted.label ? `${extracted.label} sayfasına yönlendiriliyorsunuz.` : 'Ana sayfaya yönlendiriliyorsunuz.',
     };
   }
 
