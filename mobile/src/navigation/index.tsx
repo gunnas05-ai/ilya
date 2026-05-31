@@ -10,7 +10,6 @@ import { connectSocket, disconnectSocket } from '../services/websocket';
 import CustomBackButton from './CustomBackButton';
 import MainTabs, { PersistentTabBar } from './MainTabs';
 import FinanceNavigator from './FinanceNavigator';
-import HeyKaptan from '../components/HeyKaptan';
 import ErrorBoundary from '../components/shared/ErrorBoundary';
 import LoginScreen from '../screens/LoginScreen';
 import LoadCreateWizard from '../screens/load-create/LoadCreateWizard';
@@ -312,7 +311,6 @@ export default function Navigation() {
           )}
         </Stack.Navigator>
         {isAuthenticated && <PersistentTabBar />}
-        {isAuthenticated && <HeyKaptan />}
       </View>
     </NavigationContainer>
   );
