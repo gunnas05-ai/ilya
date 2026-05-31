@@ -11,8 +11,6 @@ interface CardProps {
 }
 
 export default function Card({ children, accentColor, onPress, style, accessibilityLabel }: CardProps) {
-
-export default function Card({ children, accentColor, onPress, style }: CardProps) {
   const { colors } = useTheme();
 
   const container = (
