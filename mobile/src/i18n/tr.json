@@ -355,6 +355,16 @@
     "partOffers": "Teklifler",
     "partTransaction": "Satın Alma",
     "partDispute": "Sorun Bildir",
-    "partReviews": "Değerlendirmeler"
+    "partReviews": "Değerlendirmeler",
+    "testCenter": "Test Merkezi",
+    "permissionMatrix": "Yetki Matrisi",
+    "auditLog": "İşlem Geçmişi",
+    "securityCenter": "Güvenlik Merkezi",
+    "systemSettings": "Sistem Ayarları",
+    "routePlanner": "Rota Planlayıcı",
+    "documentCenter": "Döküman Merkezi",
+    "driverDashboard": "Sürücü Paneli",
+    "chatRoom": "Sohbet",
+    "duyuruYonetim": "Duyuru Yönetimi"
   }
 }

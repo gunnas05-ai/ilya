@@ -355,6 +355,16 @@
     "partOffers": "Offers",
     "partTransaction": "Purchase",
     "partDispute": "Report Issue",
-    "partReviews": "Reviews"
+    "partReviews": "Reviews",
+    "testCenter": "Test Center",
+    "permissionMatrix": "Permission Matrix",
+    "auditLog": "Audit Log",
+    "securityCenter": "Security Center",
+    "systemSettings": "System Settings",
+    "routePlanner": "Route Planner",
+    "documentCenter": "Document Center",
+    "driverDashboard": "Driver Dashboard",
+    "chatRoom": "Chat",
+    "duyuruYonetim": "Announcements"
   }
 }
