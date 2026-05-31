@@ -27,14 +27,15 @@ export function getDatabaseConfig(): TypeOrmModuleOptions {
     };
   }
 
-  logger.log('📦 SQLite (geliştirme) — migrations kullaniliyor');
+  const isDev = !isProduction;
+  logger.log(`📦 SQLite (${isDev ? 'geliştirme' : 'production'}) — sync:${isDev}`);
   return {
     type: 'sqlite',
     database: './data/kaptan.db',
     entities: ALL_ENTITIES,
-    synchronize: false,
-    migrations: ['dist/migrations/*.js'],
-    migrationsRun: true,
-    logging: !isProduction ? ['error', 'warn'] : ['error'],
+    synchronize: isDev, // Development'ta auto-sync, production'da migration
+    migrations: isDev ? undefined : ['dist/migrations/*.js'],
+    migrationsRun: !isDev,
+    logging: isDev ? ['error', 'warn'] : ['error'],
   };
 }
