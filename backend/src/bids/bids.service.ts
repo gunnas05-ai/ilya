@@ -1,3 +1,12 @@
+/**
+ * BidsService — Teklif yonetimi (388 satir).
+ *
+ * REFACTOR PLANI:
+ *   - BidPlacementService  (teklif verme, guncelleme, iptal)
+ *   - BidMatchingService   (kabul/red/karsi teklif)
+ *   - BidNotificationService (WebSocket + push bildirim)
+ *   - Escrow orchestration'i ayri bir saga/state machine'e tasi
+ */
 import { Injectable, NotFoundException, ForbiddenException, BadRequestException, Inject, forwardRef } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';

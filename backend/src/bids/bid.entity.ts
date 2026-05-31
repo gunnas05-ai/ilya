@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, ManyToOne, JoinColumn, Index } from 'typeorm';
 import { Load } from '../loads/load.entity';
 import { User } from '../users/user.entity';
 
@@ -15,6 +15,7 @@ export class Bid {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Index()
   @Column()
   loadId: string;
 
@@ -22,6 +23,7 @@ export class Bid {
   @JoinColumn({ name: 'loadId' })
   load: Load;
 
+  @Index()
   @Column()
   carrierId: string;
 

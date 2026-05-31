@@ -1,4 +1,4 @@
-import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne, JoinColumn } from 'typeorm';
+import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToMany, OneToOne, JoinColumn, Index } from 'typeorm';
 import { Bid } from '../bids/bid.entity';
 import { EscrowTransaction } from '../escrow/escrow-transaction.entity';
 import { Wallet } from '../escrow/wallet.entity';
@@ -39,6 +39,7 @@ export class User {
   @Column({ length: 100 })
   fullName: string;
 
+  @Index()
   @Column({ type: 'simple-enum', enum: UserRole, default: UserRole.YUK_VEREN })
   role: UserRole;
 
