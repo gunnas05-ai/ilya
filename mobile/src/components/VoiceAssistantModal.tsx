@@ -33,6 +33,8 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
   const [showDialog, setShowDialog] = useState(false);
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const slideUp = useRef(new Animated.Value(100)).current;
+  const cameraZoom = useRef(new Animated.Value(1)).current;
+  const cameraZoomTriggered = useRef(false);
 
   // Ambient floating particles
   const particles = useRef(
@@ -68,11 +70,20 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
       setAvatarState('greeting');
       setConversation([]);
       setShowDialog(false);
+      cameraZoomTriggered.current = false;
 
       Animated.parallel([
-        Animated.timing(fadeAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
-        Animated.spring(slideUp, { toValue: 0, tension: 50, friction: 9, useNativeDriver: true }),
+        Animated.timing(fadeAnim, { toValue: 1, duration: 600, useNativeDriver: true }),
+        Animated.spring(slideUp, { toValue: 0, tension: 45, friction: 8, useNativeDriver: true }),
       ]).start();
+
+      // Kamera zoom: 1.5sn sonra yüze yakınlaş
+      setTimeout(() => {
+        if (!cameraZoomTriggered.current) {
+          cameraZoomTriggered.current = true;
+          Animated.spring(cameraZoom, { toValue: 1.25, tension: 60, friction: 5, useNativeDriver: true }).start();
+        }
+      }, 1500);
 
       // Greeting
       const greeting = `${getGreeting()} ${userName} Bey. Kaptan Platformuna hoş geldiniz. Size nasıl yardımcı olabilirim?`;
@@ -84,10 +95,10 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
           onDone: () => {
             setAvatarState('idle');
             setShowDialog(true);
-            setTimeout(() => startListening(), 500);
+            setTimeout(() => startListening(), 400);
           },
         });
-      }, 800);
+      }, 1000);
     } else {
       fadeAnim.setValue(0);
       slideUp.setValue(100);
@@ -211,7 +222,7 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
         </TouchableOpacity>
 
         {/* Avatar */}
-        <Animated.View style={[styles.avatarContainer, { transform: [{ translateY: slideUp }] }]}>
+        <Animated.View style={[styles.avatarContainer, { transform: [{ translateY: slideUp }, { scale: cameraZoom }] }]}>
           <KaptanAvatar state={avatarState} message={message} />
         </Animated.View>
 
