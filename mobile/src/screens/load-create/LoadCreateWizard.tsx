@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useRef, useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, Alert, StyleSheet } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +31,14 @@ export default function LoadCreateWizard({ onClose }: LoadCreateWizardProps) {
   const { t } = useTranslation();
   const { colors } = useTheme();
   const { isGuest, logout } = useAuthStore();
-  const { formData, isSubmitting, reset, setSubmitting, setSavedId, setStep } = useLoadCreateStore();
+  const { formData, isSubmitting, reset, setSubmitting, setSavedId, setStep, loadDraft } = useLoadCreateStore();
+
+  // Mount'ta draft yukle (AI verisi yoksa)
+  useEffect(() => {
+    if (!formData.fromCity && !formData.toCity && !formData.title) {
+      loadDraft();
+    }
+  }, []);
   const { addTrackedLoad } = useTrackingStore();
   const [localStep, setLocalStep] = useState(1);
   const [savedIdState, setSavedIdState] = useState<string | null>(null);
