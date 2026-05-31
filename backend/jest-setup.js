@@ -2,6 +2,7 @@
 process.env.ENCRYPTION_KEY = 'test-encryption-key-32chars!!';
 process.env.JWT_SECRET = 'test-jwt-secret';
 process.env.JWT_REFRESH_SECRET = 'test-refresh-secret';
+process.env.TX_SIGNING_SECRET = 'test-tx-signing-key-32char!!';
 process.env.NODE_ENV = 'test';
 
 // ESM modullerini mock'la — Jest ESM uyumlulugu icin

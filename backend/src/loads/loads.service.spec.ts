@@ -35,7 +35,6 @@ describe('LoadsService', () => {
       save: jest.fn().mockResolvedValue(mockLoad),
       findOne: jest.fn().mockResolvedValue(mockLoad),
       find: jest.fn().mockResolvedValue([mockLoad]),
-    } as any;
       createQueryBuilder: jest.fn().mockReturnValue({
         where: jest.fn().mockReturnThis(),
         andWhere: jest.fn().mockReturnThis(),
@@ -47,11 +46,8 @@ describe('LoadsService', () => {
         update: jest.fn().mockReturnThis(),
         set: jest.fn().mockReturnThis(),
         execute: jest.fn().mockResolvedValue({ affected: 1 }),
-        increment: jest.fn().mockResolvedValue({}),
       }),
-      increment: jest.fn().mockResolvedValue({}),
-      update: jest.fn().mockResolvedValue({ affected: 1 }),
-    };
+    } as any;
 
     eventEmitter = { emit: jest.fn() };
 
