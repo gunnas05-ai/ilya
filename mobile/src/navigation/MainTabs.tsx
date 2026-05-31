@@ -8,7 +8,6 @@ import { usePermission } from '../hooks/usePermission';
 import { spacing, typography } from '../theme';
 import CustomBackButton from './CustomBackButton';
 import ThemeToggle from './ThemeToggle';
-import FABMenuItem from './FABMenuItem';
 import HomeNavigator from './HomeNavigator';
 import ProfileNavigator from './ProfileNavigator';
 import LoadCreateWizard from '../screens/load-create/LoadCreateWizard';
@@ -44,58 +43,7 @@ const FAB_MENU_ITEMS: FABItemConfig[] = [
   { icon: '⚙️', title: 'Admin Paneli', desc: 'Kullanıcı ve sistem yönetimi', perm: 'admin:view_panel', screen: 'AdminPanel' },
 ];
 
-function FABMenuSheet({
-  visible,
-  onClose,
-  onNavigate,
-  colors,
-  canCheck,
-}: {
-  visible: boolean;
-  onClose: () => void;
-  onNavigate: (screen: string) => void;
-  colors: any;
-  canCheck: (perm: string) => boolean;
-}) {
-  const filteredItems = FAB_MENU_ITEMS.filter((item) => !item.perm || canCheck(item.perm));
-
-  return (
-    <Modal visible={visible} transparent animationType="slide" onRequestClose={onClose}>
-      <TouchableOpacity style={styles.fabOverlay} activeOpacity={1} onPress={onClose}>
-        <TouchableOpacity activeOpacity={1} onPress={() => {}}>
-          <View style={[styles.fabSheet, { backgroundColor: colors.card, borderColor: colors.border }]}>
-            <View style={[styles.fabHandle, { backgroundColor: colors.border }]} />
-            <Text style={[typography.h3, { color: colors.text, fontWeight: '800', marginBottom: spacing.md, textAlign: 'center' }]}>
-              🚀 Hızlı İşlemler
-            </Text>
-            {filteredItems.map((item, i) => (
-              <FABMenuItem
-                key={i}
-                icon={item.icon}
-                title={item.title}
-                desc={item.desc}
-                onPress={() => onNavigate(item.screen)}
-                colors={colors}
-              />
-            ))}
-            <TouchableOpacity
-              style={[styles.fabCloseBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
-              onPress={onClose}
-            >
-              <Text style={[typography.label, { color: colors.text, fontWeight: '700' }]}>Kapat</Text>
-            </TouchableOpacity>
-          </View>
-        </TouchableOpacity>
-      </TouchableOpacity>
-    </Modal>
-  );
-}
-
 // ── Main Tab Navigator ──────────────────────────────────
-
-function DummyComponent() {
-  return <View style={{ flex: 1, backgroundColor: 'transparent' }} />;
-}
 
 const PERSISTENT_TABS = [
   { name: 'Menuler' as const, label: 'Menüler', icon: '📋', isMenu: true as const },
@@ -107,9 +55,6 @@ const PERSISTENT_TABS = [
 
 function MainTabNavigator() {
   const { colors, isDark } = useTheme();
-  const { can } = usePermission();
-  const [showFABMenu, setShowFABMenu] = useState(false);
-  const navigation = useNavigation<any>();
 
   return (
     <View style={{ flex: 1 }}>
@@ -130,21 +75,9 @@ function MainTabNavigator() {
       >
         <Tab.Screen name="Home" component={HomeNavigator} options={{ headerShown: false, tabBarLabel: 'Ana Sayfa', tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🏠</Text> }} />
         <Tab.Screen name="LoadCreateTab" component={LoadCreateWizard} options={{ title: 'Yük Ekle', tabBarLabel: 'Yük Ekle', tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>➕</Text> }} />
-        <Tab.Screen
-          name="FAB" component={DummyComponent}
-          options={{ tabBarLabel: '', tabBarIcon: () => (<View style={styles.fabIcon}><Text style={styles.fabIconText}>+</Text></View>) }}
-          listeners={{ tabPress: (e: any) => { e.preventDefault(); setShowFABMenu(true); } }}
-        />
         <Tab.Screen name="LoadAccept" component={LoadAcceptScreen} options={{ title: 'Yük Al', tabBarLabel: 'Yük Al', tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>🔍</Text> }} />
         <Tab.Screen name="Profile" component={ProfileNavigator} options={{ title: 'Profil', tabBarLabel: 'Profil', tabBarIcon: ({ color }) => <Text style={{ color, fontSize: 20 }}>👤</Text> }} />
       </Tab.Navigator>
-      <FABMenuSheet
-        visible={showFABMenu}
-        onClose={() => setShowFABMenu(false)}
-        onNavigate={(screen) => { setShowFABMenu(false); navigation.navigate(screen); }}
-        colors={colors}
-        canCheck={(perm) => can(perm as any)}
-      />
     </View>
   );
 }
