@@ -142,10 +142,29 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
     }
   }, [visible]);
 
-  // Cleanup speech on close
+  // Cleanup on close
   useEffect(() => {
-    return () => { Speech.stop(); };
+    return () => {
+      Speech.stop();
+      try { const SR = require('expo-speech-recognition'); SR?.default?.stop?.(); } catch {}
+    };
   }, []);
+
+  // Close handler with cleanup
+  const handleClose = () => {
+    Speech.stop();
+    try { const SR = require('expo-speech-recognition'); SR?.default?.stop?.(); } catch {}
+    onClose();
+  };
+
+  const avatarColors: Record<string, string> = {
+    idle: '#FF6B00', greeting: '#FF6B00', listening: '#3B82F6', talking: '#FF6B00',
+    thinking: '#F59E0B', success: '#10B981', error: '#EF4444',
+  };
+  const stateLabels: Record<string, string> = {
+    idle: 'Hazır', greeting: 'Selamlıyor', listening: 'Dinliyor...',
+    talking: 'Konuşuyor...', thinking: 'Düşünüyor...', success: 'Tamam!', error: 'Hata',
+  };
 
   const startListening = async () => {
     setAvatarState('listening');
@@ -254,7 +273,7 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
         ))}
 
         {/* Close button */}
-        <TouchableOpacity style={styles.closeBtn} onPress={onClose}>
+        <TouchableOpacity style={styles.closeBtn} onPress={handleClose}>
           <Text style={styles.closeText}>✕</Text>
         </TouchableOpacity>
 
@@ -264,6 +283,11 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
         {/* 3D Avatar */}
         <Animated.View style={[styles.avatarContainer, { transform: [{ translateY: slideUp }, { scale: cameraZoom }] }]}>
           <Avatar3D state={avatarState} height={380} />
+
+          {/* State label */}
+          <Text style={[styles.stateLabel, { color: avatarColors[avatarState] || '#FF6B00' }]}>
+            {stateLabels[avatarState] || ''}
+          </Text>
 
           {/* Message below avatar */}
           {message ? (
@@ -321,6 +345,7 @@ const styles = StyleSheet.create({
   listenBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
   particle: { position: 'absolute' },
   vignette: { ...StyleSheet.absoluteFillObject, zIndex: 1, pointerEvents: 'none' },
+  stateLabel: { textAlign: 'center', marginTop: 8, fontSize: 13, fontWeight: '700', letterSpacing: 1 },
   msgBubble: { marginTop: 10, paddingHorizontal: 18, paddingVertical: 12, borderRadius: 16, backgroundColor: '#141824', borderWidth: 1, maxWidth: '85%', alignSelf: 'center' },
   msgText: { color: '#E2E8F0', fontSize: 14, lineHeight: 20, fontWeight: '500', textAlign: 'center' },
 });
