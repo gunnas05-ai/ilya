@@ -9,6 +9,7 @@ import { useAuthStore, UIRole } from '../store/authStore';
 import { useTheme } from '../hooks/useTheme';
 import { spacing, radius, typography } from '../theme';
 import { hapticLight, hapticSuccess, hapticError } from '../utils/haptic';
+import { apiClient } from '../services/api';
 import { showToast } from '../utils/toast';
 import BottomSheet from '../components/shared/BottomSheet';
 import { PhoneInput, isValidPhone, formatPhone } from '../components/shared/PhoneInput';
@@ -101,8 +102,86 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
   const [authLoading, setAuthLoading] = useState(false);
   const [pendingUserId, setPendingUserId] = useState<string | null>(null);
   const [showKvkkSheet, setShowKvkkSheet] = useState(false);
+  const [voiceActive, setVoiceActive] = useState(false);
+  const [voiceMsg, setVoiceMsg] = useState('');
+  const [voiceListening, setVoiceListening] = useState(false);
+  const [voiceProcessing, setVoiceProcessing] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
   const otpRef = useRef<TextInput>(null);
+
+  // Sesli kayıt — konuşmayı dinle ve formu doldur
+  const startVoiceRegistration = async () => {
+    if (voiceProcessing) return;
+    setVoiceActive(true);
+    setVoiceListening(true);
+    setVoiceMsg('🎤 Dinleniyor... Rolünüzü, adınızı, telefon ve email bilgilerinizi söyleyin.');
+    hapticLight();
+
+    try {
+      const SpeechRecognition = require('expo-speech-recognition');
+      if (SpeechRecognition?.default) {
+        const result = await SpeechRecognition.default.start({ lang: 'tr-TR', interimResults: false });
+        const text = result?.[0]?.transcript || '';
+        if (text.trim()) {
+          setVoiceListening(false);
+          setVoiceProcessing(true);
+          setVoiceMsg('⏳ Bilgiler analiz ediliyor...');
+          await processVoiceRegData(text);
+        } else {
+          setVoiceMsg('⚠️ Ses algılanamadı. Lütfen tekrar deneyin veya manuel giriş yapın.');
+          setVoiceListening(false);
+        }
+      } else {
+        setVoiceMsg('⚠️ Ses tanıma kullanılamıyor. Lütfen manuel giriş yapın.');
+        setVoiceListening(false);
+      }
+    } catch {
+      setVoiceMsg('⚠️ Ses tanıma hatası. Lütfen manuel giriş yapın.');
+      setVoiceListening(false);
+    }
+  };
+
+  // Ses verisini analiz et ve form alanlarını doldur
+  const processVoiceRegData = async (text: string) => {
+    try {
+      const res = await apiClient.post('/voice/ai-dialog', { message: text, context: { conversationState: 'REGISTRATION', collected: {} } });
+      const data = res.data?.data?.data || res.data?.data || res.data || {};
+      const fields = data.params?.collected || data.extracted || {};
+      const response = data.response || '';
+
+      // Form alanlarını doldur
+      if (fields.role && ['FIRMA','TASIYICI','ISLETME','GENEL'].includes(fields.role)) {
+        setRole('selectedRole', fields.role as UIRole, { shouldValidate: true });
+      }
+      if (fields.fullName) setC2Value('fullName', fields.fullName);
+      if (fields.phone) setC2Value('phone', fields.phone);
+      if (fields.email) setC2Value('email', fields.email);
+      if (fields.password) setC2Value('password', fields.password);
+      if (fields.companyTitle) firmaForm.setValue('companyTitle', fields.companyTitle);
+      if (fields.licenseType) tasiyiciForm.setValue('licenseType', fields.licenseType);
+
+      // Eksik bilgileri kontrol et
+      const missing: string[] = [];
+      if (!fields.fullName) missing.push('ad soyad');
+      if (!fields.phone) missing.push('telefon');
+      if (!fields.email) missing.push('email');
+
+      if (missing.length > 0) {
+        setVoiceMsg(`📝 ${response || 'Bazı bilgiler eksik: ' + missing.join(', ')}. Tekrar konuşmak için mikrofona basın.`);
+        setVoiceProcessing(false);
+      } else {
+        setVoiceMsg(`✅ ${response || 'Bilgiler alındı! Devam edebilirsiniz.'}`);
+        setVoiceProcessing(false);
+        hapticSuccess();
+        // Otomatik step 2'ye geç
+        if (step === 1 && selectedRole) setStep(2);
+        setTimeout(() => setVoiceMsg(''), 3000);
+      }
+    } catch {
+      setVoiceMsg('⚠️ Analiz hatası. Lütfen manuel giriş yapın.');
+      setVoiceProcessing(false);
+    }
+  };
 
   // Step 1: Role selection
   const { control: c1, watch: w1, setValue: setRole, formState: { errors: e1 } } = useForm({ resolver: zodResolver(step1Schema), defaultValues: { selectedRole: undefined as UIRole | undefined } });
@@ -211,6 +290,26 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
 
   return (
     <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+      {/* Sesli Kayıt Butonu */}
+      <TouchableOpacity
+        style={[s.voiceBtn, { backgroundColor: voiceListening ? '#EF4444' : voiceProcessing ? '#F59E0B' : voiceActive ? '#10B981' : colors.primary, opacity: voiceProcessing ? 0.8 : 1 }]}
+        onPress={startVoiceRegistration}
+        disabled={voiceListening || voiceProcessing}
+        activeOpacity={0.8}
+      >
+        <Text style={s.voiceBtnIcon}>{voiceListening ? '🔴' : voiceProcessing ? '⏳' : '🎤'}</Text>
+        <Text style={s.voiceBtnText}>
+          {voiceListening ? 'Dinleniyor...' : voiceProcessing ? 'İşleniyor...' : 'Sesli Kayıt'}
+        </Text>
+      </TouchableOpacity>
+
+      {/* Sesli kayıt mesajı */}
+      {voiceMsg ? (
+        <View style={[s.voiceMsgBox, { backgroundColor: voiceMsg.startsWith('✅') ? '#10B98115' : voiceMsg.startsWith('⚠️') ? '#EF444415' : '#FF6B0015', borderColor: voiceMsg.startsWith('✅') ? '#10B981' : voiceMsg.startsWith('⚠️') ? '#EF4444' : '#FF6B00' }]}>
+          <Text style={[s.voiceMsgText, { color: voiceMsg.startsWith('✅') ? '#10B981' : voiceMsg.startsWith('⚠️') ? '#EF4444' : '#FF6B00' }]}>{voiceMsg}</Text>
+        </View>
+      ) : null}
+
       {/* Step Indicator */}
       <View style={styles.stepIndicator}>
         {STEP_LABELS.map((label, i) => {
@@ -418,4 +517,9 @@ const styles = StyleSheet.create({
   kvkkRow: { flexDirection: 'row', alignItems: 'center', marginBottom: spacing.md },
   checkbox: { width: 22, height: 22, borderRadius: 4, borderWidth: 2, alignItems: 'center', justifyContent: 'center', marginRight: spacing.sm },
   otpInput: { borderWidth: 2, borderRadius: radius.lg, paddingHorizontal: spacing.lg, paddingVertical: spacing.md, fontSize: 28, minHeight: 60, textAlign: 'center', letterSpacing: 8, fontWeight: '800' },
+  voiceBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.md, borderRadius: radius.lg, gap: spacing.sm, marginBottom: spacing.md },
+  voiceBtnIcon: { fontSize: 20 },
+  voiceBtnText: { color: '#FFF', fontSize: 15, fontWeight: '800' },
+  voiceMsgBox: { padding: spacing.md, borderRadius: radius.md, borderWidth: 1, marginBottom: spacing.md },
+  voiceMsgText: { fontSize: 13, fontWeight: '600', textAlign: 'center' },
 });

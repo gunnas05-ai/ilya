@@ -103,6 +103,7 @@ export class VoiceService {
     // Multi-step: devam eden konusma varsa
     if (context?.conversationState === 'CREATING_LOAD_STEP') return this.handleLoadCreationStep(msg, msgLower, context);
     if (context?.conversationState === 'CREATING_EXPENSE_STEP') return this.handleExpenseStep(msg, msgLower, context);
+    if (context?.conversationState === 'REGISTRATION') return this.handleRegistrationStep(msg, msgLower, context);
 
     // ── Intent Detection ──────────────────────────────
     const intent = this.detectIntent(msg, msgLower);
@@ -916,6 +917,79 @@ export class VoiceService {
   // ═══════════════════════════════════════════════════════════
   // Help response
   // ═══════════════════════════════════════════════════════════
+  // ═══════════════════════════════════════════════════════════
+  // Multi-step: REGISTRATION flow
+  // ═══════════════════════════════════════════════════════════
+  private handleRegistrationStep(msg: string, msgLower: string, context: Record<string, any>): any {
+    const collected = context.collected || {};
+
+    // Role detection
+    if (/firma|y[üu]k\s*sahibi|şirket/i.test(msg)) collected.role = 'FIRMA';
+    else if (/ta[şs][ıi]y[ıi]c[ıi]|s[üu]r[üu]c[üu]|nakliye/i.test(msg)) collected.role = 'TASIYICI';
+    else if (/i[şs]letme|lokanta|akaryak[ıi]t/i.test(msg)) collected.role = 'ISLETME';
+    else if (/genel|normal|standart/i.test(msg)) collected.role = 'GENEL';
+
+    // Name extraction
+    const nameMatch = msg.match(/(?:ad[ıi]m|ismim|ad[ıi]\s*soyad[ıi]m?)\s*:?\s*(.+?)(?:\s*(?:telefon|tel|email|e-posta|\.|$))/i);
+    if (nameMatch) collected.fullName = nameMatch[1].trim();
+    else {
+      const words = msg.split(/\s+/);
+      const caps = words.filter((w: string) => /^[A-ZÇĞİÖŞÜ][a-zçğıöşü]+$/.test(w));
+      if (caps.length >= 2) collected.fullName = caps.slice(0, 2).join(' ');
+    }
+
+    // Phone
+    const phoneMatch = msg.match(/(05\d{2})[\s-]*(\d{3})[\s-]*(\d{2})[\s-]*(\d{2})/);
+    if (phoneMatch) collected.phone = '0' + phoneMatch[0].replace(/[\s-]/g, '');
+
+    // Email
+    const emailMatch = msg.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+    if (emailMatch) collected.email = emailMatch[0];
+
+    // Company info (for FIRMA role)
+    if (collected.role === 'FIRMA' || /şirket|firma|limited/i.test(msg)) {
+      const companyMatch = msg.match(/(?:şirket|firma|unvan)\s*:?\s*(.+?)(?:\s*(?:vergi|\.|$))/i);
+      if (companyMatch) collected.companyTitle = companyMatch[1].trim();
+    }
+
+    // License type (TASIYICI)
+    if (/([A-Z]\s*s[ıi]n[ıi]f[ıi]|ehliyet)/i.test(msg)) {
+      const licMatch = msg.match(/([A-Z])\s*s[ıi]n[ıi]f[ıi]/i);
+      if (licMatch) collected.licenseType = licMatch[1] + ' Sınıfı';
+    }
+
+    // Check what's missing
+    const missing: string[] = [];
+    if (!collected.role) missing.push('rol (Firma/Taşıyıcı/İşletme/Genel)');
+    if (!collected.fullName) missing.push('ad soyad');
+    if (!collected.phone) missing.push('telefon');
+    if (!collected.email) missing.push('email');
+
+    if (missing.length > 0) {
+      const qs: Record<string, string> = {
+        'rol (Firma/Taşıyıcı/İşletme/Genel)': 'Hangi rolde kayıt olmak istiyorsunuz? Firma, Taşıyıcı, İşletme veya Genel?',
+        'ad soyad': 'Adınız ve soyadınız nedir?',
+        'telefon': 'Telefon numaranız nedir?',
+        'email': 'E-posta adresiniz nedir?',
+      };
+      const firstMissing = missing[0];
+      return {
+        success: true, intent: 'REGISTRATION', action: 'CONTINUE_CONVERSATION',
+        conversationState: 'REGISTRATION', params: { step: (context.step || 1) + 1, collected },
+        extracted: collected,
+        response: qs[firstMissing] || `Lütfen şu bilgileri de belirtin: ${missing.join(', ')}`,
+      };
+    }
+
+    // All collected
+    return {
+      success: true, intent: 'REGISTRATION', action: 'FILL_REGISTRATION',
+      params: { collected },
+      extracted: collected,
+      response: `${collected.fullName}, kayıt bilgileriniz hazır! ${collected.role === 'FIRMA' ? 'Firma' : collected.role === 'TASIYICI' ? 'Taşıyıcı' : collected.role === 'ISLETME' ? 'İşletme' : 'Genel'} rolünde kayıt oluyorsunuz. Devam edebilirsiniz.`,
+    };
+  }
+
   private getHelpResponse(): any {
     return {
       success: true, intent: 'HELP',
