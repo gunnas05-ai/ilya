@@ -10,7 +10,6 @@ import { spacing, radius, typography } from '../../theme';
 import { hapticLight, hapticSuccess } from '../../utils/haptic';
 import { apiClient } from '../../services/api';
 import { useLoadCreateStore } from '../../store/loadCreateStore';
-import { useAuthStore } from '../../store/authStore';
 
 interface Message { id: string; role: 'user' | 'assistant'; text: string; }
 
@@ -25,51 +24,22 @@ function cleanPhone(raw: string): string {
 export default function AiDialogScreen({ navigation, route }: any) {
   const { colors } = useTheme();
   const { updateFormData } = useLoadCreateStore();
-  const { user } = useAuthStore();
-  const flatListRef = useRef(null);
-  const inputRef = useRef(null);
+  const flatListRef = useRef<FlatList>(null);
+  const inputRef = useRef<TextInput>(null);
   const initialMsg = route?.params?.initialMessage;
 
-  // Rol bazlı selamlama
-  const getRoleGreeting = () => {
-    const role = user?.role;
-    if (role === 'tasiyici' || role === 'sofor') return '🚛 Yük bulabilir, teklif verebilir, yakıt/gider kaydı yapabilirsiniz.';
-    if (role === 'yuk_veren' || role === 'firma') return '📦 Yük oluşturabilir, taşıyıcı bulabilir, fatura kesebilirsiniz.';
-    if (role === 'admin' || role === 'super_admin') return '⚙️ Tüm sistem yönetimi, raporlama ve kullanıcı işlemleri.';
-    return '📦 Yük ekleyebilir, arama yapabilir, gider yazabilirsiniz.';
-  };
-
-  const defaultMsg: Message = {
+  const [messages, setMessages] = useState<Message[]>([{
     id: '0', role: 'assistant',
     text: initialMsg
-      ? `🎤 ${initialMsg}\n\n${getRoleGreeting()}`
-      : `🎤 Merhaba! Ben Kaptan AI Asistan.\n\n${getRoleGreeting()}\n\n📦 **Yük Ekle:** "İstanbul'dan İzmir'e 27 ton ham demir"\n🔍 **Yük Ara:** "En yakın yükleri sırala"\n💰 **Gider Yaz:** "500 TL yemek gideri yaz"\n⛽ **Yakıt:** "OPET'ten 350 litre mazot aldım"\n📄 **Fatura:** "ABC Ltd için fatura kes"\n🗺️ **Gezin:** "Profili aç", "Finans sayfasına git"\n\n💡 **İpucu:** "Neler yapabilirsin?" diye sorun, "iptal" deyin, mikrofonla konuşun.\n\n"Bulunduğum konum" derseniz GPS\'ten alırım.',
-  };
-  const [messages, setMessages] = useState([defaultMsg]);
+      ? `🎤 ${initialMsg}\n\nKonuşarak yük ekleyebilir, arama yapabilir, gider yazabilir veya istediğiniz sayfaya gidebilirsiniz.`
+      : '🎤 Merhaba! Ben Kaptan AI Asistan. Şunları yapabilirim:\n\n📦 **Yük Ekle:** "İstanbul\'dan İzmir\'e 27 ton ham demir"\n🔍 **Yük Ara:** "En yakın yükleri sırala"\n🚛 **Araç Ara:** "4 milyonluk araç arıyorum"\n💰 **Gider Yaz:** "500 TL yemek gideri yaz"\n⛽ **Yakıt Kaydet:** "OPET\'ten 350 litre mazot aldım"\n🗺️ **Gezin:** "Profili aç", "Finans sayfasına git"\n\n"Bulunduğum konum" derseniz GPS\'ten alırım.',
+  }]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [extractedFields, setExtractedFields] = useState<any>({});
-  const [missingFields, setMissingFields] = useState<any>([]);
-  const [gpsLocation, setGpsLocation] = useState<any>(null);
-  const [convCtx, setConvCtx] = useState<any>(null);
-  const [cmdHistory, setCmdHistory] = useState<any>([]);
-
-  // Komutu geçmişe ekle
-  const addToHistory = (cmd: string) => {
-    setCmdHistory(prev => {
-      const updated = [cmd, ...prev.filter(c => c !== cmd)].slice(0, 5);
-      AsyncStorage.setItem('@voice_cmd_history', JSON.stringify(updated)).catch(() => {});
-      return updated;
-    });
-  };
-
-  // Geçmişi yükle
-  useEffect(() => {
-    AsyncStorage.getItem('@voice_cmd_history').then(v => {
-      if (v) setCmdHistory(JSON.parse(v));
-    }).catch(() => {});
-  }, []);
+  const [extractedFields, setExtractedFields] = useState<Record<string, any>>({});
+  const [missingFields, setMissingFields] = useState<string[]>([]);
+  const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number; city?: string; district?: string } | null>(null);
 
   // Ses tanıma başlat
   const startVoiceRecognition = async () => {
@@ -104,25 +74,22 @@ export default function AiDialogScreen({ navigation, route }: any) {
 
   // GPS konumunu al
   useEffect(() => {
-    (async () => {
-      try {
-        const { status } = await Location.requestForegroundPermissionsAsync();
-        if (status !== 'granted') return;
-        const pos = await Location.getCurrentPositionAsync({});
-        setGpsLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-        try {
-          const url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + pos.coords.latitude + '&lon=' + pos.coords.longitude;
-          const r = await fetch(url);
-          const data = await r.json();
-          const addr = data.address || {};
-          setGpsLocation(prev => ({
-            ...prev!,
-            city: addr.city || addr.town || addr.province || '',
-            district: addr.county || addr.suburb || addr.district || '',
-          }));
-        } catch {}
-      } catch {}
-    })();
+    Location.requestForegroundPermissionsAsync().then(({ status }) => {
+      if (status === 'granted') {
+        Location.getCurrentPositionAsync({}).then(pos => {
+          setGpsLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
+            .then(r => r.json()).then(data => {
+              const addr = data.address || {};
+              setGpsLocation(prev => ({
+                ...prev!,
+                city: addr.city || addr.town || addr.province || '',
+                district: addr.county || addr.suburb || addr.district || '',
+              }));
+            }).catch(() => {});
+        }).catch(() => {});
+      }
+    });
   }, []);
 
   const scrollToBottom = () => setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 200);
@@ -148,7 +115,6 @@ export default function AiDialogScreen({ navigation, route }: any) {
   const handleSendWithText = async (text: string) => {
     if (!text || loading) return;
     hapticLight();
-    addToHistory(text);
 
     addMessage({ id: Date.now().toString(), role: 'user', text });
 
@@ -166,7 +132,7 @@ export default function AiDialogScreen({ navigation, route }: any) {
         );
       }
 
-      const res = await apiClient.post('/voice/ai-dialog', { message: enhancedMsg, context: convCtx || undefined });
+      const res = await apiClient.post('/voice/ai-dialog', { message: enhancedMsg });
       const data = res.data?.data?.data || res.data?.data || res.data || {};
       const intent = data.intent || 'CREATE_LOAD';
       const fields = data.extracted || {};
@@ -176,23 +142,6 @@ export default function AiDialogScreen({ navigation, route }: any) {
       if (hasGpsRef && gpsLocation?.city && !fields.originCity) {
         fields.originCity = gpsLocation.city;
         if (gpsLocation.district) fields.originDistrict = gpsLocation.district;
-      }
-
-      // CANCEL: konusma context'ini temizle
-      if (data.action === 'CANCEL' || intent === 'CANCEL') {
-        setConvCtx(null);
-        addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'İşlem iptal edildi.' });
-        setLoading(false); setIsListening(false);
-        return;
-      }
-
-      // Multi-step conversation: devam eden diyalog
-      if (data.conversationState || data.action === 'CONTINUE_CONVERSATION') {
-        setConvCtx({ conversationState: data.conversationState || 'CREATING_LOAD_STEP', collected: data.params?.collected || {}, step: data.params?.step || 2 });
-        addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'Devam edelim...' });
-        setLoading(false);
-        setIsListening(false);
-        return;
       }
 
       // Intent'e gore aksiyon
@@ -241,36 +190,7 @@ export default function AiDialogScreen({ navigation, route }: any) {
         return;
       }
 
-      // Tüm NAVIGATE intent'leri
-      const navigateIntents = [
-        'LIST_INVOICES','VIEW_ACCOUNTANT','VIEW_PROFIT_LOSS','CHECK_WALLET',
-        'SEARCH_RESTAURANTS','MAKE_RESERVATION','START_TRACKING','VIEW_TRACKING',
-        'LIST_VEHICLES','UPDATE_PROFILE','CHECK_PROFILE_STATUS','SEARCH_FUEL_STATIONS',
-        'CREATE_INVOICE','CREATE_VEHICLE','SHOW_MY_BIDS','SHOW_MY_LOADS',
-        'SHOW_DOCUMENTS','CHECK_NOTIFICATIONS','FIND_RETURN_LOADS','CALCULATE_ROUTE',
-        'CHECK_LOAD_STATUS','SHOW_DRIVER_DASHBOARD','PART_MARKET_SEARCH',
-        'CHECK_ESCROW_STATUS','SHOW_ANALYTICS','WHERE_AM_I',
-        'WHAT_IS_MY_BALANCE','SHOW_MY_PROFILE','OPEN_SETTINGS',
-        'DAILY_SUMMARY','MY_LAST_LOAD','MY_STATS',
-      ];
-      // LOGOUT
-      if (intent === 'LOGOUT' || data.action === 'LOGOUT') {
-        addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'Çıkış yapılıyor...' });
-        const { logout } = useAuthStore.getState();
-        setTimeout(() => { logout(); }, 1000);
-        setLoading(false);
-        return;
-      }
-
-      if (navigateIntents.includes(intent) && params.screen) {
-        addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'Yönlendiriliyorsunuz...' });
-        hapticSuccess();
-        setTimeout(() => navigation.navigate(params.screen, params), 600);
-        setLoading(false);
-        return;
-      }
-
-      // CREATE_LOAD
+      // Default: CREATE_LOAD
       if (Object.keys(fields).length >= 2) {
         // Şehir sıralamasını düzelt: "X'den Y'ye" → X=kalkış, Y=varış
         if (fields.originCity && fields.destCity) {
@@ -452,37 +372,17 @@ export default function AiDialogScreen({ navigation, route }: any) {
                   <Text style={[typography.caption, { color: colors.textSecondary, marginLeft: spacing.sm }]}>AI analiz ediyor...</Text>
                 </View>
               )}
-              {/* Son Komutlar (geçmiş) */}
-              {cmdHistory.length > 0 && (
-                <View style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.sm }}>
-                  <Text style={[typography.small, { color: colors.textTertiary, marginBottom: spacing.xs }]}>🕐 Son Komutlar:</Text>
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
-                    {cmdHistory.slice(0, 3).map((cmd, i) => (
-                      <TouchableOpacity key={i}
-                        style={{ backgroundColor: colors.card, paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border }}
-                        onPress={() => { setInputText(cmd); handleSend(); }}
-                      >
-                        <Text style={[typography.small, { color: colors.textSecondary }]} numberOfLines={1}>{cmd.length > 30 ? cmd.slice(0, 30) + '...' : cmd}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                </View>
-              )}
-
               {/* Hızlı Komutlar */}
               <View style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.md }}>
                 <Text style={[typography.small, { color: colors.textTertiary, marginBottom: spacing.xs }]}>Hızlı Komutlar:</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {[
-                    { label: '💰 Gider', cmd: '500 TL yemek gideri yaz' },
-                    { label: '⛽ Yakıt', cmd: 'OPET ten 350 litre mazot aldım' },
+                    { label: '💰 Gider Yaz', cmd: '500 TL yemek gideri yaz' },
+                    { label: '⛽ Yakıt Kaydet', cmd: 'OPET ten 350 litre mazot aldım' },
                     { label: '🔍 Yük Ara', cmd: 'En yakın yükleri sırala' },
-                    { label: '🚛 Araç', cmd: '4 milyonluk araç arıyorum' },
-                    { label: '📄 Fatura', cmd: 'ABC Ltd için 5000 TL fatura kes' },
+                    { label: '🚛 Araç Ara', cmd: '4 milyonluk araç arıyorum' },
+                    { label: '📄 Fatura Kes', cmd: 'ABC Ltd için 5000 TL fatura kes' },
                     { label: '👤 Profil', cmd: 'Profilimi göster' },
-                    { label: '💳 Cüzdan', cmd: 'Cüzdan bakiyemi göster' },
-                    { label: '📍 Takip', cmd: 'Canlı takip başlat' },
-                    { label: '🆘 Yardım', cmd: 'Neler yapabilirsin' },
                   ].map(chip => (
                     <TouchableOpacity key={chip.label}
                       style={{ backgroundColor: colors.primary + '15', paddingHorizontal: spacing.sm, paddingVertical: 6, borderRadius: radius.pill }}
