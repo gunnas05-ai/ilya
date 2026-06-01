@@ -155,8 +155,9 @@ export class VoiceService {
   }
 
   private detectIntent(msg: string, msgLower: string): string {
-    // Cancel / help / repeat
-    if (/(?:iptal|vazge[çc]|bırak|bo[şs]ver|gerek\s*yok|tamam\s*de[ğg]il)/i.test(msg)) return 'CANCEL';
+    // Cancel (sadece "iptal" / "vazgeç" tek başına veya cümle başında — fatura iptal ile karışmasın)
+    if (/^(?:iptal|vazge[çc]|bırak|bo[şs]ver)\b/i.test(msg.trim())) return 'CANCEL';
+    if (/(?:i[şs]lemi\s*iptal|konu[şs]may[ıi]\s*iptal|sohbeti\s*iptal)/i.test(msg)) return 'CANCEL';
     if (/(?:yardım|yardim|neler\s*yapabilirsin|neler\s*yapabilirim|komutlar|yard[ıi]mc[ıi]\s*ol|destek)/i.test(msg)) return 'HELP';
     if (/(?:tekrar|tekrarla|anlamad[ıi]m|bir\s*daha|yinele)/i.test(msg)) return 'REPEAT';
     // E-Belge / Invoice
