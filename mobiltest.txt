@@ -1,0 +1,23 @@
+aşağıdaki eksikikleri mevcut yapıyı bozmadan entegre et. ettiğinde diğer yapılar bozulmasın
+-Konusarak yük ekleme aktif değil ve tam çalışmıyor, yükleme yeri ile indirme yerlerini yanlış alıyor,(örnek: İstanbul'dan İzmir'e 27 ton ham demir yükü var. ton fiyatı 750 +kdv dir, yük bu gün saat :14:00 dan sonra yüklenecek. 366 saat içerisinde teslim edilecek. irtibat kurulacak kişi  Kazım KARTAL . irtibat tel:05057945405) söylendiği zaman İstanbul ile İZmir farkıl kutucuklar olarak algğılanıyor, Forma işle dediğimiz zaan bir sonak iekranda formda hiç bir şey işlenmemiş olarak görünüyor. bu sorun kökten çözüme kavuştur.
+-her veri girisi yapılan boks(kutucukları) veritabın ile karsılastır. eksiklik var ise düzelt.
+
+-Aplikasyon bittiğinde senaryo oluştur. aynı anda 10.000 kisinini bağlantdığını ve işlem yaptığını test et. sitede çökme, yavaşlama var ise çözüm yollarını bulv e öneride bulun.
+Login ekranında rol seçimi yapıldıktan sonra veri girisi ekranı gelmiyor.
+
+
+
+
+Sen deneyimli bir:
+
+* Enterprise Yazılım Mimarı
+* Mobil Uygulama Geliştiricisi
+* React Native Uzmanı
+* UX/UI Tasarımcısı
+* Lojistik Operasyon Uzmanı
+* Backend API Mimarı
+* Form ve Validasyon Sistemi Uzmanı
+* Ölçeklenebilir Sistem Tasarım Uzmanı
+* Güvenlik ve Performans Denetçisi gibi davranacaksın.
+
+Bugüne kadar benim geliştirdiğim uygulamaya benzer en az 20 adet büyük ölçekli mobil/web  plikasyon geliştirmiş deneyimli bir teknik ekip lideri bakış açısıyla hareket edeceksin.Ben sana tamamlanmış aplikasyonumu vereceğim. Mobil uygulamayayı refrans alarak, Kaptan_master.md ve onespace.md dosyalarına sadık kalarak, mobil uygulamada varo lup Web uygulamada olmayan bütün modül, sayfa ve kodların bana bir promtunu mobilweb.md olarak çıkarmanı istiyorum.

@@ -1,0 +1,529 @@
+# ENTERPRISE ADMIN PANEL + GELİŞMİŞ ROL & YETKİ YÖNETİM SİSTEMİ + QA TEST CENTER MASTER PROMPT
+
+ROL:
+Sen dünya çapında deneyimli bir:
+
+* Enterprise Yazılım Mimarı
+* RBAC (Role Based Access Control) Uzmanı
+* React Native Uzmanı
+* Admin Dashboard UX/UI Mimarı
+* Backend API Mimarı
+* QA Automation Architect
+* DevOps Architect
+* Test Automation Engineer
+* Database Architect
+* Lojistik Operasyon Uzmanı
+* SaaS Sistem Mimarı
+* Güvenlik Mühendisi
+* Form ve Validasyon Sistemi Uzmanı
+
+gibi davranacaksın.
+
+Görevin:
+Büyük ölçekli bir lojistik ve taşımacılık platformu için:
+
+1. ENTERPRISE ADMIN PANELİ
+2. GELİŞMİŞ ROL & YETKİ YÖNETİMİ
+3. QA TEST CENTER
+4. AUTOMATED HEALTH MONITORING SYSTEM
+5. ENTERPRISE TEST AUTOMATION ECOSYSTEM
+
+tasarlamak.
+
+Mobil uygulama ve backend sistemi büyük ölçüde tamamlandı.
+
+Şimdi eksik olan yapı:
+Tam profesyonel, future-proof, enterprise-grade ADMIN PANELİ + TEST & MONITORING MERKEZİ.
+
+---
+
+## SİSTEMDEKİ KULLANICI TİPLERİ
+
+Sistemde toplam 6 ana kullanıcı tipi bulunmaktadır:
+
+0 - Süper Admin
+1 - Firma / Yük Sahibi
+2 - Taşıyıcı / Sürücü
+3 - İşletme Sahibi
+4 - Genel Kullanıcı
+5 - Misafir Kullanıcı
+veritabanında bu kulanıcılaran eksik var ise tamamla. ilgili dosyalarda düzenleme gerkiyorsa hepsini incele ve tammamla.
+
+ÇOK ÖNEMLİ:
+
+Süper Admin;
+sistemdeki herhangi bir kullanıcıyı istediği role çevirebilmelidir.
+
+Örnek:
+
+* Genel kullanıcı → Admin
+* Genel kullanıcı → Firma sahibi
+* Genel kullanıcı → Taşıyıcı
+* Taşıyıcı → Admin
+* Firma sahibi → Moderatör
+* Genel kullanıcı → İşletme sahibi
+
+Sistem HARDCODE olmamalıdır.
+
+Tüm roller ve yetkiler admin panelinden dinamik yönetilmelidir.
+
+---
+
+## ANA HEDEF
+
+Basit bir admin paneli istemiyorum.mevcut admin panelini geniş bir şekilde inceleyerek bu promtu mevcut admin paneline entegre et. 
+
+İstediğim yapı:
+
+* Enterprise-grade Admin Panel
+* Enterprise RBAC System
+* Dynamic Permission Management
+* Automated QA Test Center
+* Live System Monitoring
+* Health Monitoring Dashboard
+* AI Assisted Testing
+* Enterprise Security Center
+
+olmalıdır.
+
+---
+
+## RBAC VE YETKİ SİSTEMİ
+
+Sistem aşağıdakileri desteklemelidir:
+
+* Modül bazlı yetkilendirme
+* Sayfa bazlı yetkilendirme
+* İşlem bazlı yetkilendirme
+* Çoklu rol sistemi
+* Dinamik rol sistemi
+* Yetki inheritance sistemi
+* Yetki template sistemi
+* Permission grouping
+* Permission cloning
+* Temporary permissions
+* Scope-based permissions
+* Fine-grained permissions
+* Region based authorization
+* Multi tenant authorization
+
+---
+
+## ADMİN PANELİ AMAÇLARI
+
+Süper Admin aşağıdakileri yapabilmelidir:
+
+* Yeni rol oluşturma
+* Yetki oluşturma
+* Yetki düzenleme
+* Modül bazlı erişim verme
+* API erişimi verme
+* Finansal erişim verme
+* Yetki kopyalama
+* Toplu yetki atama
+* Kullanıcı engelleme
+* Suspend işlemleri
+* Admin yönetimi
+* Audit log görüntüleme
+* Permission restore sistemi
+* Rol şablonları oluşturma
+
+---
+
+## MODÜL BAZLI YETKİLENDİRME
+
+Aşağıdaki modüller için tam yetki sistemi kur:
+
+* Dashboard
+* Kullanıcı Yönetimi
+* Yetki Yönetimi
+* Firma Yönetimi
+* Taşıyıcı Yönetimi
+* Şoför Yönetimi
+* Araç Yönetimi
+* Yük Yönetimi
+* Teklif Sistemi
+* Escrow Sistemi
+* Wallet Sistemi
+* Muhasebe Sistemi
+* Gelir Gider Sistemi
+* E-Fatura
+* Vergi Sistemi
+* GPS Sistemi
+* Canlı Takip Sistemi
+* OCR Sistemi
+* AI Sistemleri
+* CRM Sistemi
+* Support Ticket
+* Marketplace
+* Restoran Sistemi
+* Akaryakıt Sistemi
+* Otopark Sistemi
+* Bildirim Sistemi
+* CMS Sistemi
+* Banner Yönetimi
+* Dosya Yönetimi
+* API Yönetimi
+* Entegrasyon Yönetimi
+* Mobil App Management
+* Security Center
+* Fraud Detection
+* Audit Logs
+* Backup System
+* System Settings
+
+---
+
+## MODERN PERMISSION MATRIX
+
+Eski tarz düz checkbox sistemi istemiyorum.
+
+Modern enterprise düzeyde:
+Permission Matrix sistemi tasarla.
+
+Özellikler:
+
+* Accordion yapı
+* Expandable permission groups
+* Nested hierarchy
+* Smart checkbox logic
+* Parent-child checkbox sistemi
+* Select all
+* Indeterminate checkbox
+* Yetki filtreleme
+* Role filtreleme
+* Permission templates
+* Permission presets
+* Permission clone sistemi
+* Drag & Drop grouping
+* Security warning system
+* Dangerous permission highlighting
+* Permission dependency alerts
+
+---
+
+ÇOK ÖNEMLİ YENİ MODÜL:
+QA TEST CENTER
+--------------
+
+Sisteme tam profesyonel bir:
+
+QA TEST CENTER
+TEST AUTOMATION PANEL
+SYSTEM HEALTH CENTER
+
+ekle.
+
+Bu sistem;
+
+* Yazılımcılar
+* QA ekipleri
+* Süper adminler
+* Teknik adminler
+
+tarafından kullanılabilecek şekilde tasarlanmalıdır.
+
+---
+
+## QA TEST CENTER AMAÇLARI
+
+Admin paneli üzerinden:
+
+* Manuel test çalıştırma
+* Otomatik test çalıştırma
+* Scheduled test system
+* Live monitoring
+* Health monitoring
+* Error tracking
+* Regression testing
+* API health check
+* Mobile app testing
+* Web testing
+* Integration testing
+* Permission testing
+
+yapılabilmelidir.
+
+---
+
+## TEST AUTOMATION MİMARİSİ
+
+Sistem aşağıdakileri desteklemelidir:
+
+* Detox
+* Jest
+* E2E testing
+* Integration testing
+* API testing
+* Smoke testing
+* Regression testing
+* Load testing
+* Performance testing
+* Security testing
+
+---
+
+## E2E TEST SİSTEMİ
+
+React Native mobil uygulama için:
+
+Detox + Jest tabanlı profesyonel E2E test mimarisi oluştur.
+
+Testler gerçek kullanıcı gibi çalışmalıdır.
+
+Örnek:
+
+* Login testi
+* OTP testi
+* Kayıt testi
+* Yük oluşturma testi
+* Teklif gönderme testi
+* Ödeme testi
+* Escrow testi
+* GPS testi
+* Yetki testi
+* Admin panel testi
+* Wallet testi
+* E-Fatura testi
+
+---
+
+## QA TEST CENTER PANELİ
+
+Admin panelinde özel bir:
+
+TEST CENTER MODÜLÜ
+oluştur.
+
+Bu modülde şunlar bulunmalıdır:
+
+---
+
+## TEST DASHBOARD
+
+* Test başarı oranı
+* Son başarısız testler
+* Canlı sistem sağlığı
+* API response süreleri
+* Failed modules
+* Critical alerts
+* Test geçmişi
+* Error logs
+
+---
+
+## MANUEL TEST ÇALIŞTIRMA
+
+Admin aşağıdakileri manuel çalıştırabilmelidir:
+
+* Login testleri
+* OTP testleri
+* Escrow testleri
+* Payment testleri
+* GPS testleri
+* API testleri
+* Permission testleri
+* Notification testleri
+* E-Fatura testleri
+
+Örnek UI:
+
+[ Test Başlat ]
+[ Tüm Testleri Çalıştır ]
+[ Failed Testleri Yeniden Çalıştır ]
+
+---
+
+## OTOMATİK HEALTH MONITORING
+
+Sistem otomatik olarak:
+
+* API sağlık kontrolü
+* Database sağlık kontrolü
+* SMS servis kontrolü
+* Mail servis kontrolü
+* Payment gateway kontrolü
+* Websocket kontrolü
+* GPS servis kontrolü
+
+yapmalıdır.
+
+---
+
+## SCHEDULED TEST SYSTEM
+
+Sistem otomatik olarak:
+
+* Her 5 dakikada API testi
+* Her 15 dakikada login testi
+* Her 30 dakikada ödeme testi
+* Günlük regression testleri
+* Haftalık tam sistem testi
+
+çalıştırabilmelidir.
+
+---
+
+## TEST RAPORLAMA SİSTEMİ
+
+Admin aşağıdakileri görebilmelidir:
+
+* Başarılı testler
+* Başarısız testler
+* Test logları
+* Error screenshots
+* Device logs
+* API logs
+* Performance metrics
+* Crash reports
+
+---
+
+## AI DESTEKLİ TEST SİSTEMİ
+
+Sisteme geleceğe dönük:
+
+AI TEST AGENT
+mimarisi ekle.
+
+Bu sistem:
+
+* Otomatik hata tespiti
+* Kırık ekran tespiti
+* UI bozulması tespiti
+* Performans düşüşü analizi
+* Risk analizi
+* Şüpheli hata analizi
+
+yapabilmelidir.
+
+---
+
+## GÜVENLİK MERKEZİ
+
+Enterprise güvenlik sistemi tasarla:
+
+* RBAC security
+* Privilege escalation prevention
+* Session tracking
+* Device tracking
+* IP tracking
+* Geo restriction
+* MFA / 2FA
+* Security alerts
+* Sensitive action confirmation
+* Admin action logging
+
+---
+
+## VERİTABANI MİMARİSİ
+
+Aşağıdaki tabloları tasarla:
+
+* users
+* roles
+* permissions
+* role_permissions
+* user_roles
+* permission_groups
+* module_permissions
+* audit_logs
+* security_events
+* test_runs
+* test_results
+* system_health_logs
+* api_health_logs
+* monitoring_events
+* crash_reports
+
+---
+
+## BACKEND MİMARİSİ
+
+Aşağıdaki yapıları tasarla:
+
+* RBAC middleware
+* Permission guards
+* Dynamic permission loader
+* Route protection
+* Permission cache
+* Redis integration
+* QA automation engine
+* Test execution service
+* Monitoring service
+* Alert service
+* Notification engine
+
+---
+
+## MOBİL UYGULAMA ENTEGRASYONU
+
+React Native uygulamada:
+
+* Permission-based UI
+* Dynamic menu system
+* Route protection
+* Hidden unauthorized screens
+* Live permission refresh
+* Force logout system
+* Real-time access revocation
+
+nasıl yapılmalı detaylı açıkla.
+
+---
+
+## UX/UI HEDEFLERİ
+
+Sistem:
+
+* Teknik olmayan adminlerin bile kullanabileceği kadar kolay
+* Görsel olarak anlaşılır
+* Çok büyük ölçeklenebilir
+* Future-proof
+* Dark mode uyumlu
+* Tablet uyumlu
+* Mobil uyumlu
+* Hızlı
+* Operasyonel olarak kolay yönetilebilir
+
+olmalıdır.
+
+---
+
+## ÇIKTI FORMATI
+
+Aşağıdaki başlıklarda detaylı çıktı üret:
+
+1. En doğru RBAC mimarisi
+2. Enterprise admin panel yapısı
+3. QA Test Center mimarisi
+4. Detox + Jest entegrasyonu
+5. Automated Testing Architecture
+6. Health Monitoring System
+7. Permission Matrix yapısı
+8. Veritabanı şeması
+9. API mimarisi
+10. React Native entegrasyonu
+11. Güvenlik stratejileri
+12. Cache sistemi
+13. Future-proof öneriler
+14. AI Test Agent mimarisi
+15. Enterprise best practices
+
+ÇOK ÖNEMLİ:
+
+Junior seviyede basit sistem üretme.
+
+Şu seviyelerde düşün:
+
+* Uber Freight
+* Stripe Dashboard
+* AWS IAM
+* Azure RBAC
+* Salesforce
+* SAP
+* Oracle Enterprise
+* Enterprise SaaS Platformları
+
+Tam profesyonel, enterprise-grade bir:
+ADMIN + RBAC + QA TEST + MONITORING + SECURITY EKOSİSTEMİ tasarla.
