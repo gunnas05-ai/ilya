@@ -127,6 +127,17 @@ export class VoiceService {
     if (intent === 'CHECK_PROFILE_STATUS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'CarrierProfile' }, extracted, response: 'Profil durumunuz görüntüleniyor.' };
     if (intent === 'DELETE_ENTITY') return this.parseDelete(msg, msgLower, extracted);
     if (intent === 'NAVIGATE') return this.parseNavigation(msg, msgLower, extracted);
+    if (intent === 'SHOW_MY_BIDS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'MyBids' }, extracted, response: 'Teklifleriniz görüntüleniyor.' };
+    if (intent === 'SHOW_MY_LOADS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'LoadTracking' }, extracted, response: 'Yükleriniz görüntüleniyor.' };
+    if (intent === 'SHOW_DOCUMENTS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'InvoiceList' }, extracted, response: 'Evraklarınız görüntüleniyor.' };
+    if (intent === 'CHECK_NOTIFICATIONS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'Notifications' }, extracted, response: 'Bildirimleriniz görüntüleniyor.' };
+    if (intent === 'FIND_RETURN_LOADS') return this.parseReturnLoads(msg, msgLower, extracted);
+    if (intent === 'CALCULATE_ROUTE') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'RoutePlanner' }, extracted, response: 'Rota planlayıcı açılıyor.' };
+    if (intent === 'CHECK_LOAD_STATUS') return this.parseLoadStatus(msg, msgLower, extracted);
+    if (intent === 'SHOW_DRIVER_DASHBOARD') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'DriverDashboard' }, extracted, response: 'Sürücü paneli açılıyor.' };
+    if (intent === 'PART_MARKET_SEARCH') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'PartMarketHome' }, extracted, response: 'Yedek parça pazarı açılıyor.' };
+    if (intent === 'CHECK_ESCROW_STATUS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'Wallet' }, extracted, response: 'Escrow ve cüzdan durumunuz görüntüleniyor.' };
+    if (intent === 'SHOW_ANALYTICS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'AnalyticsDashboard' }, extracted, response: 'Analitik dashboard açılıyor.' };
     return this.parseLoadCreation(msg, msgLower, extracted);
   }
 
@@ -175,6 +186,29 @@ export class VoiceService {
     if (/(?:profil|hesap).*(?:durum|tamamlanma|eksik)/i.test(msg)) return 'CHECK_PROFILE_STATUS';
     // Delete operations
     if (/(?:sil|kald[ıi]r|iptal\s*et).*(?:y[üu]k|ilan|ara[çc]|gider|gelir)/i.test(msg)) return 'DELETE_ENTITY';
+    // Bids
+    if (/(?:tekliflerim|tekliflerimi|verdiklerim\s*teklif)/i.test(msg)) return 'SHOW_MY_BIDS';
+    // My loads
+    if (/(?:y[üu]klerim|y[üu]klerimi|aktif\s*y[üu]klerim)/i.test(msg) && !/(?:ara|bul|s[ıi]rala)/i.test(msg)) return 'SHOW_MY_LOADS';
+    // Documents
+    if (/(?:evraklar[ıi]m|belgelerim|d[oö]k[üu]manlar[ıi]m|e-belge)/i.test(msg)) return 'SHOW_DOCUMENTS';
+    // Notifications
+    if (/(?:bildirim|bildirimler|duyuru)/i.test(msg)) return 'CHECK_NOTIFICATIONS';
+    // Return loads
+    if (/(?:d[oö]n[üu][şs]\s*y[üu]k|geri\s*d[oö]n[üu][şs])/i.test(msg)) return 'FIND_RETURN_LOADS';
+    // Route
+    if (/(?:rota|yol\s*tarifi|g[üu]zergah|mesafe\s*hesapla)/i.test(msg)) return 'CALCULATE_ROUTE';
+    // Load status
+    if (/(?:y[üu]k[üu]n\s*durumu|y[üu]k\s*durumu|sipari[şs]\s*durumu)/i.test(msg)) return 'CHECK_LOAD_STATUS';
+    if (/(?:ABC|TRK|IST)\d+/i.test(msg) && /durum/i.test(msg)) return 'CHECK_LOAD_STATUS';
+    // Driver dashboard
+    if (/(?:s[üu]r[üu]c[üu]\s*panel|AETR|s[üu]r[üu][şs]\s*saati|mola|dinlenme)/i.test(msg)) return 'SHOW_DRIVER_DASHBOARD';
+    // Part market
+    if (/(?:yedek\s*par[çc]a|par[çc]a\s*ara|motor\s*par[çc]as[ıi]|lastik\s*ara)/i.test(msg)) return 'PART_MARKET_SEARCH';
+    // Escrow
+    if (/(?:escrow|g[üu]venli\s*[oö]deme|emanet|bloke)/i.test(msg)) return 'CHECK_ESCROW_STATUS';
+    // Analytics
+    if (/(?:analitik|rapor|istatistik|grafik|dashboard)/i.test(msg)) return 'SHOW_ANALYTICS';
     // Navigation (broad match — check last after specific patterns)
     if (/(?:git|a[çc]|g[oö]ster|g[oö]r[üu]nt[üu]le|y[oö]nlendir)\s+(?:ana\s*sayfaya|profil|finans|c[üu]zdan|ayarlar|harita|belge|d[oö]k[üu]man)/i.test(msg)) return 'NAVIGATE';
     if (/(?:ana\s*sayfa|anasayfa|home|ba[şs]lang[ıi][çc])/i.test(msg)) return 'NAVIGATE';
@@ -730,6 +764,36 @@ export class VoiceService {
       params: { entityType: extracted.entityType, entityId: extracted.entityId, entityLabel: extracted.entityLabel },
       extracted,
       response: `${extracted.entityLabel} silme işlemi için onay gerekiyor. ${extracted.entityId ? 'ID: ' + extracted.entityId : ''} Silmek istediğinize emin misiniz?`,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: FIND_RETURN_LOADS
+  // ═══════════════════════════════════════════════════════════
+  private parseReturnLoads(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    const CITIES = ['İstanbul','Ankara','İzmir','Bursa','Antalya','Konya','Adana','Mersin','Gaziantep'];
+    for (const c of CITIES) { if (msgLower.includes(this.turkishToAscii(c))) { extracted.city = c; break; } }
+    const kmMatch = msg.match(/(\d+)\s*km/i);
+    if (kmMatch) extracted.radiusKm = parseInt(kmMatch[1]);
+    return {
+      success: true, intent: 'FIND_RETURN_LOADS', action: 'NAVIGATE',
+      params: { screen: 'ReturnLoad', city: extracted.city, radiusKm: extracted.radiusKm },
+      extracted,
+      response: `${extracted.city ? extracted.city + ' bölgesinde' : 'Yakınınızda'} dönüş yükleri aranıyor.`,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Intent: CHECK_LOAD_STATUS
+  // ═══════════════════════════════════════════════════════════
+  private parseLoadStatus(msg: string, msgLower: string, extracted: Record<string, any>): any {
+    const idMatch = msg.match(/([A-Z]{2,4}[- ]?\d{3,6})/i);
+    if (idMatch) extracted.loadId = idMatch[1];
+    return {
+      success: true, intent: 'CHECK_LOAD_STATUS', action: 'NAVIGATE',
+      params: { screen: 'LoadTrackingDetail', loadId: extracted.loadId },
+      extracted,
+      response: extracted.loadId ? `${extracted.loadId} nolu yükün durumu görüntüleniyor.` : 'Yük takip sayfası açılıyor.',
     };
   }
 

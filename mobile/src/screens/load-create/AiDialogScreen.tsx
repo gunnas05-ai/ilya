@@ -190,7 +190,25 @@ export default function AiDialogScreen({ navigation, route }: any) {
         return;
       }
 
-      // Default: CREATE_LOAD
+      // Tüm NAVIGATE intent'leri
+      const navigateIntents = [
+        'LIST_INVOICES','VIEW_ACCOUNTANT','VIEW_PROFIT_LOSS','CHECK_WALLET',
+        'SEARCH_RESTAURANTS','MAKE_RESERVATION','START_TRACKING','VIEW_TRACKING',
+        'LIST_VEHICLES','UPDATE_PROFILE','CHECK_PROFILE_STATUS','SEARCH_FUEL_STATIONS',
+        'CREATE_INVOICE','CREATE_VEHICLE','SHOW_MY_BIDS','SHOW_MY_LOADS',
+        'SHOW_DOCUMENTS','CHECK_NOTIFICATIONS','FIND_RETURN_LOADS','CALCULATE_ROUTE',
+        'CHECK_LOAD_STATUS','SHOW_DRIVER_DASHBOARD','PART_MARKET_SEARCH',
+        'CHECK_ESCROW_STATUS','SHOW_ANALYTICS',
+      ];
+      if (navigateIntents.includes(intent) && params.screen) {
+        addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'Yönlendiriliyorsunuz...' });
+        hapticSuccess();
+        setTimeout(() => navigation.navigate(params.screen, params), 600);
+        setLoading(false);
+        return;
+      }
+
+      // CREATE_LOAD
       if (Object.keys(fields).length >= 2) {
         // Şehir sıralamasını düzelt: "X'den Y'ye" → X=kalkış, Y=varış
         if (fields.originCity && fields.destCity) {
