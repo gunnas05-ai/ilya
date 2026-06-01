@@ -245,8 +245,18 @@ export default function AiDialogScreen({ navigation, route }: any) {
         'CREATE_INVOICE','CREATE_VEHICLE','SHOW_MY_BIDS','SHOW_MY_LOADS',
         'SHOW_DOCUMENTS','CHECK_NOTIFICATIONS','FIND_RETURN_LOADS','CALCULATE_ROUTE',
         'CHECK_LOAD_STATUS','SHOW_DRIVER_DASHBOARD','PART_MARKET_SEARCH',
-        'CHECK_ESCROW_STATUS','SHOW_ANALYTICS',
+        'CHECK_ESCROW_STATUS','SHOW_ANALYTICS','WHERE_AM_I',
+        'WHAT_IS_MY_BALANCE','SHOW_MY_PROFILE','OPEN_SETTINGS',
       ];
+      // LOGOUT
+      if (intent === 'LOGOUT' || data.action === 'LOGOUT') {
+        addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'Çıkış yapılıyor...' });
+        const { logout } = useAuthStore.getState();
+        setTimeout(() => { logout(); }, 1000);
+        setLoading(false);
+        return;
+      }
+
       if (navigateIntents.includes(intent) && params.screen) {
         addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'Yönlendiriliyorsunuz...' });
         hapticSuccess();
