@@ -104,22 +104,24 @@ export default function AiDialogScreen({ navigation, route }: any) {
 
   // GPS konumunu al
   useEffect(() => {
-    Location.requestForegroundPermissionsAsync().then(({ status }) => {
-      if (status === 'granted') {
-        Location.getCurrentPositionAsync({}).then(pos => {
-          setGpsLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
-          fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`)
-            .then(r => r.json()).then(data => {
-              const addr = data.address || {};
-              setGpsLocation(prev => ({
-                ...prev!,
-                city: addr.city || addr.town || addr.province || '',
-                district: addr.county || addr.suburb || addr.district || '',
-              }));
-            }).catch(() => {});
-        }).catch(() => {});
-      }
-    });
+    (async () => {
+      try {
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') return;
+        const pos = await Location.getCurrentPositionAsync({});
+        setGpsLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
+        try {
+          const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+          const data = await r.json();
+          const addr = data.address || {};
+          setGpsLocation(prev => ({
+            ...prev!,
+            city: addr.city || addr.town || addr.province || '',
+            district: addr.county || addr.suburb || addr.district || '',
+          }));
+        } catch {}
+      } catch {}
+    })();
   }, []);
 
   const scrollToBottom = () => setTimeout(() => flatListRef.current?.scrollToEnd({ animated: true }), 200);
