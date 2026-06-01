@@ -247,6 +247,7 @@ export default function AiDialogScreen({ navigation, route }: any) {
         'CHECK_LOAD_STATUS','SHOW_DRIVER_DASHBOARD','PART_MARKET_SEARCH',
         'CHECK_ESCROW_STATUS','SHOW_ANALYTICS','WHERE_AM_I',
         'WHAT_IS_MY_BALANCE','SHOW_MY_PROFILE','OPEN_SETTINGS',
+        'DAILY_SUMMARY','MY_LAST_LOAD','MY_STATS',
       ];
       // LOGOUT
       if (intent === 'LOGOUT' || data.action === 'LOGOUT') {

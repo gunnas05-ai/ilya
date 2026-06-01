@@ -148,7 +148,10 @@ export class VoiceService {
     if (intent === 'PART_MARKET_SEARCH') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'PartMarketHome' }, extracted, response: 'Yedek parça pazarı açılıyor.' };
     if (intent === 'CHECK_ESCROW_STATUS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'Wallet' }, extracted, response: 'Escrow ve cüzdan durumunuz görüntüleniyor.' };
     if (intent === 'SHOW_ANALYTICS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'AnalyticsDashboard' }, extracted, response: 'Analitik dashboard açılıyor.' };
-    if (intent === 'WHERE_AM_I') return { success: true, intent, action: 'SHOW_LOCATION', extracted, response: 'Konumunuzu haritada gösteriyorum.' };
+    if (intent === 'WHERE_AM_I') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'RoutePlanner' }, extracted, response: 'Konumunuz haritada gösteriliyor.' };
+    if (intent === 'DAILY_SUMMARY') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'Finance' }, extracted, response: 'Günlük özetiniz: Gelir-gider sayfasında tüm işlemlerinizi görebilirsiniz.' };
+    if (intent === 'MY_LAST_LOAD') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'LoadTracking' }, extracted, response: 'Son yükleriniz görüntüleniyor.' };
+    if (intent === 'MY_STATS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'DriverDashboard' }, extracted, response: 'İstatistikleriniz görüntüleniyor.' };
     if (intent === 'WHAT_IS_MY_BALANCE') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'Wallet' }, extracted, response: 'Cüzdan bakiyeniz görüntüleniyor.' };
     if (intent === 'SHOW_MY_PROFILE') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'CarrierProfile' }, extracted, response: 'Profil bilgileriniz görüntüleniyor.' };
     if (intent === 'OPEN_SETTINGS') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'SystemSettings' }, extracted, response: 'Ayarlar sayfası açılıyor.' };
@@ -239,6 +242,12 @@ export class VoiceService {
     if (/(?:ayarlar[ıi]\s*a[çc]|ayarlara\s*git|settings|yap[ıi]land[ıi]rma)/i.test(msg)) return 'OPEN_SETTINGS';
     // Logout
     if (/(?:[çc][ıi]k[ıi][şs]\s*yap|oturumu\s*kapat|hesab[ıi]mdan\s*[çc][ıi]k|g[üu]le\s*g[üu]le)/i.test(msg)) return 'LOGOUT';
+    // Daily summary
+    if (/(?:bug[üu]n[üu]n\s*[oö]zeti|g[üu]nl[üu]k\s*[oö]zet|bug[üu]n\s*ne\s*oldu|bug[üu]n\s*neler\s*oldu)/i.test(msg)) return 'DAILY_SUMMARY';
+    // My last load
+    if (/(?:son\s*y[üu]k[üu]m|son\s*y[üu]klerim|en\s*son\s*y[üu]k|y[üu]klerim\s*ne\s*durumda)/i.test(msg)) return 'MY_LAST_LOAD';
+    // My stats
+    if (/(?:istatistiklerim|ka[çc]\s*y[üu]k\s*ta[şs][ıi]d[ıi]m|toplam\s*kazancım|performans[ıi]m)/i.test(msg)) return 'MY_STATS';
     // Navigation (broad match — check last after specific patterns)
     if (/(?:git|a[çc]|g[oö]ster|g[oö]r[üu]nt[üu]le|y[oö]nlendir)\s+(?:ana\s*sayfaya|profil|finans|c[üu]zdan|ayarlar|harita|belge|d[oö]k[üu]man)/i.test(msg)) return 'NAVIGATE';
     if (/(?:ana\s*sayfa|anasayfa|home|ba[şs]lang[ıi][çc])/i.test(msg)) return 'NAVIGATE';
