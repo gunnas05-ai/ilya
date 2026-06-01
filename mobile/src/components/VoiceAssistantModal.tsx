@@ -4,9 +4,7 @@ import * as Speech from 'expo-speech';
 import { apiClient } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { hapticLight, hapticSuccess } from '../utils/haptic';
-import KaptanAvatar from './KaptanAvatar';
 import Avatar3D from './Avatar3D';
-// KaptanAvatar replaced by Avatar3D for 3D rendering
 
 const { width: SW, height: SH } = Dimensions.get('window');
 

@@ -1,5 +1,5 @@
 import { useRef, useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, StyleSheet, ActivityIndicator, Image } from 'react-native';
 import { Canvas, useFrame, useLoader, useThree } from '@react-three/fiber';
 import { TextureLoader } from 'three';
 import * as THREE from 'three';
@@ -72,6 +72,17 @@ function AvatarHead({ state, onReady }: { state: AvatarState; onReady?: () => vo
       {/* ── Shoulders / Upper body ── */}
       <mesh position={[0, -1.8, 0]}>
         <capsuleGeometry args={[0.5, 1.2, 8, 16]} />
+        <meshStandardMaterial color="#0F2645" roughness={0.5} metalness={0.1} />
+      </mesh>
+
+      {/* ── Left arm ── */}
+      <mesh position={[-0.65, -1.6, 0]} rotation={[0, 0, 0.2]}>
+        <capsuleGeometry args={[0.12, 0.9, 8, 8]} />
+        <meshStandardMaterial color="#0F2645" roughness={0.5} metalness={0.1} />
+      </mesh>
+      {/* ── Right arm ── */}
+      <mesh position={[0.65, -1.6, 0]} rotation={[0, 0, -0.2]}>
+        <capsuleGeometry args={[0.12, 0.9, 8, 8]} />
         <meshStandardMaterial color="#0F2645" roughness={0.5} metalness={0.1} />
       </mesh>
 
@@ -185,6 +196,16 @@ interface Props {
 
 export default function Avatar3D({ state, height = 350 }: Props) {
   const [ready, setReady] = useState(false);
+  const [error, setError] = useState(false);
+
+  if (error) {
+    // Fallback: 2D image
+    return (
+      <View style={[styles.container, { height, alignItems: 'center', justifyContent: 'center' }]}>
+        <Image source={FACE_IMG} style={{ width: height * 0.5, height: height * 0.5, borderRadius: height * 0.25 }} resizeMode="cover" />
+      </View>
+    );
+  }
 
   return (
     <View style={[styles.container, { height }]}>
@@ -198,6 +219,7 @@ export default function Avatar3D({ state, height = 350 }: Props) {
         style={styles.canvas}
         gl={{ antialias: true, alpha: true }}
         onCreated={() => setReady(true)}
+        onError={() => setError(true)}
       >
         <CameraRig />
         <SceneLighting />
