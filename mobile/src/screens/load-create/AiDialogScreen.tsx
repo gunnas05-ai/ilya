@@ -111,7 +111,8 @@ export default function AiDialogScreen({ navigation, route }: any) {
         const pos = await Location.getCurrentPositionAsync({});
         setGpsLocation({ lat: pos.coords.latitude, lng: pos.coords.longitude });
         try {
-          const r = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${pos.coords.latitude}&lon=${pos.coords.longitude}`);
+          const url = 'https://nominatim.openstreetmap.org/reverse?format=json&lat=' + pos.coords.latitude + '&lon=' + pos.coords.longitude;
+          const r = await fetch(url);
           const data = await r.json();
           const addr = data.address || {};
           setGpsLocation(prev => ({
