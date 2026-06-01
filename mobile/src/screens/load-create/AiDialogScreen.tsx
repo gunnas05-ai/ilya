@@ -24,11 +24,11 @@ function cleanPhone(raw: string): string {
 export default function AiDialogScreen({ navigation, route }: any) {
   const { colors } = useTheme();
   const { updateFormData } = useLoadCreateStore();
-  const flatListRef = useRef<FlatList>(null);
-  const inputRef = useRef<TextInput>(null);
+  const flatListRef = useRef(null);
+  const inputRef = useRef(null);
   const initialMsg = route?.params?.initialMessage;
 
-  const [messages, setMessages] = useState<Message[]>([{
+  const [messages, setMessages] = useState([{
     id: '0', role: 'assistant',
     text: initialMsg
       ? `🎤 ${initialMsg}\n\nKonuşarak yük ekleyebilir, arama yapabilir, gider yazabilir veya istediğiniz sayfaya gidebilirsiniz.`
@@ -37,9 +37,9 @@ export default function AiDialogScreen({ navigation, route }: any) {
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [extractedFields, setExtractedFields] = useState<Record<string, any>>({});
-  const [missingFields, setMissingFields] = useState<string[]>([]);
-  const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number; city?: string; district?: string } | null>(null);
+  const [extractedFields, setExtractedFields] = useState({});
+  const [missingFields, setMissingFields] = useState([]);
+  const [gpsLocation, setGpsLocation] = useState(null);
 
   // Ses tanıma başlat
   const startVoiceRecognition = async () => {
