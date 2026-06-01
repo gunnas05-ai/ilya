@@ -26,8 +26,8 @@ export default function AiDialogScreen({ navigation, route }: any) {
   const { colors } = useTheme();
   const { updateFormData } = useLoadCreateStore();
   const { user } = useAuthStore();
-  const flatListRef = useRef<FlatList>(null);
-  const inputRef = useRef<TextInput>(null);
+  const flatListRef = useRef<any>(null);
+  const inputRef = useRef<any>(null);
   const initialMsg = route?.params?.initialMessage;
 
   // Rol bazlı selamlama
@@ -39,20 +39,21 @@ export default function AiDialogScreen({ navigation, route }: any) {
     return '📦 Yük ekleyebilir, arama yapabilir, gider yazabilirsiniz.';
   };
 
-  const [messages, setMessages] = useState<Message[]>([{
+  const defaultMsg: Message = {
     id: '0', role: 'assistant',
     text: initialMsg
       ? `🎤 ${initialMsg}\n\n${getRoleGreeting()}`
       : `🎤 Merhaba! Ben Kaptan AI Asistan.\n\n${getRoleGreeting()}\n\n📦 **Yük Ekle:** "İstanbul'dan İzmir'e 27 ton ham demir"\n🔍 **Yük Ara:** "En yakın yükleri sırala"\n💰 **Gider Yaz:** "500 TL yemek gideri yaz"\n⛽ **Yakıt:** "OPET'ten 350 litre mazot aldım"\n📄 **Fatura:** "ABC Ltd için fatura kes"\n🗺️ **Gezin:** "Profili aç", "Finans sayfasına git"\n\n💡 **İpucu:** "Neler yapabilirsin?" diye sorun, "iptal" deyin, mikrofonla konuşun.\n\n"Bulunduğum konum" derseniz GPS\'ten alırım.',
-  }]);
+  };
+  const [messages, setMessages] = useState([defaultMsg]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [extractedFields, setExtractedFields] = useState<Record<string, any>>({});
-  const [missingFields, setMissingFields] = useState<string[]>([]);
-  const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number; city?: string; district?: string } | null>(null);
-  const [convCtx, setConvCtx] = useState<Record<string, any> | null>(null);
-  const [cmdHistory, setCmdHistory] = useState<string[]>([]);
+  const [extractedFields, setExtractedFields] = useState({} as Record<string, any>);
+  const [missingFields, setMissingFields] = useState([] as string[]);
+  const [gpsLocation, setGpsLocation] = useState(null as { lat: number; lng: number; city?: string; district?: string } | null);
+  const [convCtx, setConvCtx] = useState(null as Record<string, any> | null);
+  const [cmdHistory, setCmdHistory] = useState([] as string[]);
 
   // Komutu geçmişe ekle
   const addToHistory = (cmd: string) => {
