@@ -137,7 +137,6 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
   const [voiceMsg, setVoiceMsg] = useState('');
   const [voiceListening, setVoiceListening] = useState(false);
   const [voiceProcessing, setVoiceProcessing] = useState(false);
-  const scrollRef = useRef<ScrollView>(null);
   const otpRef = useRef<TextInput>(null);
 
   // Sesli kayıt — konuşmayı dinle ve formu doldur
@@ -236,9 +235,9 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
   const { control: otpControl, handleSubmit: hsOtp, formState: { errors: otpErrors } } = useForm({ resolver: zodResolver(otpSchema), defaultValues: { otpCode: '' } });
 
   const goToStep = (target: number) => {
-    if (target === 2 && selectedRole) { hapticLight(); setStep(2); scrollRef.current?.scrollTo({ y: 0, animated: true }); }
+    if (target === 2 && selectedRole) { hapticLight(); setStep(2); }
     else if (target === 3) {
-      hs2((data) => { hapticLight(); setStep(3); scrollRef.current?.scrollTo({ y: 0, animated: true }); })();
+      hs2((data) => { hapticLight(); setStep(3); })();
     }
   };
 
@@ -322,7 +321,7 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
   const inputStyle = (hasError: boolean) => [styles.input, { backgroundColor: colors.card, color: colors.text, borderColor: hasError ? colors.danger : colors.border }] as const;
 
   return (
-    <ScrollView ref={scrollRef} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
+    <View>
       {/* Sesli Kayıt Butonu */}
       <TouchableOpacity
         style={[s.voiceBtn, { backgroundColor: voiceListening ? '#EF4444' : voiceProcessing ? '#F59E0B' : voiceActive ? '#10B981' : colors.primary, opacity: voiceProcessing ? 0.8 : 1 }]}
@@ -482,7 +481,7 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
           <Text style={styles.primaryBtnText}>Onaylıyorum</Text>
         </TouchableOpacity>
       </BottomSheet>
-    </ScrollView>
+    </View>
   );
 }
 
