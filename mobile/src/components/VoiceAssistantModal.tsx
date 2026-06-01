@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, Animated, Dimensions, Easing } from 'react-native';
+import { View, Text, TouchableOpacity, TextInput, Modal, StyleSheet, Animated, Dimensions, Easing } from 'react-native';
 import * as Speech from 'expo-speech';
 import { apiClient } from '../services/api';
 import { useAuthStore } from '../store/authStore';
@@ -314,10 +314,45 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
           </View>
         )}
 
-        {/* Manual trigger — user taps to speak again */}
+        {/* Text input + voice button row */}
         {showDialog && avatarState === 'idle' && (
-          <TouchableOpacity style={styles.listenBtn} onPress={startListening}>
-            <Text style={styles.listenBtnText}>🎤 Konuşmak için dokunun</Text>
+          <View style={styles.actionRow}>
+            <TouchableOpacity style={styles.listenBtn} onPress={startListening}>
+              <Text style={styles.listenBtnText}>🎤 Konuş</Text>
+            </TouchableOpacity>
+
+            <View style={styles.textInputRow}>
+              <TextInput
+                style={styles.textInput}
+                placeholder="Yazabilirsiniz..."
+                placeholderTextColor="#64748B"
+                onSubmitEditing={(e) => {
+                  const t = e.nativeEvent.text.trim();
+                  if (t) { setConversation(prev => [...prev, { role: 'user', text: t }]); processCommand(t); }
+                }}
+                returnKeyType="send"
+              />
+            </View>
+
+            {/* Quick chips */}
+            <View style={styles.chipRow}>
+              {['💰 Gider', '⛽ Yakıt', '📄 Fatura', '🔍 Yük Ara'].map(c => (
+                <TouchableOpacity key={c} style={styles.chip} onPress={() => {
+                  const cmd = c.includes('Gider') ? '500 TL yemek gideri yaz' : c.includes('Yakıt') ? 'OPET ten 350 litre mazot aldım' : c.includes('Fatura') ? 'ABC Ltd için 5000 TL fatura kes' : 'En yakın yükleri sırala';
+                  setConversation(prev => [...prev, { role: 'user', text: cmd }]);
+                  processCommand(cmd);
+                }}>
+                  <Text style={styles.chipText}>{c}</Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Retry button on voice failure */}
+        {showDialog && avatarState === 'error' && (
+          <TouchableOpacity style={[styles.listenBtn, { backgroundColor: '#EF4444' }]} onPress={startListening}>
+            <Text style={styles.listenBtnText}>🔄 Tekrar Dene</Text>
           </TouchableOpacity>
         )}
       </Animated.View>
@@ -339,7 +374,14 @@ const styles = StyleSheet.create({
   userMsgText: { color: '#FFF' },
   aiMsgText: { color: '#E2E8F0' },
   listenBtn: { position: 'absolute', bottom: 100, paddingHorizontal: 30, paddingVertical: 16, borderRadius: 30, backgroundColor: '#FF6B00', shadowColor: '#FF6B00', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.5, shadowRadius: 10, elevation: 8 },
-  listenBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
+  listenBtnText: { color: '#FFF', fontSize: 14, fontWeight: '800' },
+  actionRow: { position: 'absolute', bottom: 50, left: 20, right: 20, alignItems: 'center', gap: 10 },
+  textInputRow: { width: '100%', marginTop: 4 },
+  textInput: { backgroundColor: '#1E293B', borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10, color: '#FFF', fontSize: 14, borderWidth: 1, borderColor: '#334155', textAlign: 'center' },
+  chipRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 6, marginTop: 4 },
+  chip: { backgroundColor: '#FF6B0015', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 14, borderWidth: 1, borderColor: '#FF6B0030' },
+  chipText: { color: '#FF6B00', fontSize: 12, fontWeight: '600' },
+  listenBtn: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 24, backgroundColor: '#FF6B00', shadowColor: '#FF6B00', shadowOffset: {width:0,height:4}, shadowOpacity:0.5, shadowRadius:10, elevation:8 },
   particle: { position: 'absolute' },
   vignette: { ...StyleSheet.absoluteFillObject, zIndex: 1, pointerEvents: 'none' },
   stateLabel: { textAlign: 'center', marginTop: 8, fontSize: 13, fontWeight: '700', letterSpacing: 1 },
