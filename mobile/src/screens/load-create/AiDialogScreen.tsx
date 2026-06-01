@@ -26,8 +26,8 @@ export default function AiDialogScreen({ navigation, route }: any) {
   const { colors } = useTheme();
   const { updateFormData } = useLoadCreateStore();
   const { user } = useAuthStore();
-  const flatListRef = useRef<any>(null);
-  const inputRef = useRef<any>(null);
+  const flatListRef = useRef(null);
+  const inputRef = useRef(null);
   const initialMsg = route?.params?.initialMessage;
 
   // Rol bazlı selamlama
@@ -49,11 +49,11 @@ export default function AiDialogScreen({ navigation, route }: any) {
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
   const [isListening, setIsListening] = useState(false);
-  const [extractedFields, setExtractedFields] = useState({} as Record<string, any>);
-  const [missingFields, setMissingFields] = useState([] as string[]);
-  const [gpsLocation, setGpsLocation] = useState(null as { lat: number; lng: number; city?: string; district?: string } | null);
-  const [convCtx, setConvCtx] = useState(null as Record<string, any> | null);
-  const [cmdHistory, setCmdHistory] = useState([] as string[]);
+  const [extractedFields, setExtractedFields] = useState<any>({});
+  const [missingFields, setMissingFields] = useState<any>([]);
+  const [gpsLocation, setGpsLocation] = useState<any>(null);
+  const [convCtx, setConvCtx] = useState<any>(null);
+  const [cmdHistory, setCmdHistory] = useState<any>([]);
 
   // Komutu geçmişe ekle
   const addToHistory = (cmd: string) => {
