@@ -12,7 +12,6 @@ import { hapticLight, hapticSuccess, hapticError } from '../utils/haptic';
 import { apiClient } from '../services/api';
 import { showToast } from '../utils/toast';
 import BottomSheet from '../components/shared/BottomSheet';
-import { PhoneInput, isValidPhone, formatPhone } from '../components/shared/PhoneInput';
 import {
   loginSchema, step1Schema, step2Schema, otpSchema,
   step3FirmaSchema, step3TasiyiciSchema, step3IsletmeSchema,
@@ -358,7 +357,7 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
             {e2.fullName && <Text style={styles.fieldError}>{e2.fullName.message}</Text>}</View>
           )} />
           <Controller control={c2} name="phone" render={({ field }) => (
-            <View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Telefon</Text><PhoneInput value={field.value} onChangeText={field.onChange} />
+            <View style={styles.inputGroup}><Text style={[typography.label, { color: colors.text, marginBottom: spacing.xs }]}>Telefon</Text><TextInput style={inputStyle(!!e2.phone)} placeholder="05xx xxx xx xx" placeholderTextColor={colors.textTertiary} keyboardType="phone-pad" onChangeText={field.onChange} value={field.value} maxLength={11} />
             {e2.phone && <Text style={styles.fieldError}>{e2.phone.message}</Text>}</View>
           )} />
           <Controller control={c2} name="email" render={({ field }) => (
