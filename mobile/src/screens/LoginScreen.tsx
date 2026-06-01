@@ -51,25 +51,9 @@ function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => void }) {
   });
 
   // Sesli giriş
-  const startVoiceLogin = async () => {
-    if (voiceLoginActive) return;
-    setVoiceLoginActive(true);
-    setVoiceLoginMsg('🎤 Dinleniyor... Email ve şifrenizi söyleyin.');
-    try {
-      const SR = require('expo-speech-recognition');
-      if (SR?.default) {
-        const r = await SR.default.start({ lang: 'tr-TR', interimResults: false });
-        const text = r?.[0]?.transcript || '';
-        if (text) {
-          const em = text.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
-          const pw = text.match(/(?:[şs]ifre|parola|pw)\s*:?\s*(\S+)/i);
-          if (em) setLoginValue('email', em[0]);
-          if (pw) setLoginValue('password', pw[1]);
-          setVoiceLoginMsg(em || pw ? '✅ Bilgiler alındı. Giriş yapabilirsiniz.' : '⚠️ Anlaşılamadı. Manuel girin.');
-        }
-      }
-    } catch { setVoiceLoginMsg('⚠️ Ses tanıma hatası.'); }
-    setVoiceLoginActive(false);
+  const startVoiceLogin = () => {
+    setVoiceLoginMsg('⚠️ Ses tanıma sadece production build\'de çalışır. Manuel giriş yapın.');
+    setTimeout(() => setVoiceLoginMsg(''), 3000);
   };
 
   const onSubmit = async (data: LoginFormData) => {
@@ -147,28 +131,10 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
     setVoiceMsg('🎤 Dinleniyor... Rolünüzü, adınızı, telefon ve email bilgilerinizi söyleyin.');
     hapticLight();
 
-    try {
-      const SpeechRecognition = require('expo-speech-recognition');
-      if (SpeechRecognition?.default) {
-        const result = await SpeechRecognition.default.start({ lang: 'tr-TR', interimResults: false });
-        const text = result?.[0]?.transcript || '';
-        if (text.trim()) {
-          setVoiceListening(false);
-          setVoiceProcessing(true);
-          setVoiceMsg('⏳ Bilgiler analiz ediliyor...');
-          await processVoiceRegData(text);
-        } else {
-          setVoiceMsg('⚠️ Ses algılanamadı. Lütfen tekrar deneyin veya manuel giriş yapın.');
-          setVoiceListening(false);
-        }
-      } else {
-        setVoiceMsg('⚠️ Ses tanıma kullanılamıyor. Lütfen manuel giriş yapın.');
-        setVoiceListening(false);
-      }
-    } catch {
-      setVoiceMsg('⚠️ Ses tanıma hatası. Lütfen manuel giriş yapın.');
-      setVoiceListening(false);
-    }
+    setVoiceMsg('⚠️ Ses tanıma sadece production build\'de çalışır. Lütfen manuel giriş yapın.');
+    setVoiceListening(false);
+    // Not: expo-speech-recognition native modülü Expo Go'da çalışmaz.
+    // Production build (npx expo run:ios/android) gerektirir.
   };
 
   // Ses verisini analiz et ve form alanlarını doldur

@@ -46,19 +46,22 @@ export default function AiDialogScreen({ navigation, route }: any) {
     if (isListening || loading) return;
     setIsListening(true);
     try {
-      const SpeechRecognition = require('expo-speech-recognition');
-      if (SpeechRecognition?.default) {
+      let SpeechRecognition: any = null;
+      try { SpeechRecognition = require('expo-speech-recognition'); } catch {}
+      if (SpeechRecognition?.default?.start) {
         const result = await SpeechRecognition.default.start({ lang: 'tr-TR', interimResults: false });
         const text = result?.[0]?.transcript || '';
         if (text.trim()) {
           setInputText(text);
           await handleSendWithText(text);
         } else {
-          addMessage({ id: Date.now().toString(), role: 'assistant', text: '🎤 Ses algılanamadı. Lütfen tekrar deneyin veya yazabilirsiniz.' });
+          addMessage({ id: Date.now().toString(), role: 'assistant', text: '🎤 Ses algılanamadı. Lütfen yazabilirsiniz.' });
         }
+      } else {
+        addMessage({ id: Date.now().toString(), role: 'assistant', text: '🎤 Ses tanıma bu ortamda çalışmıyor (Expo Go). Lütfen yazarak devam edin.' });
       }
     } catch {
-      addMessage({ id: Date.now().toString(), role: 'assistant', text: '🎤 Ses tanıma şu anda kullanılamıyor. Lütfen yazarak devam edin.' });
+      addMessage({ id: Date.now().toString(), role: 'assistant', text: '🎤 Ses tanıma kullanılamıyor. Lütfen yazarak devam edin.' });
     } finally {
       setIsListening(false);
     }
