@@ -10,6 +10,7 @@ import { spacing, radius, typography } from '../../theme';
 import { hapticLight, hapticSuccess } from '../../utils/haptic';
 import { apiClient } from '../../services/api';
 import { useLoadCreateStore } from '../../store/loadCreateStore';
+import { useAuthStore } from '../../store/authStore';
 
 interface Message { id: string; role: 'user' | 'assistant'; text: string; }
 
@@ -24,15 +25,25 @@ function cleanPhone(raw: string): string {
 export default function AiDialogScreen({ navigation, route }: any) {
   const { colors } = useTheme();
   const { updateFormData } = useLoadCreateStore();
+  const { user } = useAuthStore();
   const flatListRef = useRef<FlatList>(null);
   const inputRef = useRef<TextInput>(null);
   const initialMsg = route?.params?.initialMessage;
 
+  // Rol bazlı selamlama
+  const getRoleGreeting = () => {
+    const role = user?.role;
+    if (role === 'tasiyici' || role === 'sofor') return '🚛 Yük bulabilir, teklif verebilir, yakıt/gider kaydı yapabilirsiniz.';
+    if (role === 'yuk_veren' || role === 'firma') return '📦 Yük oluşturabilir, taşıyıcı bulabilir, fatura kesebilirsiniz.';
+    if (role === 'admin' || role === 'super_admin') return '⚙️ Tüm sistem yönetimi, raporlama ve kullanıcı işlemleri.';
+    return '📦 Yük ekleyebilir, arama yapabilir, gider yazabilirsiniz.';
+  };
+
   const [messages, setMessages] = useState<Message[]>([{
     id: '0', role: 'assistant',
     text: initialMsg
-      ? `🎤 ${initialMsg}\n\nKonuşarak yük ekleyebilir, arama yapabilir, gider yazabilir veya istediğiniz sayfaya gidebilirsiniz.`
-      : '🎤 Merhaba! Ben Kaptan AI Asistan. Şunları yapabilirim:\n\n📦 **Yük Ekle:** "İstanbul\'dan İzmir\'e 27 ton ham demir"\n🔍 **Yük Ara:** "En yakın yükleri sırala"\n🚛 **Araç Ara:** "4 milyonluk araç arıyorum"\n💰 **Gider Yaz:** "500 TL yemek gideri yaz"\n⛽ **Yakıt Kaydet:** "OPET\'ten 350 litre mazot aldım"\n🗺️ **Gezin:** "Profili aç", "Finans sayfasına git"\n\n"Bulunduğum konum" derseniz GPS\'ten alırım.',
+      ? `🎤 ${initialMsg}\n\n${getRoleGreeting()}`
+      : `🎤 Merhaba! Ben Kaptan AI Asistan.\n\n${getRoleGreeting()}\n\n📦 **Yük Ekle:** "İstanbul'dan İzmir'e 27 ton ham demir"\n🔍 **Yük Ara:** "En yakın yükleri sırala"\n💰 **Gider Yaz:** "500 TL yemek gideri yaz"\n⛽ **Yakıt:** "OPET'ten 350 litre mazot aldım"\n📄 **Fatura:** "ABC Ltd için fatura kes"\n🗺️ **Gezin:** "Profili aç", "Finans sayfasına git"\n\n💡 **İpucu:** "Neler yapabilirsin?" diye sorun, "iptal" deyin, mikrofonla konuşun.\n\n"Bulunduğum konum" derseniz GPS\'ten alırım.',
   }]);
   const [inputText, setInputText] = useState('');
   const [loading, setLoading] = useState(false);
@@ -413,12 +424,15 @@ export default function AiDialogScreen({ navigation, route }: any) {
                 <Text style={[typography.small, { color: colors.textTertiary, marginBottom: spacing.xs }]}>Hızlı Komutlar:</Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                   {[
-                    { label: '💰 Gider Yaz', cmd: '500 TL yemek gideri yaz' },
-                    { label: '⛽ Yakıt Kaydet', cmd: 'OPET ten 350 litre mazot aldım' },
+                    { label: '💰 Gider', cmd: '500 TL yemek gideri yaz' },
+                    { label: '⛽ Yakıt', cmd: 'OPET ten 350 litre mazot aldım' },
                     { label: '🔍 Yük Ara', cmd: 'En yakın yükleri sırala' },
-                    { label: '🚛 Araç Ara', cmd: '4 milyonluk araç arıyorum' },
-                    { label: '📄 Fatura Kes', cmd: 'ABC Ltd için 5000 TL fatura kes' },
+                    { label: '🚛 Araç', cmd: '4 milyonluk araç arıyorum' },
+                    { label: '📄 Fatura', cmd: 'ABC Ltd için 5000 TL fatura kes' },
                     { label: '👤 Profil', cmd: 'Profilimi göster' },
+                    { label: '💳 Cüzdan', cmd: 'Cüzdan bakiyemi göster' },
+                    { label: '📍 Takip', cmd: 'Canlı takip başlat' },
+                    { label: '🆘 Yardım', cmd: 'Neler yapabilirsin' },
                   ].map(chip => (
                     <TouchableOpacity key={chip.label}
                       style={{ backgroundColor: colors.primary + '15', paddingHorizontal: spacing.sm, paddingVertical: 6, borderRadius: radius.pill }}
