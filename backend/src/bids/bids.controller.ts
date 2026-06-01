@@ -28,7 +28,7 @@ export class BidsController {
   @Post()
   @Throttle({ default: { limit: 10, ttl: 60000 } })
   async placeBid(@Body() body: PlaceBidDto, @Req() req: any) {
-    return this.bidsService.placeBid({ ...body, carrierId: req.user.id, carrierName: req.user.fullName });
+    return this.bidsService.placeBid({ ...body, note: body.note || '', estimatedDeliveryDays: body.estimatedDeliveryDays || 3, hasReturnLoad: body.hasReturnLoad || false, validDuration: body.validDuration || 1440, carrierId: req.user.id, carrierName: req.user.fullName });
   }
 
   @Put(':id/accept')

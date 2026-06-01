@@ -10,7 +10,7 @@ export class AiMatchingController {
 
   /** Geri bildirim kaydet */
   @Post('feedback')
-  async recordFeedback(@Body() body: { loadId: string; action: string; comment?: string; rating?: number }, @Req() req: any) {
+  async recordFeedback(@Body() body: any, @Req() req: any) {
     return this.service.recordFeedback({ ...body, carrierId: body.carrierId || req.user?.id });
   }
 
