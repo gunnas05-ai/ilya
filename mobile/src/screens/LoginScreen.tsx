@@ -42,11 +42,35 @@ function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => void }) {
   const { colors, isDark } = useTheme();
   const { login, continueAsGuest } = useAuthStore();
   const [authLoading, setAuthLoading] = useState(false);
+  const [voiceLoginMsg, setVoiceLoginMsg] = useState('');
+  const [voiceLoginActive, setVoiceLoginActive] = useState(false);
 
-  const { control, handleSubmit, formState: { errors } } = useForm<LoginFormData>({
+  const { control, handleSubmit, setValue: setLoginValue, formState: { errors } } = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
     defaultValues: { email: '', password: '' },
   });
+
+  // Sesli giriş
+  const startVoiceLogin = async () => {
+    if (voiceLoginActive) return;
+    setVoiceLoginActive(true);
+    setVoiceLoginMsg('🎤 Dinleniyor... Email ve şifrenizi söyleyin.');
+    try {
+      const SR = require('expo-speech-recognition');
+      if (SR?.default) {
+        const r = await SR.default.start({ lang: 'tr-TR', interimResults: false });
+        const text = r?.[0]?.transcript || '';
+        if (text) {
+          const em = text.match(/([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})/);
+          const pw = text.match(/(?:[şs]ifre|parola|pw)\s*:?\s*(\S+)/i);
+          if (em) setLoginValue('email', em[0]);
+          if (pw) setLoginValue('password', pw[1]);
+          setVoiceLoginMsg(em || pw ? '✅ Bilgiler alındı. Giriş yapabilirsiniz.' : '⚠️ Anlaşılamadı. Manuel girin.');
+        }
+      }
+    } catch { setVoiceLoginMsg('⚠️ Ses tanıma hatası.'); }
+    setVoiceLoginActive(false);
+  };
 
   const onSubmit = async (data: LoginFormData) => {
     hapticLight();
@@ -62,7 +86,14 @@ function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => void }) {
 
   return (
     <View>
-      <Text style={[typography.h2, { color: colors.text, fontWeight: '800', marginBottom: spacing.lg, textAlign: 'center' }]}>Giriş Yap</Text>
+      <Text style={[typography.h2, { color: colors.text, fontWeight: '800', marginBottom: spacing.sm, textAlign: 'center' }]}>Giriş Yap</Text>
+
+      {/* Sesli Giriş */}
+      <TouchableOpacity style={[s.voiceBtnSm, { backgroundColor: voiceLoginActive ? '#EF4444' : colors.primary + '20', borderColor: colors.primary + '40' }]} onPress={startVoiceLogin} disabled={voiceLoginActive}>
+        <Text style={{ fontSize: 16 }}>{voiceLoginActive ? '🔴' : '🎤'}</Text>
+        <Text style={[s.voiceBtnTextSm, { color: voiceLoginActive ? '#EF4444' : colors.primary }]}>Sesli Giriş</Text>
+      </TouchableOpacity>
+      {voiceLoginMsg ? <Text style={[s.voiceMsgSmall, { color: voiceLoginMsg.startsWith('✅') ? '#10B981' : '#EF4444' }]}>{voiceLoginMsg}</Text> : null}
 
       <Controller control={control} name="email" render={({ field: { onChange, onBlur, value } }) => (
         <View style={styles.inputGroup}>
@@ -522,4 +553,7 @@ const styles = StyleSheet.create({
   voiceBtnText: { color: '#FFF', fontSize: 15, fontWeight: '800' },
   voiceMsgBox: { padding: spacing.md, borderRadius: radius.md, borderWidth: 1, marginBottom: spacing.md },
   voiceMsgText: { fontSize: 13, fontWeight: '600', textAlign: 'center' },
+  voiceBtnSm: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: spacing.xs, paddingHorizontal: spacing.md, borderRadius: radius.pill, borderWidth: 1, gap: spacing.xs, marginBottom: spacing.sm, alignSelf: 'center' },
+  voiceBtnTextSm: { fontSize: 13, fontWeight: '700' },
+  voiceMsgSmall: { fontSize: 12, fontWeight: '600', textAlign: 'center', marginBottom: spacing.sm },
 });
