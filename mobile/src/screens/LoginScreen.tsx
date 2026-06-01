@@ -198,8 +198,10 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
       if (!fields.email) missing.push('email');
 
       if (missing.length > 0) {
-        setVoiceMsg(`📝 ${response || 'Bazı bilgiler eksik: ' + missing.join(', ')}. Tekrar konuşmak için mikrofona basın.`);
+        setVoiceMsg(`📝 ${response || 'Bazı bilgiler eksik: ' + missing.join(', ')}. 2 saniye sonra tekrar dinleyeceğim...`);
         setVoiceProcessing(false);
+        // 2 saniye sonra otomatik tekrar dinle
+        setTimeout(() => { startVoiceRegistration(); }, 2500);
       } else {
         setVoiceMsg(`✅ ${response || 'Bilgiler alındı! Devam edebilirsiniz.'}`);
         setVoiceProcessing(false);
