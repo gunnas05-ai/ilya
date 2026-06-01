@@ -15,6 +15,8 @@ function AvatarHead({ state, onReady }: { state: AvatarState; onReady?: () => vo
   const leftEyeRef = useRef<THREE.Mesh>(null);
   const rightEyeRef = useRef<THREE.Mesh>(null);
   const bodyRef = useRef<THREE.Group>(null);
+  const leftArmRef = useRef<THREE.Group>(null);
+  const rightArmRef = useRef<THREE.Group>(null);
   const time = useRef(0);
 
   // Load face texture
@@ -59,6 +61,20 @@ function AvatarHead({ state, onReady }: { state: AvatarState; onReady?: () => vo
 
     // Subtle head turn — feels alive
     headRef.current.rotation.y = Math.sin(time.current * 0.3) * 0.05;
+
+    // Hand gestures when talking
+    if (state === 'talking' || state === 'greeting') {
+      if (leftArmRef.current) leftArmRef.current.rotation.z = Math.sin(time.current * 2.5) * 0.15 - 0.1;
+      if (rightArmRef.current) rightArmRef.current.rotation.z = Math.sin(time.current * 2.5 + 1) * 0.15 - 0.1;
+    } else if (leftArmRef.current) {
+      leftArmRef.current.rotation.z += (0.2 - leftArmRef.current.rotation.z) * 0.05;
+      rightArmRef.current.rotation.z += (-0.2 - rightArmRef.current.rotation.z) * 0.05;
+    }
+
+    // Thinking: one hand near chin
+    if (state === 'thinking' && rightArmRef.current) {
+      rightArmRef.current.rotation.z += (-0.8 - rightArmRef.current.rotation.z) * 0.1;
+    }
   });
 
   return (
@@ -76,15 +92,29 @@ function AvatarHead({ state, onReady }: { state: AvatarState; onReady?: () => vo
       </mesh>
 
       {/* ── Left arm ── */}
-      <mesh position={[-0.65, -1.6, 0]} rotation={[0, 0, 0.2]}>
-        <capsuleGeometry args={[0.12, 0.9, 8, 8]} />
-        <meshStandardMaterial color="#0F2645" roughness={0.5} metalness={0.1} />
-      </mesh>
+      <group ref={leftArmRef} position={[-0.55, -1.4, 0]}>
+        <mesh rotation={[0, 0, 0.3]}>
+          <capsuleGeometry args={[0.11, 0.85, 8, 8]} />
+          <meshStandardMaterial color="#0F2645" roughness={0.5} metalness={0.1} />
+        </mesh>
+        {/* Hand */}
+        <mesh position={[-0.05, -0.52, 0.02]}>
+          <sphereGeometry args={[0.08, 8, 8]} />
+          <meshStandardMaterial color="#F2CBB0" roughness={0.5} />
+        </mesh>
+      </group>
       {/* ── Right arm ── */}
-      <mesh position={[0.65, -1.6, 0]} rotation={[0, 0, -0.2]}>
-        <capsuleGeometry args={[0.12, 0.9, 8, 8]} />
-        <meshStandardMaterial color="#0F2645" roughness={0.5} metalness={0.1} />
-      </mesh>
+      <group ref={rightArmRef} position={[0.55, -1.4, 0]}>
+        <mesh rotation={[0, 0, -0.3]}>
+          <capsuleGeometry args={[0.11, 0.85, 8, 8]} />
+          <meshStandardMaterial color="#0F2645" roughness={0.5} metalness={0.1} />
+        </mesh>
+        {/* Hand */}
+        <mesh position={[0.05, -0.52, 0.02]}>
+          <sphereGeometry args={[0.08, 8, 8]} />
+          <meshStandardMaterial color="#F2CBB0" roughness={0.5} />
+        </mesh>
+      </group>
 
       {/* ── Collar ── */}
       <mesh position={[0, -1.25, 0.38]} rotation={[0.3, 0, 0]}>
