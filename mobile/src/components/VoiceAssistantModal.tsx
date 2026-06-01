@@ -1,7 +1,6 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { View, Text, TouchableOpacity, TextInput, Modal, StyleSheet, Animated, Dimensions, Easing } from 'react-native';
 import * as Speech from 'expo-speech';
-import { Audio } from 'expo-av';
 import { apiClient } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { hapticLight, hapticSuccess } from '../utils/haptic';
@@ -149,17 +148,6 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
   }, []);
 
   // Close handler with cleanup
-  // Success beep sound
-  const playSuccess = useCallback(async () => {
-    try {
-      const { sound } = await Audio.Sound.createAsync(
-        { uri: 'https://assets.mixkit.co/sfx/preview/mixkit-software-interface-success-2573.mp3' },
-        { shouldPlay: true, volume: 0.5 },
-      );
-      sound.setOnPlaybackStatusUpdate((status: any) => { if (status.didJustFinish) sound.unloadAsync(); });
-    } catch {}
-  }, []);
-
   const handleClose = () => {
     Speech.stop();
     try { const SR = require('expo-speech-recognition'); SR?.default?.stop?.(); } catch {}
@@ -229,7 +217,6 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
         language: 'tr-TR', rate: 0.85, pitch: 1.05,
         onDone: () => {
           hapticSuccess();
-          playSuccess();
           setAvatarState('success');
           setTimeout(() => setAvatarState('idle'), 800);
 
