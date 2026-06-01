@@ -40,6 +40,7 @@ export default function AiDialogScreen({ navigation, route }: any) {
   const [extractedFields, setExtractedFields] = useState<Record<string, any>>({});
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number; city?: string; district?: string } | null>(null);
+  const [convCtx, setConvCtx] = useState<Record<string, any> | null>(null);
 
   // Ses tanıma başlat
   const startVoiceRecognition = async () => {
@@ -132,7 +133,7 @@ export default function AiDialogScreen({ navigation, route }: any) {
         );
       }
 
-      const res = await apiClient.post('/voice/ai-dialog', { message: enhancedMsg });
+      const res = await apiClient.post('/voice/ai-dialog', { message: enhancedMsg, context: convCtx || undefined });
       const data = res.data?.data?.data || res.data?.data || res.data || {};
       const intent = data.intent || 'CREATE_LOAD';
       const fields = data.extracted || {};
@@ -142,6 +143,15 @@ export default function AiDialogScreen({ navigation, route }: any) {
       if (hasGpsRef && gpsLocation?.city && !fields.originCity) {
         fields.originCity = gpsLocation.city;
         if (gpsLocation.district) fields.originDistrict = gpsLocation.district;
+      }
+
+      // Multi-step conversation: devam eden diyalog
+      if (data.conversationState || data.action === 'CONTINUE_CONVERSATION') {
+        setConvCtx({ conversationState: data.conversationState || 'CREATING_LOAD_STEP', collected: data.params?.collected || {}, step: data.params?.step || 2 });
+        addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'Devam edelim...' });
+        setLoading(false);
+        setIsListening(false);
+        return;
       }
 
       // Intent'e gore aksiyon

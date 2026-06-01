@@ -27,8 +27,8 @@ export class VoiceController {
   }
 
   @Post('ai-dialog')
-  async processAiDialog(@Body() body: { message: string }) {
-    const result = this.voiceService.parseAiDialogMessage(body.message);
+  async processAiDialog(@Body() body: { message: string; context?: Record<string, any> }) {
+    const result = this.voiceService.parseAiDialogMessage(body.message, body.context);
     return { data: result };
   }
 }

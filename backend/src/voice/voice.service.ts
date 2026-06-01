@@ -91,14 +91,19 @@ export class VoiceService {
     ].filter(Boolean).join('. ');
   }
 
-  // Process an AI dialog message — detects intent and delegates to specialized parser
-  parseAiDialogMessage(message: string): { success: boolean; intent: string; action?: string; params?: Record<string, any>; extracted: Record<string, any>; response: string } {
+  // Process an AI dialog message
+  parseAiDialogMessage(message: string, context?: Record<string, any>): any {
     const extracted: Record<string, any> = {};
     const msg = (message || '')
       .normalize('NFD').replace(/[̀-ͯ]/g, '')
       .replace(/İ/gi, 'i').replace(/I/gi, 'i')
       .normalize('NFC');
     const msgLower = this.turkishToAscii(msg);
+
+    // Multi-step: devam eden konusma varsa
+    if (context?.conversationState === 'CREATING_LOAD_STEP') {
+      return this.handleLoadCreationStep(msg, msgLower, context);
+    }
 
     // ── Intent Detection ──────────────────────────────
     const intent = this.detectIntent(msg, msgLower);
@@ -794,6 +799,83 @@ export class VoiceService {
       params: { screen: 'LoadTrackingDetail', loadId: extracted.loadId },
       extracted,
       response: extracted.loadId ? `${extracted.loadId} nolu yükün durumu görüntüleniyor.` : 'Yük takip sayfası açılıyor.',
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Multi-step conversation: CREATE_LOAD flow
+  // ═══════════════════════════════════════════════════════════
+  private handleLoadCreationStep(msg: string, msgLower: string, context: Record<string, any>): any {
+    const step = context.step || 1;
+    const collected = context.collected || {};
+
+    // City extraction (same as parseLoadCreation but incremental)
+    const CITIES = ['İstanbul','Ankara','İzmir','Bursa','Antalya','Konya','Adana','Mersin','Gaziantep','Kayseri','Samsun','Trabzon','Diyarbakır','Eskişehir','Kocaeli'];
+    for (const city of CITIES) {
+      if (msgLower.includes(this.turkishToAscii(city)) && !collected.fromCity) {
+        collected.fromCity = city;
+        break;
+      } else if (msgLower.includes(this.turkishToAscii(city)) && collected.fromCity && city !== collected.fromCity) {
+        collected.toCity = city;
+        break;
+      }
+    }
+    // Tonnage
+    const tonMatch = msg.match(/(\d+)\s*ton/i);
+    if (tonMatch) collected.totalTonnage = parseInt(tonMatch[1]) * 1000;
+    // Title
+    if (tonMatch && !collected.title) {
+      const cargoMatch = msg.match(/(\d+)\s*ton\s+(.+?)(?:\s*(?:\.|$|yükü|var))/i);
+      if (cargoMatch) collected.title = `${cargoMatch[1]} Ton ${cargoMatch[2].trim()}`;
+    }
+    // Price
+    const priceMatch = msg.match(/(?:ton\s*fiyat[ıi]|fiyat[ıi]?)\s*:?\s*(\d+\.?\d*)/i);
+    if (priceMatch) collected.price = parseFloat(priceMatch[1]);
+    // Date
+    if (/bugün|bugun/i.test(msg)) collected.pickupDate = new Date().toISOString().slice(0, 10);
+    else if (/yar[ıi]n/i.test(msg)) { const t = new Date(); t.setDate(t.getDate()+1); collected.pickupDate = t.toISOString().slice(0, 10); }
+    // Contact
+    const phoneMatch = msg.match(/(05\d{2})[\s-]*(\d{3})[\s-]*(\d{2})[\s-]*(\d{2})/);
+    if (phoneMatch) collected.contactPhone = phoneMatch[0].replace(/[\s-]/g, '');
+
+    // Determine what's missing and ask
+    const missing: string[] = [];
+    if (!collected.fromCity) missing.push('kalkış şehri');
+    if (!collected.toCity) missing.push('varış şehri');
+    if (!collected.totalTonnage) missing.push('tonaj');
+    if (!collected.title) missing.push('yük cinsi');
+
+    if (missing.length > 0) {
+      const questions: Record<string, string> = {
+        'kalkış şehri': 'Yük hangi şehirden alınacak?',
+        'varış şehri': 'Teslimat şehri nedir?',
+        'tonaj': 'Yük kaç ton?',
+        'yük cinsi': 'Yükün cinsi nedir? (ör: buğday, demir, mobilya)',
+      };
+      return {
+        success: true, intent: 'CREATE_LOAD', action: 'CONTINUE_CONVERSATION',
+        conversationState: 'CREATING_LOAD_STEP',
+        params: { step: step + 1, collected },
+        extracted: collected,
+        response: missing.length === 1 ? questions[missing[0]] : `Birkaç bilgiye daha ihtiyacım var: ${missing.join(', ')}. Lütfen belirtir misiniz?`,
+      };
+    }
+
+    // All info collected — build the load
+    const fields: any = {};
+    if (collected.fromCity) fields.originCity = collected.fromCity;
+    if (collected.toCity) fields.destCity = collected.toCity;
+    if (collected.totalTonnage) fields.weight = collected.totalTonnage;
+    if (collected.title) fields.title = collected.title;
+    if (collected.price) fields.price = collected.price;
+    if (collected.pickupDate) fields.pickupDate = collected.pickupDate;
+    if (collected.contactPhone) fields.contactPhone = collected.contactPhone;
+    if (collected.totalTonnage >= 20000) fields.loadType = 'tam_yuk';
+
+    return {
+      success: true, intent: 'CREATE_LOAD', action: 'FILL_LOAD_FORM',
+      extracted: { ...collected, ...fields },
+      response: `Yük bilgileri hazırlandı: ${collected.fromCity}'dan ${collected.toCity}'e ${collected.totalTonnage ? (collected.totalTonnage/1000) + ' ton' : ''} ${collected.title || ''}. Onaylıyor musunuz?`,
     };
   }
 
