@@ -89,11 +89,11 @@ function LoginForm({ onSwitchToRegister }: { onSwitchToRegister: () => void }) {
       <Text style={[typography.h2, { color: colors.text, fontWeight: '800', marginBottom: spacing.sm, textAlign: 'center' }]}>Giriş Yap</Text>
 
       {/* Sesli Giriş */}
-      <TouchableOpacity style={[s.voiceBtnSm, { backgroundColor: voiceLoginActive ? '#EF4444' : colors.primary + '20', borderColor: colors.primary + '40' }]} onPress={startVoiceLogin} disabled={voiceLoginActive}>
+      <TouchableOpacity style={[styles.voiceBtnSm, { backgroundColor: voiceLoginActive ? '#EF4444' : colors.primary + '20', borderColor: colors.primary + '40' }]} onPress={startVoiceLogin} disabled={voiceLoginActive}>
         <Text style={{ fontSize: 16 }}>{voiceLoginActive ? '🔴' : '🎤'}</Text>
-        <Text style={[s.voiceBtnTextSm, { color: voiceLoginActive ? '#EF4444' : colors.primary }]}>Sesli Giriş</Text>
+        <Text style={[styles.voiceBtnTextSm, { color: voiceLoginActive ? '#EF4444' : colors.primary }]}>Sesli Giriş</Text>
       </TouchableOpacity>
-      {voiceLoginMsg ? <Text style={[s.voiceMsgSmall, { color: voiceLoginMsg.startsWith('✅') ? '#10B981' : '#EF4444' }]}>{voiceLoginMsg}</Text> : null}
+      {voiceLoginMsg ? <Text style={[styles.voiceMsgSmall, { color: voiceLoginMsg.startsWith('✅') ? '#10B981' : '#EF4444' }]}>{voiceLoginMsg}</Text> : null}
 
       <Controller control={control} name="email" render={({ field: { onChange, onBlur, value } }) => (
         <View style={styles.inputGroup}>
@@ -324,21 +324,21 @@ function RegisterWizard({ onSwitchToLogin }: { onSwitchToLogin: () => void }) {
     <View>
       {/* Sesli Kayıt Butonu */}
       <TouchableOpacity
-        style={[s.voiceBtn, { backgroundColor: voiceListening ? '#EF4444' : voiceProcessing ? '#F59E0B' : voiceActive ? '#10B981' : colors.primary, opacity: voiceProcessing ? 0.8 : 1 }]}
+        style={[styles.voiceBtn, { backgroundColor: voiceListening ? '#EF4444' : voiceProcessing ? '#F59E0B' : voiceActive ? '#10B981' : colors.primary, opacity: voiceProcessing ? 0.8 : 1 }]}
         onPress={startVoiceRegistration}
         disabled={voiceListening || voiceProcessing}
         activeOpacity={0.8}
       >
-        <Text style={s.voiceBtnIcon}>{voiceListening ? '🔴' : voiceProcessing ? '⏳' : '🎤'}</Text>
-        <Text style={s.voiceBtnText}>
+        <Text style={styles.voiceBtnIcon}>{voiceListening ? '🔴' : voiceProcessing ? '⏳' : '🎤'}</Text>
+        <Text style={styles.voiceBtnText}>
           {voiceListening ? 'Dinleniyor...' : voiceProcessing ? 'İşleniyor...' : 'Sesli Kayıt'}
         </Text>
       </TouchableOpacity>
 
       {/* Sesli kayıt mesajı */}
       {voiceMsg ? (
-        <View style={[s.voiceMsgBox, { backgroundColor: voiceMsg.startsWith('✅') ? '#10B98115' : voiceMsg.startsWith('⚠️') ? '#EF444415' : '#FF6B0015', borderColor: voiceMsg.startsWith('✅') ? '#10B981' : voiceMsg.startsWith('⚠️') ? '#EF4444' : '#FF6B00' }]}>
-          <Text style={[s.voiceMsgText, { color: voiceMsg.startsWith('✅') ? '#10B981' : voiceMsg.startsWith('⚠️') ? '#EF4444' : '#FF6B00' }]}>{voiceMsg}</Text>
+        <View style={[styles.voiceMsgBox, { backgroundColor: voiceMsg.startsWith('✅') ? '#10B98115' : voiceMsg.startsWith('⚠️') ? '#EF444415' : '#FF6B0015', borderColor: voiceMsg.startsWith('✅') ? '#10B981' : voiceMsg.startsWith('⚠️') ? '#EF4444' : '#FF6B00' }]}>
+          <Text style={[styles.voiceMsgText, { color: voiceMsg.startsWith('✅') ? '#10B981' : voiceMsg.startsWith('⚠️') ? '#EF4444' : '#FF6B00' }]}>{voiceMsg}</Text>
         </View>
       ) : null}
 
