@@ -145,6 +145,14 @@ export default function AiDialogScreen({ navigation, route }: any) {
         if (gpsLocation.district) fields.originDistrict = gpsLocation.district;
       }
 
+      // CANCEL: konusma context'ini temizle
+      if (data.action === 'CANCEL' || intent === 'CANCEL') {
+        setConvCtx(null);
+        addMessage({ id: (Date.now() + 1).toString(), role: 'assistant', text: data.response || 'İşlem iptal edildi.' });
+        setLoading(false); setIsListening(false);
+        return;
+      }
+
       // Multi-step conversation: devam eden diyalog
       if (data.conversationState || data.action === 'CONTINUE_CONVERSATION') {
         setConvCtx({ conversationState: data.conversationState || 'CREATING_LOAD_STEP', collected: data.params?.collected || {}, step: data.params?.step || 2 });

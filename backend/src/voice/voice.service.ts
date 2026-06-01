@@ -101,13 +101,17 @@ export class VoiceService {
     const msgLower = this.turkishToAscii(msg);
 
     // Multi-step: devam eden konusma varsa
-    if (context?.conversationState === 'CREATING_LOAD_STEP') {
-      return this.handleLoadCreationStep(msg, msgLower, context);
-    }
+    if (context?.conversationState === 'CREATING_LOAD_STEP') return this.handleLoadCreationStep(msg, msgLower, context);
+    if (context?.conversationState === 'CREATING_EXPENSE_STEP') return this.handleExpenseStep(msg, msgLower, context);
 
     // ── Intent Detection ──────────────────────────────
     const intent = this.detectIntent(msg, msgLower);
     extracted._intent = intent;
+
+    // Cancel / help / repeat
+    if (intent === 'CANCEL') return { success: true, intent, action: 'CANCEL', extracted, response: 'İşlem iptal edildi. Başka bir isteğiniz var mı?' };
+    if (intent === 'HELP') return this.getHelpResponse();
+    if (intent === 'REPEAT') return { success: true, intent, action: 'REPEAT', extracted, response: 'Son söylediğinizi tekrar ediyorum. Lütfen dinleyin.' };
 
     if (intent === 'CREATE_INVOICE') return this.parseInvoice(msg, msgLower, extracted);
     if (intent === 'LIST_INVOICES') return { success: true, intent, action: 'NAVIGATE', params: { screen: 'InvoiceList' }, extracted, response: 'Fatura listeniz görüntüleniyor.' };
@@ -151,6 +155,10 @@ export class VoiceService {
   }
 
   private detectIntent(msg: string, msgLower: string): string {
+    // Cancel / help / repeat
+    if (/(?:iptal|vazge[çc]|bırak|bo[şs]ver|gerek\s*yok|tamam\s*de[ğg]il)/i.test(msg)) return 'CANCEL';
+    if (/(?:yardım|yardim|neler\s*yapabilirsin|neler\s*yapabilirim|komutlar|yard[ıi]mc[ıi]\s*ol|destek)/i.test(msg)) return 'HELP';
+    if (/(?:tekrar|tekrarla|anlamad[ıi]m|bir\s*daha|yinele)/i.test(msg)) return 'REPEAT';
     // E-Belge / Invoice
     if (/(?:e-fatura|fatura|e-irsaliye|irsaliye)\s+(?:olu[şs]tur|kes|yaz|d[üu]zenle)/i.test(msg)) return 'CREATE_INVOICE';
     if (/(?:fatura|irsaliye)\s+(?:listele|g[oö]ster|durum)/i.test(msg)) return 'LIST_INVOICES';
@@ -876,6 +884,42 @@ export class VoiceService {
       success: true, intent: 'CREATE_LOAD', action: 'FILL_LOAD_FORM',
       extracted: { ...collected, ...fields },
       response: `Yük bilgileri hazırlandı: ${collected.fromCity}'dan ${collected.toCity}'e ${collected.totalTonnage ? (collected.totalTonnage/1000) + ' ton' : ''} ${collected.title || ''}. Onaylıyor musunuz?`,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Multi-step: CREATE_EXPENSE flow
+  // ═══════════════════════════════════════════════════════════
+  private handleExpenseStep(msg: string, msgLower: string, context: Record<string, any>): any {
+    const collected = context.collected || {};
+    const amtMatch = msg.match(/(\d+\.?\d*)\s*(?:TL|₺|lira)/i);
+    if (amtMatch) collected.amount = parseFloat(amtMatch[1]);
+    if (/yemek|lokanta|restoran/i.test(msg)) collected.category = 'Yemek';
+    else if (/mazot|motorin|yak[ıi]t|benzin/i.test(msg)) collected.category = 'Akaryakıt';
+    else if (/tamir|bak[ıi]m/i.test(msg)) collected.category = 'Araç Bakım';
+    else if (!collected.category) collected.category = 'Genel Gider';
+
+    if (!collected.amount) {
+      return { success: true, intent: 'CREATE_EXPENSE', action: 'CONTINUE_CONVERSATION',
+        conversationState: 'CREATING_EXPENSE_STEP', params: { step: 2, collected }, extracted: collected,
+        response: 'Gider tutarı nedir? Örnek: 500 TL',
+      };
+    }
+
+    return { success: true, intent: 'CREATE_EXPENSE', action: 'API_CALL',
+      params: { endpoint: '/finance/expenses', method: 'POST', data: { amount: collected.amount, category: collected.category, description: `${collected.category} gideri` } },
+      extracted: collected, response: `${collected.amount} ₺ ${collected.category} gideri kaydediliyor.`,
+    };
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // Help response
+  // ═══════════════════════════════════════════════════════════
+  private getHelpResponse(): any {
+    return {
+      success: true, intent: 'HELP',
+      extracted: {},
+      response: 'Şunları yapabilirim:\n📦 Yük ekleme\n🔍 Yük/araç/parça arama\n💰 Gelir/gider/yakıt kaydı\n📄 Fatura/irsaliye oluşturma\n👤 Profil/araç/müşteri yönetimi\n📍 Navigasyon ve takip\n\nSadece ne yapmak istediğinizi söyleyin. Örnek: "En yakın yükleri sırala"',
     };
   }
 
