@@ -1,183 +1,132 @@
 import { useEffect, useRef } from 'react';
 import { View, Image, StyleSheet, Animated, Easing, Dimensions } from 'react-native';
 
-const { width: SW } = Dimensions.get('window');
+const { width: SW, height: SH } = Dimensions.get('window');
 const AVATAR_IMG = require('../../assets/heykaptan.png');
 
 type AvatarState = 'idle' | 'greeting' | 'listening' | 'talking' | 'thinking' | 'success' | 'error';
 
-interface Props { state: AvatarState; height?: number; }
+interface Props { state: AvatarState; }
 
-export default function Avatar3D({ state, height = 380 }: Props) {
-  const faceSize = Math.min(SW * 0.42, 170);
+/**
+ * FaceTime-style avatar:
+ * - Face walks in from right side
+ * - Shows upper 1/4 body (head + shoulders)
+ * - Fills screen like a video call
+ * - Subtle breathing and blink for realism
+ */
+export default function Avatar3D({ state }: Props) {
+  const slideX = useRef(new Animated.Value(SW)).current;
+  const opacity = useRef(new Animated.Value(0)).current;
   const breathe = useRef(new Animated.Value(1)).current;
-  const tilt = useRef(new Animated.Value(0)).current;
-  const rotateY = useRef(new Animated.Value(0)).current;
-  const blink = useRef(new Animated.Value(1)).current;
-  const mouthScale = useRef(new Animated.Value(1)).current;
-  const ringOpacity = useRef(new Animated.Value(0)).current;
-  const ringScale = useRef(new Animated.Value(0.9)).current;
-  const leftHand = useRef(new Animated.Value(0)).current;
-  const rightHand = useRef(new Animated.Value(0)).current;
+  const blinkOverlay = useRef(new Animated.Value(0)).current;
+  const ringPulse = useRef(new Animated.Value(1)).current;
+  const ringColor6 = { idle:'#FF6B00',greeting:'#FF6B00',listening:'#3B82F6',talking:'#FF6B00',thinking:'#F59E0B',success:'#10B981',error:'#EF4444' }[state]||'#FF6B00';
+
+  // Walk-in from right — FaceTime answer feel
+  useEffect(() => {
+    Animated.parallel([
+      Animated.spring(slideX, { toValue: 0, tension: 30, friction: 7, useNativeDriver: true }),
+      Animated.timing(opacity, { toValue: 1, duration: 400, useNativeDriver: true }),
+    ]).start();
+  }, []);
 
   // Breathing
   useEffect(() => {
     const a = Animated.loop(Animated.sequence([
-      Animated.timing(breathe, { toValue: 1.015, duration: 2800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      Animated.timing(breathe, { toValue: 0.985, duration: 2800, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(breathe, { toValue: 1.01, duration: 3000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
+      Animated.timing(breathe, { toValue: 0.99, duration: 3000, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
     ])); a.start(); return () => a.stop();
   }, []);
 
-  // 3D Y-axis sway
-  useEffect(() => {
-    const a = Animated.loop(Animated.sequence([
-      Animated.timing(rotateY, { toValue: 1, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-      Animated.timing(rotateY, { toValue: -1, duration: 4000, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
-    ])); a.start(); return () => a.stop();
-  }, []);
-
-  // Blink
+  // Natural blink
   useEffect(() => {
     let active = true;
     const b = () => { if(!active) return;
-      Animated.sequence([Animated.timing(blink,{toValue:0.05,duration:50,useNativeDriver:true}),Animated.timing(blink,{toValue:1,duration:100,useNativeDriver:true})]).start();
-      setTimeout(b, 2800+Math.random()*4000);
+      Animated.sequence([
+        Animated.timing(blinkOverlay,{toValue:1,duration:60,useNativeDriver:true}),
+        Animated.timing(blinkOverlay,{toValue:0,duration:100,useNativeDriver:true}),
+      ]).start();
+      setTimeout(b, 2500+Math.random()*4000);
     }; setTimeout(b,1500); return () => {active=false;};
   }, []);
 
-  // State-based animations
+  // Ring pulse when listening
   useEffect(() => {
     if (state === 'listening') {
       Animated.loop(Animated.sequence([
-        Animated.timing(tilt, { toValue: 1, duration: 2000, useNativeDriver: true }),
-        Animated.timing(tilt, { toValue: -1, duration: 2000, useNativeDriver: true }),
+        Animated.timing(ringPulse, { toValue: 1.06, duration: 1000, useNativeDriver: true }),
+        Animated.timing(ringPulse, { toValue: 0.94, duration: 1000, useNativeDriver: true }),
       ])).start();
-      Animated.parallel([
-        Animated.loop(Animated.sequence([Animated.timing(ringOpacity,{toValue:0.5,duration:1500,useNativeDriver:true}),Animated.timing(ringOpacity,{toValue:0.08,duration:1500,useNativeDriver:true})])),
-        Animated.loop(Animated.sequence([Animated.timing(ringScale,{toValue:1.3,duration:1500,useNativeDriver:true}),Animated.timing(ringScale,{toValue:0.85,duration:1500,useNativeDriver:true})])),
-      ]).start();
-    } else { tilt.setValue(0); ringOpacity.setValue(0); }
+    } else { ringPulse.setValue(1); }
   }, [state]);
 
-  // Talking: mouth + hand gestures
-  useEffect(() => {
-    if (state === 'talking' || state === 'greeting') {
-      const mouth = Animated.loop(Animated.sequence([
-        Animated.timing(mouthScale, { toValue: 1.6, duration: 100, useNativeDriver: true }),
-        Animated.timing(mouthScale, { toValue: 1, duration: 120, useNativeDriver: true }),
-        Animated.timing(mouthScale, { toValue: 1.4, duration: 80, useNativeDriver: true }),
-        Animated.timing(mouthScale, { toValue: 1, duration: 140, useNativeDriver: true }),
-      ])); mouth.start();
-      Animated.loop(Animated.sequence([
-        Animated.timing(leftHand, { toValue: 1, duration: 600, useNativeDriver: true }),
-        Animated.timing(leftHand, { toValue: -0.5, duration: 600, useNativeDriver: true }),
-      ])).start();
-      Animated.loop(Animated.sequence([
-        Animated.timing(rightHand, { toValue: -0.5, duration: 700, useNativeDriver: true }),
-        Animated.timing(rightHand, { toValue: 1, duration: 700, useNativeDriver: true }),
-      ])).start();
-      return () => { mouth.stop(); leftHand.setValue(0); rightHand.setValue(0); };
-    } else { mouthScale.setValue(1); leftHand.setValue(0); rightHand.setValue(0); }
-  }, [state]);
-
-  const ringColor = { idle:'#FF6B00',greeting:'#FF6B00',listening:'#3B82F6',talking:'#FF6B00',thinking:'#F59E0B',success:'#10B981',error:'#EF4444' }[state]||'#FF6B00';
+  // Face size — large, video-call proportions
+  const faceW = SW * 0.75;
+  const faceH = faceW * 1.2; // Portrait aspect
 
   return (
-    <View style={[s.outer, { height }]}>
-      {/* BG glow */}
-      <Animated.View style={[s.bgGlow, { backgroundColor: ringColor + '10', opacity: ringOpacity }]} />
-
-      {/* 3D container with perspective */}
-      <Animated.View style={[s.body3D, {
-        transform: [
-          { perspective: 1000 },
-          { rotateY: rotateY.interpolate({ inputRange: [-1,1], outputRange: ['-10deg','10deg'] }) },
-          { scale: breathe },
-        ],
-      }]}>
-        {/* Glow ring */}
-        <Animated.View style={[s.glowRing, {
-          width: faceSize+50, height: faceSize+50, borderRadius: (faceSize+50)/2,
-          borderColor: ringColor, opacity: ringOpacity,
-          transform: [{ scale: ringScale }],
-        }]} />
-
-        {/* ── HEAD ── */}
-        <Animated.View style={{ transform: [{ rotate: tilt.interpolate({ inputRange: [-1,1], outputRange: ['-2deg','2deg'] }) }] }}>
-          <View style={[s.faceFrame, { width: faceSize, height: faceSize, borderRadius: faceSize/2, borderColor: ringColor }]}>
-            <Image source={AVATAR_IMG} style={[s.faceImg, { width: faceSize, height: faceSize, borderRadius: faceSize/2 }]} resizeMode="cover" />
-            {/* Blink overlay */}
-            <Animated.View style={[s.blinkOverlay, { width: faceSize, height: faceSize, borderRadius: faceSize/2, opacity: blink.interpolate({ inputRange: [0.05, 1], outputRange: [1, 0] }) }]} />
-          </View>
-          {/* Hair sides */}
-          <View style={[s.hairL, { borderRightColor: '#1A0D03', borderRightWidth: faceSize*0.07 }]} />
-          <View style={[s.hairR, { borderLeftColor: '#1A0D03', borderLeftWidth: faceSize*0.07 }]} />
-        </Animated.View>
-
-        {/* ── NECK ── */}
-        <View style={[s.neck, { width: faceSize*0.22, backgroundColor: '#E8C4A8' }]} />
-
-        {/* ── SHOULDERS ── */}
-        <View style={[s.shoulders, { width: faceSize*1.7 }]}>
-          <View style={[s.shoulder, { backgroundColor: '#0F2645', borderBottomLeftRadius: faceSize*0.3 }]} />
-          <View style={[s.shoulderR, { backgroundColor: '#0F2645', borderBottomRightRadius: faceSize*0.3 }]} />
+    <Animated.View style={[s.outer, { transform: [{ translateX: slideX }], opacity }]}>
+      {/* ── FaceTime Frame ── */}
+      <Animated.View style={[s.frame, { borderColor: ringColor6, transform: [{ scale: ringPulse }] }]}>
+        {/* Main portrait — upper body visible, face centered */}
+        <View style={[s.portraitClip, { width: faceW, height: faceH }]}>
+          <Image
+            source={AVATAR_IMG}
+            style={[s.portraitImg, { width: faceW, height: faceH * 1.6, top: -faceH * 0.1 }]}
+            resizeMode="cover"
+          />
+          {/* Blink overlay — closes over eyes */}
+          <Animated.View style={[s.blinkBar, { opacity: blinkOverlay, width: faceW, top: faceH * 0.28 }]} />
         </View>
 
-        {/* ── COLLAR ── */}
-        <View style={s.collarArea}>
-          <View style={[s.collarWhite, { borderBottomColor: '#FFF', borderLeftWidth: faceSize*0.2, borderRightWidth: faceSize*0.2 }]} />
-          <View style={[s.collarInner, { borderBottomColor: '#F0EAE0', borderLeftWidth: faceSize*0.13, borderRightWidth: faceSize*0.13 }]} />
+        {/* ── Video-call style overlays ── */}
+        {/* Top gradient — cinematic vignette */}
+        <View style={[s.vignetteTop, { width: faceW }]} />
+        <View style={[s.vignetteBottom, { width: faceW }]} />
+
+        {/* State ring — subtle animated border glow */}
+        {state === 'listening' && (
+          <View style={[s.listeningRing, { borderColor: '#3B82F6', width: faceW + 8, height: faceH + 8 }]} />
+        )}
+
+        {/* Name tag — FaceTime style */}
+        <View style={s.nameTag}>
+          <Animated.View style={[s.nameDot, { backgroundColor: ringColor6 }]} />
         </View>
 
-        {/* ── TORSO ── */}
-        <View style={[s.torso, { width: faceSize*1.5, backgroundColor: '#0F2645' }]}>
-          {/* Badge */}
-          <View style={[s.badge, { backgroundColor: '#FF6B00' }]}>
-            <Animated.View style={{ transform: [{ scale: mouthScale }] }}><Image source={require('../../assets/icon.png')} style={{width:12,height:12}} /></Animated.View>
-          </View>
+        {/* State label */}
+        <View style={s.stateBadge}>
+          <Animated.View style={[s.stateDot, { backgroundColor: ringColor6 }]} />
         </View>
-
-        {/* ── ARMS ── */}
-        <Animated.View style={[s.armL, { transform: [{ rotate: leftHand.interpolate({ inputRange: [-1,1], outputRange: ['-15deg','15deg'] }) }] }]}>
-          <View style={[s.arm, { backgroundColor: '#0F2645' }]} />
-          <View style={[s.hand, { backgroundColor: '#F2CBB0' }]} />
-        </Animated.View>
-        <Animated.View style={[s.armR, { transform: [{ rotate: rightHand.interpolate({ inputRange: [-1,1], outputRange: ['15deg','-15deg'] }) }] }]}>
-          <View style={[s.arm, { backgroundColor: '#0F2645' }]} />
-          <View style={[s.hand, { backgroundColor: '#F2CBB0' }]} />
-        </Animated.View>
       </Animated.View>
-    </View>
+
+      {/* Bottom bar — FaceTime controls feel */}
+      <View style={s.controlBar}>
+        <View style={[s.controlDot, { backgroundColor: state === 'listening' ? '#3B82F6' : '#FFFFFF30' }]} />
+        <View style={[s.controlDot, { backgroundColor: state === 'talking' ? '#FF6B00' : '#FFFFFF30' }]} />
+        <View style={[s.controlDot, { backgroundColor: state === 'thinking' ? '#F59E0B' : '#FFFFFF30' }]} />
+      </View>
+    </Animated.View>
   );
 }
 
 const s = StyleSheet.create({
-  outer: { alignItems: 'center', justifyContent: 'center', overflow: 'hidden' },
-  bgGlow: { position: 'absolute', top: '10%', width: '80%', height: '60%', borderRadius: 100 },
-  body3D: { alignItems: 'center' },
-  glowRing: { position: 'absolute', top: -20, borderWidth: 2, borderStyle: 'dashed' },
-  // Face
-  faceFrame: { borderWidth: 3, overflow: 'hidden', shadowColor: '#FF6B00', shadowOffset: {width:0,height:0}, shadowOpacity: 0.5, shadowRadius: 20, elevation: 10 },
-  faceImg: { position: 'absolute' },
-  blinkOverlay: { position: 'absolute', backgroundColor: '#0A0D14' },
-  hairL: { position: 'absolute', left: -3, top: '10%', width: 0, height: 0, borderTopWidth: 35, borderTopColor: 'transparent' },
-  hairR: { position: 'absolute', right: -3, top: '10%', width: 0, height: 0, borderTopWidth: 35, borderTopColor: 'transparent' },
-  // Neck
-  neck: { height: 28, borderBottomLeftRadius: 4, borderBottomRightRadius: 4 },
-  // Shoulders
-  shoulders: { flexDirection: 'row', justifyContent: 'space-between', marginTop: -5 },
-  shoulder: { flex: 1, height: 55, marginRight: 1 },
-  shoulderR: { flex: 1, height: 55, marginLeft: 1 },
-  // Collar
-  collarArea: { alignItems: 'center', marginTop: -2, zIndex: 5 },
-  collarWhite: { width: 0, height: 0, borderBottomWidth: 16, borderLeftColor: 'transparent', borderRightColor: 'transparent' },
-  collarInner: { width: 0, height: 0, borderBottomWidth: 9, borderLeftColor: 'transparent', borderRightColor: 'transparent', marginTop: -8 },
-  // Torso
-  torso: { height: 65, alignItems: 'center', justifyContent: 'center', borderBottomLeftRadius: 12, borderBottomRightRadius: 12 },
-  badge: { position: 'absolute', top: 8, left: 10, width: 20, height: 20, borderRadius: 4, alignItems: 'center', justifyContent: 'center' },
-  // Arms
-  armL: { position: 'absolute', left: -30, top: '45%' },
-  armR: { position: 'absolute', right: -30, top: '45%' },
-  arm: { width: 14, height: 80, borderRadius: 7 },
-  hand: { width: 16, height: 16, borderRadius: 8, marginTop: -4, alignSelf: 'center' },
+  outer: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  frame: {
+    borderWidth: 1.5, borderRadius: 24, overflow: 'hidden',
+    shadowColor: '#000', shadowOffset: {width:0,height:8}, shadowOpacity: 0.5, shadowRadius: 20, elevation: 15,
+  },
+  portraitClip: { overflow: 'hidden', borderRadius: 22 },
+  portraitImg: { position: 'absolute' },
+  blinkBar: { position: 'absolute', height: 6, backgroundColor: '#0A0D14', borderRadius: 3 },
+  vignetteTop: { position: 'absolute', top: 0, height: 60, opacity: 0.4 },
+  vignetteBottom: { position: 'absolute', bottom: 0, height: 40, opacity: 0.6 },
+  listeningRing: { position: 'absolute', top: -4, left: -4, borderRadius: 28, borderWidth: 2, borderStyle: 'dashed' },
+  nameTag: { position: 'absolute', top: 14, left: 14 },
+  nameDot: { width: 10, height: 10, borderRadius: 5 },
+  stateBadge: { position: 'absolute', bottom: 14, right: 14 },
+  stateDot: { width: 8, height: 8, borderRadius: 4 },
+  controlBar: { flexDirection: 'row', gap: 16, marginTop: 20, justifyContent: 'center' },
+  controlDot: { width: 10, height: 10, borderRadius: 5 },
 });

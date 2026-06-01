@@ -292,28 +292,21 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
         {/* Vignette overlay */}
         <View style={styles.vignette} pointerEvents="none" />
 
-        {/* 3D Avatar */}
+        {/* FaceTime-style Avatar */}
         <Animated.View style={[styles.avatarContainer, { transform: [{ translateY: slideUp }, { scale: cameraZoom }] }]}>
-          <Avatar3D state={avatarState} height={380} />
+          <Avatar3D state={avatarState} />
+
+          {/* Message bubble overlaid at bottom of avatar */}
+          {message ? (
+            <View style={[styles.msgBubble]}>
+              <Text style={styles.msgText}>{message}</Text>
+            </View>
+          ) : null}
 
           {/* State label */}
           <Text style={[styles.stateLabel, { color: avatarColors[avatarState] || '#FF6B00' }]}>
             {stateLabels[avatarState] || ''}
           </Text>
-
-          {/* Message below avatar */}
-          {message ? (
-            <View style={[styles.msgBubble, { borderColor: (['listening','idle','greeting','talking','thinking','success','error'].indexOf(avatarState) >= 0 ? {idle:'#FF6B00',greeting:'#FF6B00',listening:'#3B82F6',talking:'#FF6B00',thinking:'#F59E0B',success:'#10B981',error:'#EF4444'}[avatarState] : '#FF6B00') + '60' }]}>
-              <Text style={styles.msgText}>{message}</Text>
-            </View>
-          ) : null}
-
-          {/* Audio visualizer when talking */}
-          {avatarState === 'talking' && (
-            <View style={{ marginTop: 12 }}>
-              <AudioVisualizer active={true} />
-            </View>
-          )}
         </Animated.View>
 
         {/* Conversation history */}
