@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Text, TouchableOpacity, Modal, StyleSheet, Animated, Easing } from 'react-native';
+import * as Speech from 'expo-speech';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../hooks/useTheme';
@@ -108,12 +109,18 @@ export function PersistentTabBar() {
     else if (tabName === 'Profile') navigation.navigate('MainTabs', { screen: 'Profile' });
   };
 
+  // Pulse animation for HeyKaptan button
+  const pulseAnim = useRef(new Animated.Value(1)).current;
+  useEffect(() => {
+    const a = Animated.loop(Animated.sequence([
+      Animated.timing(pulseAnim, { toValue: 1.08, duration: 1200, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      Animated.timing(pulseAnim, { toValue: 0.94, duration: 1200, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+    ])); a.start(); return () => a.stop();
+  }, []);
+
   const handleHeyKaptan = () => {
     const greeting = `${getGreeting()}${userName ? ' ' + userName + ' Bey' : ''}, size nasıl yardımcı olabilirim?`;
-    try {
-      const Speech = require('expo-speech');
-      Speech.speak(greeting, { language: 'tr-TR', rate: 0.85 });
-    } catch {}
+    Speech.speak(greeting, { language: 'tr-TR', rate: 0.85 });
     navigation.navigate('AiDialog', { initialMessage: greeting });
   };
 
@@ -126,9 +133,9 @@ export function PersistentTabBar() {
           if (tab.isHeyKaptan) {
             return (
               <TouchableOpacity key={tab.name} style={styles.tabItem} onPress={handleHeyKaptan} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Hey Kaptan">
-                <View style={styles.heyKaptanIcon}>
+                <Animated.View style={[styles.heyKaptanIcon, { transform: [{ scale: pulseAnim }] }]}>
                   <Text style={styles.heyKaptanText}>🎤</Text>
-                </View>
+                </Animated.View>
               </TouchableOpacity>
             );
           }

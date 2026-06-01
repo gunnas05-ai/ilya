@@ -52,6 +52,23 @@ export default function AiDialogScreen({ navigation, route }: any) {
   const [missingFields, setMissingFields] = useState<string[]>([]);
   const [gpsLocation, setGpsLocation] = useState<{ lat: number; lng: number; city?: string; district?: string } | null>(null);
   const [convCtx, setConvCtx] = useState<Record<string, any> | null>(null);
+  const [cmdHistory, setCmdHistory] = useState<string[]>([]);
+
+  // Komutu geçmişe ekle
+  const addToHistory = (cmd: string) => {
+    setCmdHistory(prev => {
+      const updated = [cmd, ...prev.filter(c => c !== cmd)].slice(0, 5);
+      AsyncStorage.setItem('@voice_cmd_history', JSON.stringify(updated)).catch(() => {});
+      return updated;
+    });
+  };
+
+  // Geçmişi yükle
+  useEffect(() => {
+    AsyncStorage.getItem('@voice_cmd_history').then(v => {
+      if (v) setCmdHistory(JSON.parse(v));
+    }).catch(() => {});
+  }, []);
 
   // Ses tanıma başlat
   const startVoiceRecognition = async () => {
@@ -127,6 +144,7 @@ export default function AiDialogScreen({ navigation, route }: any) {
   const handleSendWithText = async (text: string) => {
     if (!text || loading) return;
     hapticLight();
+    addToHistory(text);
 
     addMessage({ id: Date.now().toString(), role: 'user', text });
 
@@ -419,6 +437,23 @@ export default function AiDialogScreen({ navigation, route }: any) {
                   <Text style={[typography.caption, { color: colors.textSecondary, marginLeft: spacing.sm }]}>AI analiz ediyor...</Text>
                 </View>
               )}
+              {/* Son Komutlar (geçmiş) */}
+              {cmdHistory.length > 0 && (
+                <View style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.sm }}>
+                  <Text style={[typography.small, { color: colors.textTertiary, marginBottom: spacing.xs }]}>🕐 Son Komutlar:</Text>
+                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+                    {cmdHistory.slice(0, 3).map((cmd, i) => (
+                      <TouchableOpacity key={i}
+                        style={{ backgroundColor: colors.card, paddingHorizontal: spacing.sm, paddingVertical: 4, borderRadius: radius.pill, borderWidth: 1, borderColor: colors.border }}
+                        onPress={() => { setInputText(cmd); handleSend(); }}
+                      >
+                        <Text style={[typography.small, { color: colors.textSecondary }]} numberOfLines={1}>{cmd.length > 30 ? cmd.slice(0, 30) + '...' : cmd}</Text>
+                      </TouchableOpacity>
+                    ))}
+                  </View>
+                </View>
+              )}
+
               {/* Hızlı Komutlar */}
               <View style={{ paddingHorizontal: spacing.lg, marginBottom: spacing.md }}>
                 <Text style={[typography.small, { color: colors.textTertiary, marginBottom: spacing.xs }]}>Hızlı Komutlar:</Text>
