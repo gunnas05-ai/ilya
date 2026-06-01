@@ -5,6 +5,8 @@ import { apiClient } from '../services/api';
 import { useAuthStore } from '../store/authStore';
 import { hapticLight, hapticSuccess } from '../utils/haptic';
 import KaptanAvatar from './KaptanAvatar';
+import Avatar3D from './Avatar3D';
+// KaptanAvatar replaced by Avatar3D for 3D rendering
 
 const { width: SW, height: SH } = Dimensions.get('window');
 
@@ -261,9 +263,16 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
         {/* Vignette overlay */}
         <View style={styles.vignette} pointerEvents="none" />
 
-        {/* Avatar */}
+        {/* 3D Avatar */}
         <Animated.View style={[styles.avatarContainer, { transform: [{ translateY: slideUp }, { scale: cameraZoom }] }]}>
-          <KaptanAvatar state={avatarState} message={message} />
+          <Avatar3D state={avatarState} height={380} />
+
+          {/* Message below avatar */}
+          {message ? (
+            <View style={[styles.msgBubble, { borderColor: (['listening','idle','greeting','talking','thinking','success','error'].indexOf(avatarState) >= 0 ? {idle:'#FF6B00',greeting:'#FF6B00',listening:'#3B82F6',talking:'#FF6B00',thinking:'#F59E0B',success:'#10B981',error:'#EF4444'}[avatarState] : '#FF6B00') + '60' }]}>
+              <Text style={styles.msgText}>{message}</Text>
+            </View>
+          ) : null}
 
           {/* Audio visualizer when talking */}
           {avatarState === 'talking' && (
@@ -314,4 +323,6 @@ const styles = StyleSheet.create({
   listenBtnText: { color: '#FFF', fontSize: 16, fontWeight: '800' },
   particle: { position: 'absolute' },
   vignette: { ...StyleSheet.absoluteFillObject, zIndex: 1, pointerEvents: 'none' },
+  msgBubble: { marginTop: 10, paddingHorizontal: 18, paddingVertical: 12, borderRadius: 16, backgroundColor: '#141824', borderWidth: 1, maxWidth: '85%', alignSelf: 'center' },
+  msgText: { color: '#E2E8F0', fontSize: 14, lineHeight: 20, fontWeight: '500', textAlign: 'center' },
 });
