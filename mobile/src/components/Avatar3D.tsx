@@ -107,7 +107,7 @@ export default function Avatar3D({ state, height = 380 }: Props) {
           <View style={[s.faceFrame, { width: faceSize, height: faceSize, borderRadius: faceSize/2, borderColor: ringColor }]}>
             <Image source={AVATAR_IMG} style={[s.faceImg, { width: faceSize, height: faceSize, borderRadius: faceSize/2 }]} resizeMode="cover" />
             {/* Blink overlay */}
-            <Animated.View style={[s.blinkOverlay, { width: faceSize, height: faceSize, borderRadius: faceSize/2, opacity: Animated.subtract(1, blink) }]} />
+            <Animated.View style={[s.blinkOverlay, { width: faceSize, height: faceSize, borderRadius: faceSize/2, opacity: blink.interpolate({ inputRange: [0.05, 1], outputRange: [1, 0] }) }]} />
           </View>
           {/* Hair sides */}
           <View style={[s.hairL, { borderRightColor: '#1A0D03', borderRightWidth: faceSize*0.07 }]} />

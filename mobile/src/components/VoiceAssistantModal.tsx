@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { View, Text, TouchableOpacity, Modal, StyleSheet, Animated, Dimensions, Easing, StatusBar } from 'react-native';
+import { View, Text, TouchableOpacity, Modal, StyleSheet, Animated, Dimensions, Easing } from 'react-native';
 import * as Speech from 'expo-speech';
 import { apiClient } from '../services/api';
 import { useAuthStore } from '../store/authStore';
