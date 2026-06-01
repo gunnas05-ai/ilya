@@ -87,18 +87,15 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
   ).current;
 
   useEffect(() => {
-    if (visible) {
-      particles.forEach(p => {
-        const loop = Animated.loop(
-          Animated.timing(p.anim, {
-            toValue: 1, duration: p.speed * 1000,
-            easing: Easing.linear, useNativeDriver: true,
-          }),
-        );
-        loop.start();
-        return () => loop.stop();
-      });
-    }
+    if (!visible) return;
+    const loops = particles.map(p => {
+      const loop = Animated.loop(
+        Animated.timing(p.anim, { toValue: 1, duration: p.speed * 1000, easing: Easing.linear, useNativeDriver: true }),
+      );
+      loop.start();
+      return loop;
+    });
+    return () => loops.forEach(l => l.stop());
   }, [visible]);
 
   // Entry animation
@@ -122,10 +119,10 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
         }
       }, 1500);
 
-      // Greeting
+      // Greeting — text immediately, speech with slight delay
       const greeting = `${getGreeting()} ${userName} Bey. Kaptan Platformuna hoş geldiniz. Size nasıl yardımcı olabilirim?`;
+      setMessage(greeting);
       setTimeout(() => {
-        setMessage(greeting);
         setAvatarState('talking');
         Speech.speak(greeting, {
           language: 'tr-TR', rate: 0.85, pitch: 1.05,
@@ -135,7 +132,7 @@ export default function VoiceAssistantModal({ visible, onClose, onNavigate }: Pr
             setTimeout(() => startListening(), 400);
           },
         });
-      }, 1000);
+      }, 800);
     } else {
       fadeAnim.setValue(0);
       slideUp.setValue(100);
