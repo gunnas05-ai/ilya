@@ -226,13 +226,13 @@ interface Props {
 
 export default function Avatar3D({ state, height = 350 }: Props) {
   const [ready, setReady] = useState(false);
-  const [error, setError] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
-  if (error) {
-    // Fallback: 2D image
+  // Try 3D, fallback to 2D on any error
+  if (hasError) {
     return (
       <View style={[styles.container, { height, alignItems: 'center', justifyContent: 'center' }]}>
-        <Image source={FACE_IMG} style={{ width: height * 0.5, height: height * 0.5, borderRadius: height * 0.25 }} resizeMode="cover" />
+        <Image source={FACE_IMG} style={{ width: height * 0.45, height: height * 0.45, borderRadius: height * 0.225, borderWidth: 3, borderColor: '#FF6B00' }} resizeMode="cover" />
       </View>
     );
   }
@@ -247,9 +247,9 @@ export default function Avatar3D({ state, height = 350 }: Props) {
       <Canvas
         camera={{ position: [0, 0.1, 2.2], fov: 40 }}
         style={styles.canvas}
-        gl={{ antialias: true, alpha: true }}
+        gl={{ antialias: true, alpha: true, preserveDrawingBuffer: false, powerPreference: 'default' }}
         onCreated={() => setReady(true)}
-        onError={() => setError(true)}
+        onError={() => setHasError(true)}
       >
         <CameraRig />
         <SceneLighting />
