@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -45,7 +45,7 @@ export default function RatesPage() {
       </div>
 
       {/* Rota Arama */}
-      <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 mb-6">
+      <div className="glass-card p-4 mb-6">
         <div className="flex items-center gap-3 flex-wrap">
           <MapPin size={18} className="text-kaptan-primary" />
           <input className="bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-sm text-kaptan-text w-32" placeholder="Nereden" value={search.from} onChange={e => setSearch({...search, from: e.target.value})} />
@@ -94,7 +94,7 @@ export default function RatesPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* En Aktif Rotalar */}
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+        <div className="glass-card p-5">
           <h3 className="font-semibold text-kaptan-text mb-4 flex items-center gap-2"><Activity size={18} className="text-kaptan-primary" /> En Aktif Rotalar (30 gün)</h3>
           {loading ? <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-10 bg-kaptan-dark rounded-lg animate-pulse" />)}</div> : (
             <div className="space-y-2">
@@ -110,7 +110,7 @@ export default function RatesPage() {
         </div>
 
         {/* Trend Rotalar */}
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+        <div className="glass-card p-5">
           <h3 className="font-semibold text-kaptan-text mb-4 flex items-center gap-2"><TrendingUp size={18} className="text-kaptan-primary" /> Fiyatı En Çok Değişen Rotalar</h3>
           {loading ? <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-10 bg-kaptan-dark rounded-lg animate-pulse" />)}</div> : (
             <div className="space-y-2">

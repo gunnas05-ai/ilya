@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
@@ -115,7 +115,7 @@ export default function TrackingPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 mb-4">
+          <div className="glass-card p-4 mb-4">
             <div className="relative mb-4">
               <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
               <input className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
@@ -126,24 +126,24 @@ export default function TrackingPage() {
           </div>
 
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-3 text-center">
+            <div className="glass-card p-3 text-center">
               <Truck className="mx-auto mb-1 text-kaptan-primary" size={20} />
               <p className="text-xl font-bold text-kaptan-text">{records.length}</p>
               <p className="text-xs text-kaptan-muted">Aktif Takip</p>
             </div>
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-3 text-center">
+            <div className="glass-card p-3 text-center">
               <Navigation className="mx-auto mb-1 text-kaptan-success" size={20} />
               <p className="text-xl font-bold text-kaptan-text">{positions.length}</p>
               <p className="text-xs text-kaptan-muted">Anlık Pozisyon</p>
             </div>
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-3 text-center">
+            <div className="glass-card p-3 text-center">
               <Clock className="mx-auto mb-1 text-kaptan-warning" size={20} />
               <p className="text-xl font-bold text-kaptan-text">
                 {records.filter((r: any) => r.status === 'delayed').length}
               </p>
               <p className="text-xs text-kaptan-muted">Gecikmeli</p>
             </div>
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-3 text-center">
+            <div className="glass-card p-3 text-center">
               <MapPin className="mx-auto mb-1 text-kaptan-primary" size={20} />
               <p className="text-xl font-bold text-kaptan-text">
                 {records.filter((r: any) => r.status === 'delivered').length}
@@ -154,7 +154,7 @@ export default function TrackingPage() {
         </div>
 
         <div>
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+          <div className="glass-card p-4">
             <h3 className="font-semibold text-kaptan-text mb-3">Aktif Araçlar</h3>
             {loading ? (
               <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-kaptan-dark rounded-lg animate-pulse" />)}</div>

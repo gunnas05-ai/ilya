@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -50,7 +50,7 @@ export default function OdemePage() {
       <div>
         <h2 className="text-2xl font-bold text-kaptan-text mb-6">Ödeme Sistemi</h2>
         <div className="grid grid-cols-4 gap-4">
-          {[1,2,3,4].map(i => <div key={i} className="h-32 bg-kaptan-card rounded-xl animate-pulse" />)}
+          {[1,2,3,4].map(i => <div key={i} className="h-32 skeleton rounded-xl" />)}
         </div>
       </div>
     );
@@ -80,30 +80,30 @@ export default function OdemePage() {
 
       {/* ── Üst İstatistikler ── */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+        <div className="glass-card p-4">
           <div className="flex items-center gap-2 text-xs text-kaptan-muted mb-1"><CreditCard size={14} /> Kayıtlı Kart</div>
           <div className="text-xl font-bold text-kaptan-text">{cards.length}</div>
         </div>
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+        <div className="glass-card p-4">
           <div className="flex items-center gap-2 text-xs text-kaptan-muted mb-1"><RefreshCw size={14} /> Abonelik Planı</div>
           <div className="text-xl font-bold text-kaptan-primary">{plans.length}</div>
         </div>
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+        <div className="glass-card p-4">
           <div className="flex items-center gap-2 text-xs text-kaptan-muted mb-1"><Receipt size={14} /> Kontör Paketi</div>
           <div className="text-xl font-bold text-kaptan-warning">{creditPkgs.length}</div>
         </div>
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+        <div className="glass-card p-4">
           <div className="flex items-center gap-2 text-xs text-kaptan-muted mb-1"><Percent size={14} /> Komisyon</div>
           <div className="text-xl font-bold text-kaptan-success">{commissionConfigs.length} oran</div>
         </div>
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+        <div className="glass-card p-4">
           <div className="flex items-center gap-2 text-xs text-kaptan-muted mb-1"><Banknote size={14} /> Aylık Komisyon</div>
           <div className="text-xl font-bold text-kaptan-success">{commissionReport?.totalCommissionTL || '0'} ₺</div>
         </div>
       </div>
 
       {/* ── Tab Navigasyon ── */}
-      <div className="flex gap-1 mb-4 bg-kaptan-card border border-kaptan-border rounded-lg p-1 overflow-x-auto">
+      <div className="flex gap-1 mb-4 glass-card p-1 overflow-x-auto">
         {tabs.map((t) => (
           <button
             key={t.key}
@@ -122,7 +122,7 @@ export default function OdemePage() {
       {/* ── TAB: Genel Bakış ── */}
       {tab === 'overview' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+          <div className="glass-card p-5">
             <h3 className="text-sm font-semibold text-kaptan-text mb-3 flex items-center gap-2">
               <CreditCard size={16} className="text-kaptan-primary" /> Ödeme Sağlayıcı
             </h3>
@@ -146,7 +146,7 @@ export default function OdemePage() {
             </div>
           </div>
 
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+          <div className="glass-card p-5">
             <h3 className="text-sm font-semibold text-kaptan-text mb-3 flex items-center gap-2">
               <AlertCircle size={16} className="text-kaptan-warning" /> Sistem Durumu
             </h3>
@@ -170,7 +170,7 @@ export default function OdemePage() {
 
       {/* ── TAB: Kartlar ── */}
       {tab === 'cards' && (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+        <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-kaptan-dark/50 border-b border-kaptan-border">
               <tr className="text-left text-kaptan-muted">
@@ -205,7 +205,7 @@ export default function OdemePage() {
       {tab === 'subscriptions' && (
         <div className="space-y-3">
           {plans.map((p) => (
-            <div key={p.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+            <div key={p.id} className="glass-card p-5">
               <div className="flex justify-between items-start">
                 <div>
                   <span className="text-kaptan-text font-semibold text-lg">{p.displayName}</span>
@@ -234,7 +234,7 @@ export default function OdemePage() {
       {tab === 'credits' && (
         <div className="space-y-3">
           {creditPkgs.map((p) => (
-            <div key={p.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+            <div key={p.id} className="glass-card p-5">
               <div className="flex justify-between items-center">
                 <div>
                   <span className="text-kaptan-text font-semibold">{p.name}</span>
@@ -255,7 +255,7 @@ export default function OdemePage() {
         <div>
           <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-6">
             {commissionConfigs.map((c) => (
-              <div key={c.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 text-center">
+              <div key={c.id} className="glass-card p-4 text-center">
                 <div className="text-3xl font-bold text-kaptan-primary">%{c.rate}</div>
                 <div className="text-sm text-kaptan-text mt-1">{c.displayName || configLabels[c.name] || c.name}</div>
                 {c.description && <div className="text-xs text-kaptan-muted mt-1">{c.description}</div>}
@@ -263,7 +263,7 @@ export default function OdemePage() {
             ))}
           </div>
           {commissionReport && (
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+            <div className="glass-card p-5">
               <h3 className="text-sm font-semibold text-kaptan-text mb-3">Aylık Komisyon Raporu</h3>
               <div className="text-3xl font-bold text-kaptan-success">{commissionReport.totalCommissionTL} ₺</div>
               <div className="text-xs text-kaptan-muted mt-1">{commissionReport.totalTransactions} işlem</div>
@@ -274,7 +274,7 @@ export default function OdemePage() {
 
       {/* ── TAB: İşlemler ── */}
       {tab === 'transactions' && (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+        <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-kaptan-dark/50 border-b border-kaptan-border">
               <tr className="text-left text-kaptan-muted">

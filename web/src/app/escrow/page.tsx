@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -86,26 +86,26 @@ export default function EscrowPage() {
       {tab === 'overview' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+            <div className="glass-card p-4">
               <div className="flex items-center gap-2 text-kaptan-muted text-sm mb-2"><DollarSign size={16} className="text-kaptan-primary" /> Escrow Hacmi</div>
               <p className="text-2xl font-bold text-kaptan-text">{totalEscrowVolume.toLocaleString('tr-TR')} ₺</p>
             </div>
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+            <div className="glass-card p-4">
               <div className="flex items-center gap-2 text-kaptan-muted text-sm mb-2"><Clock size={16} className="text-kaptan-warning" /> Bekleyen Çekim</div>
               <p className="text-2xl font-bold text-kaptan-warning">{pending.length}</p>
             </div>
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+            <div className="glass-card p-4">
               <div className="flex items-center gap-2 text-kaptan-muted text-sm mb-2"><AlertTriangle size={16} className="text-kaptan-danger" /> Aktif İhtilaf</div>
               <p className="text-2xl font-bold text-kaptan-danger">{activeDisputes.length}</p>
             </div>
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+            <div className="glass-card p-4">
               <div className="flex items-center gap-2 text-kaptan-muted text-sm mb-2"><CheckCircle size={16} className="text-kaptan-success" /> Çözümlenen</div>
               <p className="text-2xl font-bold text-kaptan-success">{disputes.filter(d => d.status === 'resolved').length}</p>
             </div>
           </div>
 
           {/* Quick actions */}
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+          <div className="glass-card p-5">
             <h3 className="font-semibold text-kaptan-text mb-3">Hızlı İşlemler</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {[
@@ -123,7 +123,7 @@ export default function EscrowPage() {
       )}
 
       {tab === 'withdrawals' && (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+        <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-kaptan-dark/50 border-b border-kaptan-border">
               <tr className="text-left text-kaptan-muted">
@@ -163,7 +163,7 @@ export default function EscrowPage() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             {disputes.length === 0 ? (
-              <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-12 text-center text-kaptan-muted">
+              <div className="glass-card p-12 text-center text-kaptan-muted">
                 <Shield size={48} className="mx-auto mb-3 opacity-30" />
                 <p>Aktif ihtilaf bulunmuyor</p>
               </div>
@@ -198,7 +198,7 @@ export default function EscrowPage() {
 
           <div>
             {selectedDispute ? (
-              <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 sticky top-6">
+              <div className="glass-card p-4 sticky top-6">
                 <h3 className="font-semibold text-kaptan-text mb-3">İhtilaf Çözüm Paneli</h3>
                 <div className="space-y-3 text-sm">
                   <div>
@@ -248,7 +248,7 @@ export default function EscrowPage() {
                 </div>
               </div>
             ) : (
-              <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-6 text-center text-kaptan-muted">
+              <div className="glass-card p-6 text-center text-kaptan-muted">
                 <Eye size={32} className="mx-auto mb-2 opacity-30" />
                 <p className="text-sm">Çözmek için bir ihtilaf seçin</p>
               </div>

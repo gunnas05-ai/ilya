@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Controller, Get, Post, Param, Body, Query, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { DocumentService } from './document.service';

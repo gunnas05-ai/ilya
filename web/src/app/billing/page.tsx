@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -58,7 +58,7 @@ export default function BillingPage() {
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">{[1,2,3].map(i => <div key={i} className="h-52 bg-kaptan-card rounded-xl animate-pulse" />)}</div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">{[1,2,3].map(i => <div key={i} className="h-52 skeleton rounded-xl" />)}</div>
       ) : (
         <>
           {/* Subscription Plans */}
@@ -96,7 +96,7 @@ export default function BillingPage() {
               {creditPkgs.length === 0 ? (
                 <div className="col-span-3 text-center py-12 text-kaptan-muted">Henüz kontör paketi tanımlanmamış</div>
               ) : creditPkgs.map((p) => (
-                <div key={p.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-6 flex flex-col text-center">
+                <div key={p.id} className="glass-card p-6 flex flex-col text-center">
                   <Zap size={28} className="mx-auto text-kaptan-warning mb-3" />
                   <h3 className="text-lg font-bold text-kaptan-text">{p.name}</h3>
                   <div className="mt-3 mb-1">
@@ -118,7 +118,7 @@ export default function BillingPage() {
 
           {/* Purchase History */}
           {tab === 'history' && (
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+            <div className="glass-card overflow-hidden">
               {subs.length === 0 ? (
                 <div className="text-center py-16 text-kaptan-muted">
                   <Clock size={40} className="mx-auto mb-2 opacity-20" />

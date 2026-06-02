@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -29,9 +29,9 @@ export default function WhiteLabelPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-2">{[1,2].map(i => <div key={i} className="h-20 bg-kaptan-card rounded-xl animate-pulse" />)}</div>
+        <div className="space-y-2">{[1,2].map(i => <div key={i} className="h-20 skeleton rounded-xl" />)}</div>
       ) : configs.length === 0 ? (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-12 text-center">
+        <div className="glass-card p-12 text-center">
           <Palette size={48} className="mx-auto mb-4 text-kaptan-muted opacity-50" />
           <h3 className="text-lg font-semibold text-kaptan-text mb-2">Henüz Beyaz Etiket Müşterisi Yok</h3>
           <p className="text-kaptan-muted text-sm mb-6 max-w-md mx-auto">
@@ -57,7 +57,7 @@ export default function WhiteLabelPage() {
       ) : (
         <div className="space-y-3">
           {configs.map((c: any) => (
-            <div key={c.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+            <div key={c.id} className="glass-card p-5">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-lg flex items-center justify-center text-white font-bold" style={{ backgroundColor: c.primaryColor }}>
                   {c.companyName?.charAt(0)}

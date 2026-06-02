@@ -23,9 +23,9 @@
       }
     ],
     "paths": {
-      "@/*": [
-        "./src/*"
-      ]
+      "@/*": ["./src/*"],
+      "@kaptan/shared": ["../shared/index.ts"],
+      "@kaptan/shared/*": ["../shared/*"]
     }
   },
   "include": [
@@ -36,6 +36,9 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ]
 }

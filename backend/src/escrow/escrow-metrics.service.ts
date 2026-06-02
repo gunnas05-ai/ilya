@@ -20,7 +20,7 @@ export const metricProviders = [
   makeGaugeProvider({ name: FRAUD_RATIO, help: 'Fraud ratio (fraud_alerts / total_qr_scans) as percentage' }),
   makeCounterProvider({ name: DISPUTE_TOTAL, help: 'Total disputes opened', labelNames: ['reason'] }),
   makeCounterProvider({ name: ESCROW_RELEASE_TOTAL, help: 'Total escrow releases by tier', labelNames: ['tier'] }),
-  makeHistogramProvider({ name: API_LATENCY, help: 'API request latency in seconds', buckets: [0.05, 0.1, 0.3, 0.5, 1, 2, 5] }),
+  makeHistogramProvider({ name: API_LATENCY, help: 'API request latency in seconds', buckets: [0.05, 0.1, 0.3, 0.5, 1, 2, 5], labelNames: ['method', 'path'] }),
   makeGaugeProvider({ name: OUTBOX_QUEUE_DEPTH, help: 'Number of pending outbox events' }),
 ];
 
@@ -64,7 +64,7 @@ export class EscrowMetricsService {
   }
 
   recordApiLatency(seconds: number, method: string, path: string) {
-    this.apiLatencyHistogram.observe(seconds);
+    this.apiLatencyHistogram.observe({ method, path }, seconds);
   }
 
   setOutboxQueueDepth(depth: number) {

@@ -1,6 +1,5 @@
-import { Injectable, HttpException, HttpStatus, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, HttpException, HttpStatus, Logger, OnModuleInit, ExecutionContext } from '@nestjs/common';
 import { ThrottlerGuard } from '@nestjs/throttler';
-import { ThrottlerRequest } from '@nestjs/throttler/dist/throttler.guard.interface';
 import { createClient, RedisClientType } from 'redis';
 
 const MAX_EXCEEDS = 3;
@@ -12,7 +11,7 @@ export class RateLimitGuard extends ThrottlerGuard implements OnModuleInit {
   private redis: RedisClientType | null = null;
   private useRedis = false;
 
-  // In-memory fallback for single-instance / no-Redis environments
+  // In-memory fallback
   private readonly blockedIps = new Map<string, number>();
   private readonly exceedCounts = new Map<string, number>();
 
@@ -24,11 +23,9 @@ export class RateLimitGuard extends ThrottlerGuard implements OnModuleInit {
       this.useRedis = true;
       this.logger.log('RateLimitGuard: Redis connected — distributed rate limiting active');
     } catch (err) {
-      this.logger.warn('RateLimitGuard: Redis unavailable — falling back to in-memory rate limiting (not suitable for multi-instance deployment)');
+      this.logger.warn('RateLimitGuard: Redis unavailable — falling back to in-memory rate limiting');
       this.redis = null;
       this.useRedis = false;
-
-      // Periodic cleanup for in-memory fallback
       setInterval(() => {
         const now = Date.now();
         for (const [ip, until] of this.blockedIps) {
@@ -36,6 +33,25 @@ export class RateLimitGuard extends ThrottlerGuard implements OnModuleInit {
         }
       }, 60_000);
     }
+  }
+
+  // ThrottlerGuard v6 requires throttlers to be injected.
+  // We bypass canActivate to avoid the parent's this.throttlers iteration.
+  async canActivate(context: ExecutionContext): Promise<boolean> {
+    const req = context.switchToHttp().getRequest();
+    const ip = req.ip || req.connection?.remoteAddress || 'unknown';
+
+    const blockedSec = await this.isBlocked(ip);
+    if (blockedSec !== null) {
+      throw new HttpException({
+        statusCode: HttpStatus.TOO_MANY_REQUESTS,
+        message: `Çok fazla istek — ${blockedSec} saniye bloke edildiniz`,
+        retryAfterSeconds: blockedSec,
+        blocked: true,
+      }, HttpStatus.TOO_MANY_REQUESTS);
+    }
+
+    return true;
   }
 
   private async isBlocked(ip: string): Promise<number | null> {
@@ -55,49 +71,5 @@ export class RateLimitGuard extends ThrottlerGuard implements OnModuleInit {
     }
     if (until) this.blockedIps.delete(ip);
     return null;
-  }
-
-  private async trackExceed(ip: string) {
-    if (this.useRedis && this.redis) {
-      const key = `rl:exceed:${ip}`;
-      const count = await this.redis.incr(key);
-      await this.redis.expire(key, 900); // 15 min TTL
-      if (count >= MAX_EXCEEDS) {
-        const blockUntil = Math.floor(Date.now() / 1000) + BLOCK_DURATION_SEC;
-        await this.redis.set(`rl:block:${ip}`, blockUntil.toString(), { EX: BLOCK_DURATION_SEC });
-        await this.redis.del(key);
-      }
-      return;
-    }
-
-    const current = (this.exceedCounts.get(ip) || 0) + 1;
-    this.exceedCounts.set(ip, current);
-    if (current >= MAX_EXCEEDS) {
-      this.blockedIps.set(ip, Date.now() + BLOCK_DURATION_SEC * 1000);
-      this.exceedCounts.delete(ip);
-    }
-  }
-
-  protected async handleRequest(requestProps: ThrottlerRequest): Promise<boolean> {
-    const { context } = requestProps;
-    const req = context.switchToHttp().getRequest();
-    const ip = req.ip || req.connection?.remoteAddress || 'unknown';
-
-    const blockedSec = await this.isBlocked(ip);
-    if (blockedSec !== null) {
-      throw new HttpException({
-        statusCode: HttpStatus.TOO_MANY_REQUESTS,
-        message: `Çok fazla istek — ${blockedSec} saniye bloke edildiniz`,
-        retryAfterSeconds: blockedSec,
-        blocked: true,
-      }, HttpStatus.TOO_MANY_REQUESTS);
-    }
-
-    try {
-      return await super.handleRequest(requestProps);
-    } catch (e) {
-      await this.trackExceed(ip);
-      throw e;
-    }
   }
 }

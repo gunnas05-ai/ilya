@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useMemo } from 'react';
 import dynamic from 'next/dynamic';
@@ -11,7 +11,7 @@ import {
 } from 'lucide-react';
 
 // Dynamic import for Leaflet map (SSR-safe)
-const ReturnLoadMap = dynamic(() => import('./map'), { ssr: false, loading: () => <div className="h-[400px] bg-kaptan-card rounded-xl animate-pulse flex items-center justify-center text-kaptan-muted">Harita yükleniyor...</div> });
+const ReturnLoadMap = dynamic(() => import('./map'), { ssr: false, loading: () => <div className="h-[400px] skeleton rounded-xl flex items-center justify-center text-kaptan-muted">Harita yükleniyor...</div> });
 
 const RADIUS_OPTIONS = [25, 50, 100, 250, 500];
 type ViewMode = 'list' | 'map';
@@ -187,26 +187,26 @@ export default function ReturnLoadsPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+        <div className="glass-card p-4">
           <div className="flex items-center gap-2 text-xs text-kaptan-muted mb-1"><Package size={14} className="text-kaptan-primary" /> Toplam Yük</div>
           <p className="text-xl font-bold text-kaptan-text">{stats.total}</p>
         </div>
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+        <div className="glass-card p-4">
           <div className="flex items-center gap-2 text-xs text-kaptan-muted mb-1"><Shield size={14} className="text-kaptan-success" /> Escrow Garantili</div>
           <p className="text-xl font-bold text-kaptan-success">{stats.escrow}</p>
         </div>
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+        <div className="glass-card p-4">
           <div className="flex items-center gap-2 text-xs text-kaptan-muted mb-1"><Zap size={14} className="text-kaptan-warning" /> Acil Yükler</div>
           <p className="text-xl font-bold text-kaptan-warning">{stats.urgent}</p>
         </div>
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+        <div className="glass-card p-4">
           <div className="flex items-center gap-2 text-xs text-kaptan-muted mb-1"><DollarSign size={14} className="text-kaptan-primary" /> Ortalama Fiyat</div>
           <p className="text-xl font-bold text-kaptan-text">{stats.avgPrice.toLocaleString('tr-TR')} ₺</p>
         </div>
       </div>
 
       {/* Location + Radius bar */}
-      <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 mb-4">
+      <div className="glass-card p-4 mb-4">
         <div className="flex flex-wrap items-center gap-4">
           <div className="flex items-center gap-2">
             <MapPin size={16} className="text-kaptan-primary" />
@@ -246,7 +246,7 @@ export default function ReturnLoadsPage() {
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-          <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted text-sm"
+          <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted text-sm"
             placeholder="Yük başlığı, şehir ara..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <div className="flex gap-2">
@@ -270,7 +270,7 @@ export default function ReturnLoadsPage() {
 
       {/* Advanced Filters */}
       {showFilters && (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 mb-4 animate-in slide-in-from-top-2">
+        <div className="glass-card p-4 mb-4 animate-in slide-in-from-top-2">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             <div>
               <label className="text-xs text-kaptan-muted mb-1 block">Yük Türü</label>
@@ -318,7 +318,7 @@ export default function ReturnLoadsPage() {
 
       {/* Map View */}
       {viewMode === 'map' && (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 mb-4">
+        <div className="glass-card p-4 mb-4">
           <div className="h-[450px] rounded-lg overflow-hidden">
             <ReturnLoadMap
               deliveryPoint={deliveryPoint}
@@ -343,7 +343,7 @@ export default function ReturnLoadsPage() {
       {loading && (
         <div className="space-y-3">
           {[1, 2, 3].map(i => (
-            <div key={i} className="h-28 bg-kaptan-card rounded-xl animate-pulse border border-kaptan-border">
+            <div key={i} className="h-28 skeleton rounded-xl border border-kaptan-border">
               <div className="p-4 flex gap-4">
                 <div className="w-2/3 space-y-2"><div className="h-4 bg-kaptan-border rounded w-3/4" /><div className="h-3 bg-kaptan-border rounded w-1/2" /><div className="h-3 bg-kaptan-border rounded w-1/3" /></div>
                 <div className="w-1/3 space-y-2"><div className="h-4 bg-kaptan-border rounded w-full" /><div className="h-3 bg-kaptan-border rounded w-1/2" /></div>
@@ -461,7 +461,7 @@ export default function ReturnLoadsPage() {
 
           {/* Empty State */}
           {displayItems.length === 0 && !loading && !error && (
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-16 text-center">
+            <div className="glass-card p-16 text-center">
               <ArrowLeftRight size={56} className="mx-auto mb-4 text-kaptan-muted opacity-30" />
               <h3 className="text-lg font-semibold text-kaptan-text mb-2">Geri Dönüş Yükü Bulunamadı</h3>
               <p className="text-sm text-kaptan-muted max-w-md mx-auto">
@@ -479,7 +479,7 @@ export default function ReturnLoadsPage() {
       {/* Bid/Offer Modal */}
       {bidLoad && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setBidLoad(null)}>
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div className="glass-card rounded-2xl p-6 w-full max-w-lg shadow-2xl" onClick={e => e.stopPropagation()}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-bold text-kaptan-text">Teklif Ver</h3>
               <button onClick={() => setBidLoad(null)} className="p-1.5 hover:bg-kaptan-dark rounded-lg text-kaptan-muted hover:text-kaptan-text"><X size={18} /></button>

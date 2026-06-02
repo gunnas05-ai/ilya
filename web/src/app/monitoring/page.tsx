@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -50,7 +50,7 @@ export default function MonitoringPage() {
       {/* Sistem durumu */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         {services.map(svc => (
-          <div key={svc.key} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+          <div key={svc.key} className="glass-card p-4">
             <div className="flex items-center justify-between">
               <svc.icon size={20} className={svc.status ? 'text-kaptan-success' : 'text-kaptan-danger'} />
               {svc.status ? <CheckCircle size={16} className="text-kaptan-success" /> : <AlertTriangle size={16} className="text-kaptan-danger" />}
@@ -71,7 +71,7 @@ export default function MonitoringPage() {
           { label: 'Bellek', value: health?.memory ? formatMemory(health.memory) : '—', icon: HardDrive, color: 'text-kaptan-warning' },
           { label: 'CPU Load', value: health?.cpu ? health.cpu.toFixed(1) : '—', icon: Cpu, color: 'text-kaptan-text' },
         ].map(m => (
-          <div key={m.label} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+          <div key={m.label} className="glass-card p-4">
             <div className="text-xs text-kaptan-muted mb-1">{m.label}</div>
             <div className="flex items-center justify-between">
               <span className={`text-xl font-bold ${m.color}`}>{m.value}</span>
@@ -83,7 +83,7 @@ export default function MonitoringPage() {
 
       {/* API metrikleri — health endpoint'inden canli */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+        <div className="glass-card p-5">
           <h3 className="font-semibold text-kaptan-text mb-3">Servis Durumları</h3>
           <div className="space-y-3">
             {health?.services ? Object.entries(health.services).map(([key, svc]: any) => (
@@ -102,7 +102,7 @@ export default function MonitoringPage() {
             )) : <p className="text-kaptan-muted text-sm">Health verisi yüklenemedi</p>}
           </div>
         </div>
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+        <div className="glass-card p-5">
           <h3 className="font-semibold text-kaptan-text mb-3">Sistem Bilgisi</h3>
           <div className="space-y-3 text-sm">
             <div className="flex justify-between"><span className="text-kaptan-muted">Backend Versiyonu</span><span className="text-kaptan-text">{health?.version || 'v1.0.0'}</span></div>

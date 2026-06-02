@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -62,16 +62,16 @@ export default function CarrierProfilesPage() {
 
       <div className="mb-4 relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-        <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
+        <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
           placeholder="İsim, e-posta, plaka ara..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
-      {loading ? <div className="space-y-2">{[1,2,3,4].map(i => <div key={i} className="h-20 bg-kaptan-card rounded-lg animate-pulse" />)}</div> : (
+      {loading ? <div className="space-y-2">{[1,2,3,4].map(i => <div key={i} className="h-20 skeleton rounded-lg" />)}</div> : (
         <div className="space-y-3">
           {filtered.map((c: any) => {
             const pct = getCompletionPct(c);
             return (
-              <div key={c.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 hover:border-kaptan-primary/30 transition-colors">
+              <div key={c.id} className="glass-card p-4 hover:border-kaptan-primary/30 transition-colors">
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-3">

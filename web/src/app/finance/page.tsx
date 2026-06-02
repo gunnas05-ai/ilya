@@ -1,8 +1,12 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { api, ApiError, showToast } from '@/lib/api';
+import { expenseSchema, type ExpenseForm } from '@/lib/validations';
 import { safeText } from '@/lib/utils';
+import { FormInput, MoneyInput, DateInput, DropdownSelect, PlateInput } from '@/components/shared';
 import { Plus, Search, Edit, Trash2, TrendingUp, TrendingDown, DollarSign, Upload } from 'lucide-react';
 
 const INCOME_TYPES = ['maaş', 'kira', 'ticari_kazanc', 'yatırım', 'yardım', 'taşıma_kazancı', 'diğer'];
@@ -24,44 +28,43 @@ export default function FinancePage() {
   const [ocrResult, setOcrResult] = useState<any>(null);
   const [ocrLoading, setOcrLoading] = useState(false);
 
-  const [form, setForm] = useState({
-    category: '', type: '', amount: '', description: '', date: '',
-    paymentMethod: '', vehiclePlate: '', relatedPerson: '', location: '',
-  });
+  const ff = useForm<ExpenseForm>({ resolver: zodResolver(expenseSchema), defaultValues: { amount: 0, description: '', category: '', date: '', vehiclePlate: '', paymentMethod: '' } });
+  const ffErr = ff.formState.errors;
+  const [formCategory, setFormCategory] = useState('');
+  const [formTypeState, setFormTypeState] = useState('');
 
   const fetchData = async () => {
     setLoading(true);
     try {
       const [incRes, expRes, plRes] = await Promise.all([
-        api.get('/finance/incomes').catch(() => ({ data: { data: [] } })),
-        api.get('/finance/expenses').catch(() => ({ data: { data: [] } })),
-        api.get('/finance/profit-loss').catch(() => ({ data: { data: null } })),
+        api.get('/finance/incomes').catch(() => ({ data: [] })),
+        api.get('/finance/expenses').catch(() => ({ data: [] })),
+        api.get('/finance/profit-loss').catch(() => ({ data: null })),
       ]);
-      setIncomes(Array.isArray(incRes.data?.data?.data || incRes.data?.data) ? (incRes.data?.data?.data || incRes.data?.data) : []);
-      setExpenses(Array.isArray(expRes.data?.data?.data || expRes.data?.data) ? (expRes.data?.data?.data || expRes.data?.data) : []);
-      setProfitLoss(plRes.data?.data || null);
+      setIncomes(Array.isArray(incRes.data) ? incRes.data : []);
+      setExpenses(Array.isArray(expRes.data) ? expRes.data : []);
+      setProfitLoss(plRes.data || null);
     } catch { setIncomes([]); setExpenses([]); }
     setLoading(false);
   };
 
   useEffect(() => { fetchData(); }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmitForm = async () => {
+    const ok = await ff.trigger();
+    if (!ok) { showToast(Object.values(ffErr)[0]?.message || 'Tutar ve açıklama zorunludur', 'warning'); return; }
+    const data = ff.getValues();
     setSaving(true);
-    const endpoint = formType === 'income' ? '/finance/incomes' : '/finance/expenses';
     const payload = formType === 'income'
-      ? { type: form.type, amount: parseFloat(form.amount), description: form.description, date: form.date, paymentMethod: form.paymentMethod }
-      : { category: form.category, amount: parseFloat(form.amount), description: form.description, date: form.date, vehiclePlate: form.vehiclePlate, relatedPerson: form.relatedPerson, location: form.location, paymentMethod: form.paymentMethod };
-
+      ? { type: formTypeState, amount: data.amount, description: data.description, date: data.date, paymentMethod: data.paymentMethod }
+      : { category: formCategory, amount: data.amount, description: data.description, date: data.date, vehiclePlate: data.vehiclePlate, paymentMethod: data.paymentMethod };
     try {
-      if (editing) {
-        await api.put(`${endpoint}/${editing.id}`, payload);
-      } else {
-        await api.post(endpoint, payload);
-      }
-      setShowForm(false); setEditing(null); resetForm(); fetchData();
-    } catch (err: any) { alert(err.response?.data?.message || 'Hata'); }
+      const endpoint = formType === 'income' ? '/finance/incomes' : '/finance/expenses';
+      if (editing) await api.put(`${endpoint}/${editing.id}`, payload);
+      else await api.post(endpoint, payload);
+      showToast(formType === 'income' ? 'Gelir kaydedildi.' : 'Gider kaydedildi.', 'success');
+      setShowForm(false); setEditing(null); ff.reset(); fetchData();
+    } catch (err: any) { showToast(err instanceof ApiError ? err.message : 'Hata', 'error'); }
     setSaving(false);
   };
 
@@ -81,20 +84,18 @@ export default function FinancePage() {
       const res = await api.post('/finance/ocr/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setOcrResult(res.data?.data);
-      if (res.data?.data) {
-        setForm({
-          ...form,
-          amount: res.data.data.amount?.toString() || '',
-          description: res.data.data.merchant || '',
-          date: res.data.data.date || '',
-        });
+      setOcrResult(res.data);
+      if (res.data) {
+        const d = res.data;
+        if (d.amount) ff.setValue('amount', parseFloat(d.amount) || 0);
+        if (d.merchant) ff.setValue('description', d.merchant);
+        if (d.date) ff.setValue('date', d.date);
       }
-    } catch (err: any) { alert('OCR işleme hatası'); }
+    } catch { showToast('OCR işleme hatası', 'error'); }
     setOcrLoading(false);
   };
 
-  const resetForm = () => setForm({ category: '', type: '', amount: '', description: '', date: '', paymentMethod: '', vehiclePlate: '', relatedPerson: '', location: '' });
+  const resetForm = () => { ff.reset(); setFormCategory(''); setFormTypeState(''); };
 
   const totalIncome = incomes.reduce((s: number, i: any) => s + Number(i.amount || 0), 0);
   const totalExpense = expenses.reduce((s: number, i: any) => s + Number(i.amount || 0), 0);
@@ -127,15 +128,15 @@ export default function FinancePage() {
       {tab === 'dashboard' && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+            <div className="glass-card p-5">
               <div className="flex items-center gap-3"><TrendingUp className="text-kaptan-success" size={24} /><span className="text-kaptan-muted text-sm">Toplam Gelir</span></div>
               <p className="text-2xl font-bold text-kaptan-success mt-2">{totalIncome.toLocaleString('tr-TR')} ₺</p>
             </div>
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+            <div className="glass-card p-5">
               <div className="flex items-center gap-3"><TrendingDown className="text-kaptan-danger" size={24} /><span className="text-kaptan-muted text-sm">Toplam Gider</span></div>
               <p className="text-2xl font-bold text-kaptan-danger mt-2">{totalExpense.toLocaleString('tr-TR')} ₺</p>
             </div>
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+            <div className="glass-card p-5">
               <div className="flex items-center gap-3"><DollarSign className="text-kaptan-primary" size={24} /><span className="text-kaptan-muted text-sm">Net Durum</span></div>
               <p className={`text-2xl font-bold mt-2 ${totalIncome - totalExpense >= 0 ? 'text-kaptan-success' : 'text-kaptan-danger'}`}>
                 {(totalIncome - totalExpense).toLocaleString('tr-TR')} ₺
@@ -144,7 +145,7 @@ export default function FinancePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+            <div className="glass-card p-4">
               <h3 className="font-semibold text-kaptan-text mb-3">Son Gelirler</h3>
               {incomes.slice(0, 5).map((inc: any) => (
                 <div key={inc.id} className="flex justify-between py-2 border-b border-kaptan-border/50 text-sm">
@@ -154,7 +155,7 @@ export default function FinancePage() {
               ))}
               {incomes.length === 0 && <p className="text-kaptan-muted text-sm">Henüz gelir kaydı yok</p>}
             </div>
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+            <div className="glass-card p-4">
               <h3 className="font-semibold text-kaptan-text mb-3">Son Giderler</h3>
               {expenses.slice(0, 5).map((exp: any) => (
                 <div key={exp.id} className="flex justify-between py-2 border-b border-kaptan-border/50 text-sm">
@@ -172,10 +173,10 @@ export default function FinancePage() {
         <>
           <div className="mb-4 relative">
             <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-            <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
+            <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
               placeholder="Ara..." value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+          <div className="glass-card overflow-hidden">
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-kaptan-border text-kaptan-muted">
@@ -214,7 +215,7 @@ export default function FinancePage() {
 
       {showForm && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-10 z-50">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-lg mx-4">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-lg mx-4">
             <h3 className="text-lg font-semibold text-kaptan-text mb-4">
               {formType === 'income' ? 'Gelir Ekle' : 'Gider Ekle'}
             </h3>
@@ -236,12 +237,11 @@ export default function FinancePage() {
               )}
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-3">
+            <div className="space-y-3">
               {formType === 'income' ? (
                 <div>
                   <label className="block text-sm text-kaptan-muted mb-1">Gelir Türü *</label>
-                  <select className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-kaptan-text" required
-                    value={form.type} onChange={e => setForm({...form, type: e.target.value})}>
+                  <select className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-kaptan-text" value={formTypeState} onChange={e => setFormTypeState(e.target.value)}>
                     <option value="">Seçiniz</option>
                     {INCOME_TYPES.map(t => <option key={t} value={t}>{t.replace(/_/g, ' ')}</option>)}
                   </select>
@@ -249,8 +249,7 @@ export default function FinancePage() {
               ) : (
                 <div>
                   <label className="block text-sm text-kaptan-muted mb-1">Kategori *</label>
-                  <select className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-kaptan-text" required
-                    value={form.category} onChange={e => setForm({...form, category: e.target.value})}>
+                  <select className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-kaptan-text" value={formCategory} onChange={e => setFormCategory(e.target.value)}>
                     <option value="">Seçiniz</option>
                     <optgroup label="Lojistik">
                       {EXPENSE_CATEGORIES_LOJISTIK.map(c => <option key={c} value={c}>{c}</option>)}
@@ -263,44 +262,41 @@ export default function FinancePage() {
               )}
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-sm text-kaptan-muted mb-1">Tutar (₺) *</label>
-                  <input type="number" step="0.01" className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-kaptan-text" required
-                    value={form.amount} onChange={e => setForm({...form, amount: e.target.value})} />
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Tutar (₺) *</label>
+                  <input type="number" step="0.01" {...ff.register('amount', { valueAsNumber: true })} className="w-full px-3 py-2.5 rounded-xl text-sm text-[var(--text)] placeholder:text-slate-500 outline-none bg-white/[0.04] border border-[var(--glass-border)] focus:border-[#FF7A00] focus:ring-2 focus:ring-[#FF7A00]/20 transition-all" />
+                  {ffErr.amount && <p className="text-xs text-red-400 mt-1">{ffErr.amount.message}</p>}
                 </div>
                 <div>
-                  <label className="block text-sm text-kaptan-muted mb-1">Tarih</label>
-                  <input type="date" className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-kaptan-text"
-                    value={form.date} onChange={e => setForm({...form, date: e.target.value})} />
+                  <label className="block text-xs font-medium text-slate-400 mb-1">Tarih</label>
+                  <input type="date" {...ff.register('date')} className="w-full px-3 py-2.5 rounded-xl text-sm text-[var(--text)] outline-none bg-white/[0.04] border border-[var(--glass-border)] focus:border-[#FF7A00] focus:ring-2 focus:ring-[#FF7A00]/20 transition-all [color-scheme:dark]" />
                 </div>
               </div>
               <div>
-                <label className="block text-sm text-kaptan-muted mb-1">Açıklama</label>
-                <input className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-kaptan-text"
-                  value={form.description} onChange={e => setForm({...form, description: e.target.value})} />
+                <label className="block text-xs font-medium text-slate-400 mb-1">Açıklama *</label>
+                <input {...ff.register('description')} className="w-full px-3 py-2.5 rounded-xl text-sm text-[var(--text)] placeholder:text-slate-500 outline-none bg-white/[0.04] border border-[var(--glass-border)] focus:border-[#FF7A00] focus:ring-2 focus:ring-[#FF7A00]/20 transition-all" />
+                {ffErr.description && <p className="text-xs text-red-400 mt-1">{ffErr.description.message}</p>}
               </div>
               {formType === 'expense' && (
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm text-kaptan-muted mb-1">Araç Plakası</label>
-                    <input className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-kaptan-text"
-                      value={form.vehiclePlate} onChange={e => setForm({...form, vehiclePlate: e.target.value})} />
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Araç Plakası</label>
+                    <input {...ff.register('vehiclePlate')} className="w-full px-3 py-2.5 rounded-xl text-sm text-[var(--text)] placeholder:text-slate-500 font-mono tracking-wide uppercase outline-none bg-white/[0.04] border border-[var(--glass-border)] focus:border-[#FF7A00] focus:ring-2 focus:ring-[#FF7A00]/20 transition-all" placeholder="34 ABC 123" />
                   </div>
                   <div>
-                    <label className="block text-sm text-kaptan-muted mb-1">Ödeme Yöntemi</label>
-                    <input className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-kaptan-text"
-                      value={form.paymentMethod} onChange={e => setForm({...form, paymentMethod: e.target.value})} />
+                    <label className="block text-xs font-medium text-slate-400 mb-1">Ödeme Yöntemi</label>
+                    <input {...ff.register('paymentMethod')} className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-kaptan-text" />
                   </div>
                 </div>
               )}
               <div className="flex gap-3 justify-end pt-3">
                 <button type="button" onClick={() => { setShowForm(false); setEditing(null); setOcrResult(null); }}
                   className="px-4 py-2 border border-kaptan-border rounded-lg text-kaptan-muted hover:text-kaptan-text">İptal</button>
-                <button type="submit" disabled={saving}
+                <button type="button" onClick={handleSubmitForm} disabled={saving}
                   className="px-4 py-2 bg-kaptan-primary text-white rounded-lg hover:bg-kaptan-primary/90 disabled:opacity-50">
                   {saving ? 'Kaydediliyor...' : 'Kaydet'}
                 </button>
               </div>
-            </form>
+            </div>
           </div>
         </div>
       )}

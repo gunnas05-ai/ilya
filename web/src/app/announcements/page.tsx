@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -51,13 +51,13 @@ export default function AnnouncementsPage() {
       </div>
       <div className="mb-4 relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-        <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
+        <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
           placeholder="Duyuru ara..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
-      {loading ? <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-kaptan-card rounded-xl animate-pulse" />)}</div> : (
+      {loading ? <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 skeleton rounded-xl" />)}</div> : (
         <div className="space-y-3">
           {filtered.map((item: any) => (
-            <div key={item.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 hover:border-kaptan-primary/30">
+            <div key={item.id} className="glass-card p-4 hover:border-kaptan-primary/30">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2">
                   <Megaphone size={16} className={item.priority === 'high' ? 'text-kaptan-danger' : 'text-kaptan-primary'} />
@@ -80,7 +80,7 @@ export default function AnnouncementsPage() {
       )}
       {showForm && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-10 z-50">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-md mx-4">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold text-kaptan-text mb-4">{editing ? 'Duyuru Düzenle' : 'Yeni Duyuru'}</h3>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div><label className="block text-sm text-kaptan-muted mb-1">Başlık *</label>

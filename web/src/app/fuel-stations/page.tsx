@@ -1,11 +1,11 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { api } from '@/lib/api';
 import { Plus, Search, Edit, Trash2, MapPin, Fuel, AlertTriangle, Clock, CheckCircle, List, Map } from 'lucide-react';
 
-const FuelStationMap = dynamic(() => import('./map'), { ssr: false, loading: () => <div className="h-[500px] bg-kaptan-card rounded-xl animate-pulse flex items-center justify-center text-kaptan-muted">Harita yükleniyor...</div> });
+const FuelStationMap = dynamic(() => import('./map'), { ssr: false, loading: () => <div className="h-[500px] skeleton rounded-xl flex items-center justify-center text-kaptan-muted">Harita yükleniyor...</div> });
 
 const BRANDS = ['Shell', 'BP', 'Petrol Ofisi', 'Opet', 'Total', 'Aytemiz', 'GO', 'Lukoil', 'Alpet', 'Diger'];
 const FUEL_TYPES = ['motorin', 'kursunsuz', 'LPG', 'AdBlue', 'elektrik_sarj'];
@@ -80,7 +80,7 @@ export default function FuelStationsPage() {
       <div className="flex flex-wrap gap-3 mb-4">
         <div className="relative flex-1 min-w-[200px]">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-          <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
+          <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
             placeholder="İstasyon, marka, şehir ara..." value={search} onChange={e => setSearch(e.target.value)} />
         </div>
         <div className="flex rounded-lg border border-kaptan-border overflow-hidden">
@@ -95,7 +95,7 @@ export default function FuelStationsPage() {
 
       {/* Map View */}
       {viewMode === 'map' && (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 mb-6">
+        <div className="glass-card p-4 mb-6">
           <div className="h-[500px] rounded-lg overflow-hidden">
             <FuelStationMap stations={filtered} onSelect={(s: any) => setSelectedStation(s)} />
           </div>
@@ -116,14 +116,14 @@ export default function FuelStationsPage() {
         <>
           {loading ? (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              {[1,2,3,4].map(i => <div key={i} className="h-28 bg-kaptan-card rounded-xl animate-pulse" />)}
+              {[1,2,3,4].map(i => <div key={i} className="h-28 skeleton rounded-xl" />)}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {filtered.map((s: any) => {
                 const priceStatus = getPriceStatus(s.priceUpdatedAt || s.updatedAt);
                 return (
-                  <div key={s.id} className={`bg-kaptan-card border border-kaptan-border rounded-xl p-4 transition-all hover:border-kaptan-primary/30 ${priceStatus.faded ? 'opacity-60' : ''}`}>
+                  <div key={s.id} className={`glass-card p-4 transition-all hover:border-kaptan-primary/30 ${priceStatus.faded ? 'opacity-60' : ''}`}>
                     <div className="flex justify-between items-start">
                       <div>
                         <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export default function FuelStationsPage() {
       {/* Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-10 z-50 overflow-y-auto">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-lg mx-4">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-lg mx-4">
             <h3 className="text-lg font-semibold text-kaptan-text mb-4">{editing ? 'İstasyon Düzenle' : 'Yeni İstasyon'}</h3>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">

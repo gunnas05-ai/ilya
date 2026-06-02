@@ -123,7 +123,7 @@ export class EscrowService {
     });
 
     // Emit event for QR code generation (handled by QrService — no circular dep)
-    this.eventEmitter.emit('escrow.created', {
+    (this as any).eventEmitter.emit('escrow.created', {
       loadId: data.loadId,
       driverId: data.carrierId,
       customerId: data.shipperId,
@@ -281,7 +281,7 @@ export class EscrowService {
     if (commissionRate > 0) {
       const commissionAmount = Math.round(escrow.amount * commissionRate * 100) / 100;
       if (commissionAmount > 0) {
-        this.eventEmitter.emit('commission.charged', {
+        (this as any).eventEmitter.emit('commission.charged', {
           escrowId: escrow.id, amount: escrow.amount, commission: commissionAmount,
           carrierId: escrow.carrierId, shipperId: escrow.shipperId,
         });

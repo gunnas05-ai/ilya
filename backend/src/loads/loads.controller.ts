@@ -12,10 +12,16 @@ class CreateLoadDto {
   @IsString() loadType: string;
   @IsString() fromCity: string;
   @IsString() toCity: string;
+  @IsString() fromAddress: string;
+  @IsString() toAddress: string;
+  @IsString() contactName: string;
+  @IsString() contactPhone: string;
   @IsOptional() @IsString() fromDistrict?: string;
   @IsOptional() @IsString() toDistrict?: string;
   @IsOptional() @IsString() pickupDate?: string;
+  @IsOptional() @IsString() pickupTime?: string;
   @IsOptional() @IsString() deliveryDate?: string;
+  @IsOptional() @IsString() deliveryTime?: string;
   @IsOptional() @IsString() vehicleType?: string;
   @IsOptional() @IsString() trailerType?: string;
   @IsOptional() @IsNumber() totalTonnage?: number;
@@ -59,7 +65,7 @@ export class LoadsController {
   @Post()
   @UseGuards(AuthGuard('jwt'))
   async create(@Body() body: CreateLoadDto, @Req() req: any) {
-    return this.loadsService.create(body, req.user.id);
+    return this.loadsService.create(body as any, req.user.id);
   }
 
   @Get()

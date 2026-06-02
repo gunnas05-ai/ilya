@@ -11,6 +11,7 @@ import { TrackingRecord } from '../tracking/tracking.entity';
 import { WithdrawalRequest } from './withdrawal-request.entity';
 import { AuditLog } from './audit-log.entity';
 import { OutboxEvent } from './outbox.entity';
+import { QRCode } from '../qr/qr-code.entity';
 import { EscrowController } from './escrow.controller';
 import { EscrowService } from './escrow.service';
 import { WalletService } from './wallet.service';
@@ -30,7 +31,7 @@ import { WebSocketModule } from '../websocket/websocket.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 @Module({
   imports: [
-    TypeOrmModule.forFeature([EscrowTransaction, Wallet, WalletTransaction, Dispute, DisputeEvidence, Load, TrackingRecord, WithdrawalRequest, AuditLog, OutboxEvent, InsurancePolicy]),
+    TypeOrmModule.forFeature([EscrowTransaction, Wallet, WalletTransaction, Dispute, DisputeEvidence, Load, TrackingRecord, QRCode, WithdrawalRequest, AuditLog, OutboxEvent, InsurancePolicy]),
     MulterModule.register({ storage: memoryStorage() }),
     WebSocketModule,
     NotificationsModule,

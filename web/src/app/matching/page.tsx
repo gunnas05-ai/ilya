@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -21,7 +21,7 @@ export default function MatchingPage() {
     });
   }, []);
 
-  if (loading) return <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-24 bg-kaptan-card rounded-xl animate-pulse" />)}</div>;
+  if (loading) return <div className="space-y-4">{[1,2,3].map(i => <div key={i} className="h-24 skeleton rounded-xl" />)}</div>;
 
   const topRoutes = (pref?.favoriteRoutes || []).slice(0, 5);
   const topTypes = (pref?.preferredLoadTypes || []).slice(0, 5);
@@ -47,7 +47,7 @@ export default function MatchingPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Stats */}
           <div className="space-y-4">
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+            <div className="glass-card p-5">
               <h3 className="font-semibold text-kaptan-text mb-4">📊 Taşıyıcı Profili</h3>
               <div className="grid grid-cols-2 gap-4">
                 <div className="text-center p-3 bg-kaptan-dark rounded-lg">
@@ -75,7 +75,7 @@ export default function MatchingPage() {
 
             {/* Embedding */}
             {pref?.embedding?.length > 0 && (
-              <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+              <div className="glass-card p-5">
                 <h3 className="font-semibold text-kaptan-text mb-3">🧬 Embedding Vektörü</h3>
                 <div className="space-y-2">
                   {['Rota Çeşitliliği', 'Fiyat Norm.', 'Yük Tipi Çeşit.', 'Mesafe Tercihi', 'Kabul Oranı', 'Aktivite'].map((label, i) => (
@@ -94,7 +94,7 @@ export default function MatchingPage() {
 
           {/* Routes & Types */}
           <div className="space-y-4">
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+            <div className="glass-card p-5">
               <h3 className="font-semibold text-kaptan-text mb-3">🛣️ Favori Rotalar ({topRoutes.length})</h3>
               {topRoutes.length === 0 ? <p className="text-sm text-kaptan-muted">Henüz veri yok</p> : (
                 <div className="space-y-2">
@@ -108,7 +108,7 @@ export default function MatchingPage() {
               )}
             </div>
 
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+            <div className="glass-card p-5">
               <h3 className="font-semibold text-kaptan-text mb-3">📦 Yük Tipi Tercihleri</h3>
               {topTypes.length === 0 ? <p className="text-sm text-kaptan-muted">Henüz veri yok</p> : (
                 <div className="space-y-2">
@@ -126,7 +126,7 @@ export default function MatchingPage() {
       )}
 
       {tab === 'feedback' && (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+        <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-kaptan-dark/50"><tr className="text-kaptan-muted"><th className="text-left p-3">Tarih</th><th className="text-left p-3">Yük</th><th className="text-left p-3">Rota</th><th className="text-left p-3">Fiyat</th><th className="text-left p-3">Aksiyon</th><th className="text-left p-3">Skor</th></tr></thead>
             <tbody>

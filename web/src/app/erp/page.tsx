@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -45,10 +45,10 @@ export default function ErpPage() {
         <button onClick={() => { setForm({ name: '', erpType: '', baseUrl: '', apiKey: '', isActive: true }); setEditing(null); setShowForm(true); }}
           className="flex items-center gap-2 bg-kaptan-primary text-white px-4 py-2 rounded-lg hover:bg-kaptan-primary/90"><Plus size={18} /> ERP Bağlantısı Ekle</button>
       </div>
-      {loading ? <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-kaptan-card rounded-xl animate-pulse" />)}</div> : (
+      {loading ? <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 skeleton rounded-xl" />)}</div> : (
         <div className="space-y-3">
           {items.map((e: any) => (
-            <div key={e.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+            <div key={e.id} className="glass-card p-4">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-3">
                   <Settings size={20} className={e.isActive ? 'text-kaptan-primary' : 'text-kaptan-muted'} />
@@ -71,7 +71,7 @@ export default function ErpPage() {
       )}
       {showForm && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-10 z-50">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-md mx-4">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold text-kaptan-text mb-4">{editing ? 'ERP Düzenle' : 'Yeni ERP Bağlantısı'}</h3>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div><label className="block text-sm text-kaptan-muted mb-1">Bağlantı Adı *</label><input className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-kaptan-text" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>

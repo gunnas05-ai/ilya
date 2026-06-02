@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -39,17 +39,17 @@ export default function AuditPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
         {[{ label: 'Toplam', value: logs.length, icon: FileText, color: 'text-kaptan-text' },{ label: 'Oluşturma', value: logs.filter(l => (l.action||l.type||'').toLowerCase().includes('create')).length, icon: Activity, color: 'text-kaptan-success' },{ label: 'Güncelleme', value: logs.filter(l => (l.action||l.type||'').toLowerCase().includes('update')).length, icon: Clock, color: 'text-kaptan-warning' },{ label: 'Silme', value: logs.filter(l => (l.action||l.type||'').toLowerCase().includes('delete')).length, icon: AlertTriangle, color: 'text-kaptan-danger' }].map(s => (
-          <div key={s.label} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4"><div className="flex items-center justify-between"><span className="text-sm text-kaptan-muted">{s.label}</span><s.icon size={18} className={s.color} /></div><p className={`text-2xl font-bold mt-2 ${s.color}`}>{s.value}</p></div>
+          <div key={s.label} className="glass-card p-4"><div className="flex items-center justify-between"><span className="text-sm text-kaptan-muted">{s.label}</span><s.icon size={18} className={s.color} /></div><p className={`text-2xl font-bold mt-2 ${s.color}`}>{s.value}</p></div>
         ))}
       </div>
 
       <div className="flex gap-3 mb-4">
-        <div className="flex-1 relative"><Search size={16} className="absolute left-3 top-3 text-kaptan-muted" /><input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-kaptan-text" placeholder="Kullanıcı, işlem, detay ara..." value={search} onChange={e => setSearch(e.target.value)} /></div>
-        <select className="bg-kaptan-card border border-kaptan-border rounded-lg px-3 py-2 text-sm text-kaptan-text" value={actionFilter} onChange={e => setActionFilter(e.target.value)}><option value="">Tüm İşlemler</option>{actions.map(a => <option key={a} value={a}>{a}</option>)}</select>
+        <div className="flex-1 relative"><Search size={16} className="absolute left-3 top-3 text-kaptan-muted" /><input className="w-full glass-card pl-10 pr-4 py-2.5 text-sm text-kaptan-text" placeholder="Kullanıcı, işlem, detay ara..." value={search} onChange={e => setSearch(e.target.value)} /></div>
+        <select className="glass-card px-3 py-2 text-sm text-kaptan-text" value={actionFilter} onChange={e => setActionFilter(e.target.value)}><option value="">Tüm İşlemler</option>{actions.map(a => <option key={a} value={a}>{a}</option>)}</select>
       </div>
 
-      {loading ? <div className="space-y-2">{[1,2,3,4,5].map(i => <div key={i} className="h-14 bg-kaptan-card rounded-lg animate-pulse" />)}</div> : (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+      {loading ? <div className="space-y-2">{[1,2,3,4,5].map(i => <div key={i} className="h-14 skeleton rounded-lg" />)}</div> : (
+        <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-kaptan-dark/50 border-b border-kaptan-border"><tr className="text-left text-kaptan-muted"><th className="px-4 py-3">Tarih</th><th className="px-4 py-3">Kullanıcı</th><th className="px-4 py-3">İşlem</th><th className="px-4 py-3">Detay</th><th className="px-4 py-3">IP</th></tr></thead>
             <tbody>

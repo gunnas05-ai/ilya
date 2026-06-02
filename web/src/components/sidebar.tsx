@@ -1,13 +1,11 @@
-'use client';
+﻿'use client';
 
 import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import {
-  LayoutDashboard, Users, CreditCard, Percent, FileText, Settings, LogOut, Shield, Banknote, UserPlus, Palette, Wrench, Package, Gavel, MapPin, Truck, Utensils, Fuel, ShoppingCart, Bell, Radio, Warehouse, Ship, Plug, QrCode, TrendingUp, RotateCcw, Send, FileBadge, Camera, ClipboardCheck, Globe, Sun, Moon, MessageSquare, Wallet, Activity, UserCheck, Brain, BarChart3, Trophy, ClipboardList, Menu, X,
+  LayoutDashboard, Users, CreditCard, Percent, FileText, Settings, Shield, Banknote, UserPlus, Palette, Wrench, Package, Gavel, MapPin, Truck, Utensils, Fuel, ShoppingCart, Bell, Radio, Warehouse, Ship, Plug, QrCode, TrendingUp, RotateCcw, Send, FileBadge, Camera, ClipboardCheck, Globe, MessageSquare, Wallet, Activity, UserCheck, Brain, BarChart3, Trophy, ClipboardList, Menu, X,
 } from 'lucide-react';
-import { useTheme } from '@/lib/useTheme';
-
 const navSections = [
   {
     label: 'Ana',
@@ -98,7 +96,6 @@ const navSections = [
 
 export function Sidebar() {
   const pathname = usePathname();
-  const { theme, toggle } = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const closeMobile = () => setMobileOpen(false);
@@ -119,74 +116,79 @@ export function Sidebar() {
         <div className="lg:hidden fixed inset-0 bg-black/50 z-30" onClick={closeMobile} />
       )}
 
-      <aside className={`
-        w-64 bg-kaptan-card border-r border-kaptan-border flex flex-col h-screen overflow-y-auto
-        fixed lg:static inset-y-0 left-0 z-40 transition-transform duration-200
-        ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-      `}>
-        <div className="p-4 border-b border-kaptan-border sticky top-0 bg-kaptan-card z-10">
-          <h1 className="text-xl font-bold text-kaptan-primary tracking-wider">KAPTAN</h1>
-        {(() => {
-          try {
-            const raw = localStorage.getItem('admin_user');
-            if (raw) {
-              const user = JSON.parse(raw);
-              return (
-                <div className="mt-2 space-y-1">
-                  <p className="text-sm text-kaptan-text font-medium truncate">{user.fullName || user.email}</p>
-                  <span className="inline-block px-2 py-0.5 text-[10px] font-medium rounded-full bg-kaptan-primary/20 text-kaptan-primary">
-                    {user.role === 'super_admin' ? 'Süper Admin' : user.role === 'admin' ? 'Admin' : user.role || 'Kullanıcı'}
-                  </span>
-                </div>
-              );
-            }
-          } catch {}
-          return <p className="text-xs text-kaptan-muted mt-1">Admin Paneli</p>;
-        })()}
-      </div>
-      <nav className="flex-1 p-3 space-y-4">
-        {navSections.map((section) => (
-          <div key={section.label}>
-            <h3 className="px-3 text-xs font-semibold text-kaptan-muted uppercase tracking-wider mb-1">{section.label}</h3>
-            <div className="space-y-0.5">
-              {section.items.map((item) => {
-                const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={closeMobile}
-                    className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                      isActive
-                        ? 'bg-kaptan-primary/15 text-kaptan-primary'
-                        : 'text-kaptan-muted hover:bg-kaptan-border/30 hover:text-kaptan-text'
-                    }`}
-                  >
-                    <item.icon size={16} />
-                    <span className="truncate">{item.label}</span>
-                  </Link>
-                );
-              })}
+      <aside
+        className={`
+          w-[280px] flex flex-col h-screen overflow-y-auto custom-scrollbar
+          fixed lg:static inset-y-0 left-0 z-40 transition-transform duration-200
+          ${mobileOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
+        `}
+        style={{
+          background: 'linear-gradient(180deg, var(--sidebar-bg-start) 0%, var(--sidebar-bg-end) 100%)',
+          borderRight: '1px solid var(--glass-border)',
+        }}
+      >
+        <div
+          className="p-5 sticky top-0 z-10"
+          style={{
+            background: 'linear-gradient(180deg, var(--sidebar-bg-start) 0%, var(--sidebar-bg-end) 100%)',
+            borderBottom: '1px solid var(--glass-border)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+          }}
+        >
+          <Link href="/admin" className="flex items-center gap-3 mb-3 group">
+            <div className="w-10 h-10 rounded-xl overflow-hidden shrink-0
+                            shadow-[0_0_15px_rgba(255,122,0,0.25)]">
+              <img
+                src="/kaptan-logo.png"
+                alt="KAPTAN Logo"
+                className="w-full h-full object-contain"
+              />
             </div>
-          </div>
-        ))}
-      </nav>
-      <div className="p-3 border-t border-kaptan-border sticky bottom-0 bg-kaptan-card space-y-1">
-        <button
-          onClick={toggle}
-          className="flex items-center gap-2 text-kaptan-muted hover:text-kaptan-text text-sm w-full px-3 py-2 transition-colors rounded-lg"
-        >
-          {theme === 'dark' ? <Sun size={16} /> : <Moon size={16} />}
-          {theme === 'dark' ? 'Aydınlık Mod' : 'Karanlık Mod'}
-        </button>
-        <button
-          onClick={() => { localStorage.removeItem('admin_token'); localStorage.removeItem('admin_refresh'); localStorage.removeItem('admin_user'); document.cookie = 'admin_session=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/'; window.location.href = '/login'; }}
-          className="flex items-center gap-2 text-kaptan-muted hover:text-kaptan-danger text-sm w-full px-3 py-2 transition-colors rounded-lg"
-        >
-          <LogOut size={16} /> Çıkış Yap
-        </button>
-      </div>
-    </aside>
+            <div>
+              <h1 className="text-xl font-bold tracking-wider group-hover:opacity-80 transition-opacity"
+                style={{ color: 'var(--primary)' }}>KAPTAN</h1>
+              <div className="h-[2px] w-16 mt-0.5 rounded-full"
+                style={{
+                  background: 'linear-gradient(90deg, var(--primary), transparent)',
+                  boxShadow: '0 0 8px rgba(255,122,0,0.4)',
+                }} />
+            </div>
+          </Link>
+          <p className="text-xs font-semibold tracking-[0.2em] uppercase"
+            style={{ color: 'var(--primary)' }}>Lojistik Portal</p>
+        </div>
+
+        <nav className="flex-1 p-3 space-y-4">
+          {navSections.map((section) => (
+            <div key={section.label}>
+              <h3 className="px-3 text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">
+                {section.label}
+              </h3>
+              <div className="space-y-0.5">
+                {section.items.map((item) => {
+                  const isActive = pathname === item.href || (item.href !== '/' && pathname.startsWith(item.href));
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={closeMobile}
+                      className={`flex items-center gap-2.5 px-3 py-2 rounded-xl text-sm font-medium transition-all duration-200 border-l-[3px] ${
+                        isActive
+                          ? 'bg-[rgba(255,122,0,0.12)] text-[#FF7A00] shadow-[0_0_12px_rgba(255,122,0,0.12)] border-l-[#FF7A00]'
+                          : 'text-slate-400 hover:bg-white/[0.04] hover:text-[var(--text)] border-l-transparent'
+                      }`}
+                    >
+                      <item.icon size={18} className={isActive ? 'text-[#FF7A00]' : ''} />
+                      <span className="truncate">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </nav>
+
+      </aside>
     </>
   );
 }

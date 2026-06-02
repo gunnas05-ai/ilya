@@ -1,0 +1,396 @@
+================================================================================
+  KAPTAN LOJISTIK PLATFORMU — TEKNIK ALTYAPI RAPORU
+  Hosting / Sunucu Gorusmeleri icin Hazirlanmistir
+  Tarih: 02.06.2026
+  Domain: www.kap-tan.com
+================================================================================
+
+1. PROJE GENEL BILGILERI
+================================================================================
+
+  Proje Adi       : KAPTAN Lojistik Platformu
+  Proje Turu      : Enterprise Karayolu Yuk Tasimaciligi Dijital Platformu
+  Domain          : www.kap-tan.com
+  Platformlar     : Web Admin Panel + Mobil Uygulama (iOS/Android) + Backend API
+  Kullanicilar    : Yuk Verenler, Tasiyicilar, Soforler, Isletmeler, Muhasebeciler
+  Hedef Kitle     : Turkiye geneli lojistik sektoru
+  Olcek           : 16 kullanici rolu, 55+ veritabani tablosu, 40+ backend modulu
+
+================================================================================
+2. TEKNOLOJI STACK'I
+================================================================================
+
+2.1 BACKEND (API Sunucusu)
+--------------------------------------------------------------------------------
+  Framework       : NestJS 10.4 (Node.js + TypeScript)
+  Calisma Zamani  : Node.js v24+
+  Platform        : Express (HTTP) + Socket.IO (WebSocket)
+  Veritabani      : PostgreSQL 16+ (birincil) + PostGIS (mekansal sorgular)
+  ORM             : TypeORM 0.3.x
+  Kimlik Dogrulama: JWT (Access + Refresh Token), TOTP 2FA, API Key
+  Job Queue       : Bull (Redis tabanli)
+  Event Bus       : Kafka (opsiyonel, EventEmitter2 fallback)
+  Cache           : Redis 7.x
+  Dokumantasyon   : Swagger / OpenAPI (otomatik)
+  Tracing         : OpenTelemetry
+  Metrikler       : Prometheus endpoint'i
+
+  Temel Bagimliliklar:
+    - @nestjs/core, @nestjs/common            (NestJS core)
+    - @nestjs/typeorm, typeorm, pg            (Veritabani)
+    - @nestjs/jwt, @nestjs/passport, bcrypt   (Auth)
+    - @nestjs/bull, bull                       (Job Queue)
+    - @nestjs/platform-socket.io               (WebSocket)
+    - @nestjs/swagger                          (API Dokumantasyon)
+    - @nestjs/throttler                        (Rate Limiting)
+    - @nestjs/schedule                         (Zamanlanmis Gorevler)
+    - kafkajs                                  (Event Streaming)
+    - pdfmake                                  (PDF Uretimi)
+    - nodemailer                               (E-posta)
+    - sharp                                    (Resim Isleme)
+    - openai                                   (AI Dialog)
+
+2.2 WEB PANEL (Admin Arayuzu)
+--------------------------------------------------------------------------------
+  Framework       : Next.js 14.2 (React 18 + TypeScript)
+  Render          : Client-side (SPA), Next.js App Router
+  Stil            : Tailwind CSS 3.4
+  State Yonetimi  : TanStack React Query 5.x (server state)
+  Form Yonetimi   : React Hook Form 7.x + Zod 4.x (validasyon)
+  Harita          : Leaflet + React-Leaflet (OpenStreetMap)
+  Grafikler       : Recharts 2.x
+  Gercek Zamanli  : Socket.IO Client 4.x
+  Font            : Inter (Google Fonts)
+  Derleme         : Next.js Build → Static + Dynamic sayfalar
+
+  Temel Bagimliliklar:
+    - next, react, react-dom
+    - @tanstack/react-query
+    - react-hook-form, @hookform/resolvers, zod
+    - socket.io-client
+    - leaflet, react-leaflet
+    - recharts
+    - lucide-react (ikonlar)
+    - tailwindcss, postcss, autoprefixer
+
+  Sayfa Sayisi    : 64 sayfa (tumu derleniyor)
+  Bundle Boyutu   : ~88 KB (shared) + sayfa basina 91-230 KB (first load)
+
+2.3 MOBIL UYGULAMA (iOS + Android)
+--------------------------------------------------------------------------------
+  Framework       : Expo SDK 54 + React Native 0.81
+  React Surumu    : React 19.1
+  Navigasyon      : React Navigation 7.x (Native Stack + Bottom Tabs)
+  State Yonetimi  : Zustand 5.x (client state) + TanStack React Query (server state)
+  Form Yonetimi   : React Hook Form + Zod
+  Dil Desteği     : i18next (Turkce + Ingilizce)
+  Ses             : expo-speech, expo-speech-recognition
+  Harita          : react-native-maps
+  Guvenlik        : expo-secure-store (token depolama)
+  Offline         : NetInfo + AsyncStorage tabanli offline kuyruk
+  Test            : Jest (unit) + Detox (E2E)
+
+  Temel Bagimliliklar:
+    - expo, expo-router
+    - react-native, react-native-reanimated
+    - @react-navigation/native, native-stack, bottom-tabs
+    - zustand, @tanstack/react-query
+    - react-hook-form, zod
+    - socket.io-client
+    - i18next, react-i18next
+    - axios
+    - react-native-maps, expo-location
+    - expo-secure-store, @react-native-async-storage/async-storage
+
+================================================================================
+3. VERITABANI GEREKSINIMLERI
+================================================================================
+
+3.1 PostgreSQL
+--------------------------------------------------------------------------------
+  Surum           : PostgreSQL 16+ (zorunlu)
+  Veritabani Adi  : kaptan
+  Tablo Sayisi    : 55+ tablo (TypeORM autoLoadEntities)
+  PostGIS         : Onerilir (mekansal sorgular icin). Yoksa geometry kolonlari
+                    double precision'a cevrilmelidir.
+  Migration       : TypeORM migration yonetimi mevcut
+  Yedekleme       : Gunluk pg_dump + WAL arsivleme onerilir
+
+  Kritik Tablolar:
+    - users              (kullanicilar, 16 rol)
+    - loads              (yuk ilanlari)
+    - bids               (teklifler)
+    - tracking_records   (GPS takip kayitlari)
+    - escrow_transactions (emanet odemeler)
+    - wallets            (dijital cuzdan)
+    - invoices           (e-Fatura/e-Arsiv)
+    - fuel_stations      (akaryakit istasyonlari)
+    - restaurants        (yol ustu lokantalar)
+    - marketplace        (arac/ekipman pazaryeri)
+    - chat_rooms, chat_messages (mesajlasma)
+    - notifications      (bildirimler)
+    - system_settings    (sistem ayarlari)
+
+  Tahmini Veri Buyumesi (ilk yil):
+    - Kullanici: ~10.000
+    - Yuk: ~50.000
+    - Takip Kaydi: ~5.000.000
+    - Tahmini DB Boyutu: ~5-10 GB (ilk yil)
+
+3.2 Redis
+--------------------------------------------------------------------------------
+  Surum           : Redis 7.x
+  Kullanim        :
+    - Bull job queue (e-Fatura, UETDS, toplu islemler)
+    - Socket.IO adapter (coklu sunucu WebSocket senkronu)
+    - Rate limiting (dagitik)
+    - Cache (opsiyonel)
+
+  Tahmini Bellek   : 512 MB - 1 GB
+
+3.3 Kafka (Opsiyonel)
+--------------------------------------------------------------------------------
+  Surum           : Apache Kafka 3.x
+  Kullanim        : Event streaming (yuk olaylari, odeme olaylari, bildirimler)
+  Fallback        : EventEmitter2 (in-process) — Kafka yoksa otomatik devreye girer
+  Topic'ler       : load.events, bid.events, escrow.events, notification.events,
+                    tracking.events, invoice.events
+
+================================================================================
+4. SUNUCU GEREKSINIMLERI
+================================================================================
+
+4.1 Minimum Yapilandirma (PoC / Test)
+--------------------------------------------------------------------------------
+  CPU             : 2 vCPU
+  RAM             : 4 GB
+  Disk            : 50 GB SSD
+  Isletim Sistemi : Ubuntu 22.04 LTS (veya Alpine Linux Docker imaji)
+
+  Calisan Servisler:
+    - Backend API (Node.js)        : Port 3000
+    - Web Panel (Next.js)          : Port 3005 (dev) / Port 80/443 (prod)
+    - PostgreSQL                    : Port 5432
+    - Redis                         : Port 6379
+
+4.2 Onerilen Yapilandirma (Production)
+--------------------------------------------------------------------------------
+  CPU             : 4-8 vCPU
+  RAM             : 8-16 GB
+  Disk            : 200 GB SSD (NVMe tercih edilir)
+  Isletim Sistemi : Ubuntu 22.04 LTS
+
+  Docker Compose veya Kubernetes uzerinde:
+    Container 1 : Backend API (2+ replika)
+    Container 2 : Web Panel (Next.js, statik export veya SSR)
+    Container 3 : PostgreSQL 16 + PostGIS
+    Container 4 : Redis 7
+    Container 5 : Kafka + Zookeeper (opsiyonel)
+    Container 6 : Nginx (reverse proxy + SSL termination)
+
+4.3 Yuksek Erisilebilirlik (HA) Yapilandirmasi
+--------------------------------------------------------------------------------
+  - Backend API         : 3+ replika (Kubernetes Deployment)
+  - PostgreSQL           : Primary + 1 Read Replica (veya Patroni HA)
+  - Redis                : Sentinel modunda 3 dugum
+  - Kafka                : 3 broker
+  - Load Balancer        : Nginx / HAProxy / Bulut LB
+  - CDN                  : Statik dosyalar ve medya icin
+  - Object Storage       : S3-uyumlu (MinIO / AWS S3 / Cloudflare R2)
+  - SSL                  : Let's Encrypt veya cloud-managed
+
+================================================================================
+5. PORT VE SERVIS HARITASI
+================================================================================
+
+  Port  | Servis              | Protokol  | Aciklama
+  ------|---------------------|-----------|------------------------------
+  80    | Web Panel (Nginx)   | HTTP      | Web arayuzu (→ 3005)
+  443   | Web Panel (Nginx)   | HTTPS     | SSL'li web arayuzu
+  3000  | Backend API         | HTTP      | REST API + Saglik Kontrolu
+  3001  | WebSocket           | WS/WSS    | Socket.IO (opsiyonel port)
+  3005  | Next.js Dev         | HTTP      | Sadece gelistirme ortami
+  5432  | PostgreSQL          | TCP       | Veritabani baglantisi
+  6379  | Redis               | TCP       | Cache + Job Queue
+  9092  | Kafka               | TCP       | Event Stream (opsiyonel)
+  8081  | Expo Metro          | HTTP      | Mobil dev (sadece gelistirme)
+
+================================================================================
+6. API YAPISI
+================================================================================
+
+  Protokol        : REST (JSON) + WebSocket (Socket.IO)
+  Prefix          : /api/v1/
+  Kimlik Dogrulama: Bearer Token (JWT)
+  Rate Limit      : 5 istek/dk (login), 100 istek/dk (genel)
+  Dokumantasyon   : /api/docs (Swagger UI)
+
+  Temel Endpoint Gruplari:
+    /api/v1/auth/*           Kimlik dogrulama (login, register, OTP, MFA, refresh)
+    /api/v1/users/*          Kullanici yonetimi
+    /api/v1/loads/*          Yuk yonetimi (CRUD, arama, filtre)
+    /api/v1/bids/*           Teklif sistemi
+    /api/v1/tracking/*       GPS takip (konum kaydi, canli izleme)
+    /api/v1/escrow/*         Emanet odeme, anlasmazlik
+    /api/v1/wallet/*         Dijital cuzdan, bakiye, islem gecmisi
+    /api/v1/finance/*        Gelir/gider, OCR belge tarama
+    /api/v1/gib/*            e-Fatura, e-Arsiv, e-Irsaliye
+    /api/v1/invoice/*        Fatura yonetimi
+    /api/v1/chat/*           Mesajlasma
+    /api/v1/notifications/*  Bildirimler
+    /api/v1/fuel-stations/*  Akaryakit istasyonlari
+    /api/v1/restaurants/*    Restoranlar
+    /api/v1/marketplace/*    Arac pazaryeri
+    /api/v1/part-market/*    Yedek parca pazaryeri
+    /api/v1/vehicles/*       Arac filosu yonetimi
+    /api/v1/routing/*        Rota planlama
+    /api/v1/ai-matching/*    AI yuk esleme
+    /api/v1/integrations/*   API Key + Webhook yonetimi
+    /api/v1/admin/settings/* Sistem ayarlari (KVKK metinleri dahil)
+    /api/v1/health           Saglik kontrolu (Kubernetes liveness/readiness)
+
+  WebSocket Olaylari:
+    load.created, load.updated, load.cancelled
+    bid.placed, bid.accepted, bid.rejected
+    tracking.update, tracking.status_change
+    escrow.created, escrow.released, escrow.dispute
+    invoice.created, invoice.status_change
+    notification.new, notification.read
+    wallet.balance_change, wallet.transaction
+    chat.message, chat.typing
+
+================================================================================
+7. DEPLOYMENT (DOCKER)
+================================================================================
+
+7.1 Backend Dockerfile
+--------------------------------------------------------------------------------
+  Base Image      : node:20-alpine
+  Build           : Multi-stage (tsc derlemesi → dist/main.js)
+  Production Run  : node dist/main.js
+  Port            : 3000 (EXPOSE)
+  Saglik Kontrolu : /api/v1/health
+
+7.2 Web Dockerfile
+--------------------------------------------------------------------------------
+  Base Image      : node:20-alpine
+  Build           : next build (static + dynamic export)
+  Production Run  : next start -p 3000
+  veya            : next export (tamamamen statik, Nginx'ten servis)
+  Port            : 3000 (varsayilan)
+
+7.3 docker-compose.yml (ornek)
+--------------------------------------------------------------------------------
+  services:
+    backend:
+      build: ./backend
+      ports: ["3000:3000"]
+      depends_on: [postgres, redis]
+      environment:
+        - DB_HOST=postgres
+        - REDIS_HOST=redis
+
+    web:
+      build: ./web
+      ports: ["80:3000"]
+      depends_on: [backend]
+
+    postgres:
+      image: postgis/postgis:16-3.4
+      volumes: [pgdata:/var/lib/postgresql/data]
+
+    redis:
+      image: redis:7-alpine
+
+================================================================================
+8. GUvenLIK GEREKSINIMLERI
+================================================================================
+
+  - JWT Access Token (15 dakika gecerlilik)
+  - Refresh Token rotasyonu (7-30 gun)
+  - TOTP tabanli 2FA (opsiyonel)
+  - API Key kimlik dogrulamasi (harici entegrasyonlar)
+  - HTTP Security Headers (CSP, X-Frame-Options, X-Content-Type-Options)
+  - CORS (belirli origin'lere kisitli)
+  - Rate Limiting (Redis tabanli, dagitik)
+  - bcrypt sifre hashleme (12 round)
+  - HMAC imzali QR kodlar
+  - KVKK uyumlu veri yonetimi
+
+================================================================================
+9. HARICI SERVISLER VE ENTEGRASYONLAR
+================================================================================
+
+  Servis            | Amac                    | Zorunlu? | Not
+  ------------------|-------------------------|----------|-------
+  PostgreSQL +GIS   | Veritabani              | Evet     | Azure Database veya AWS RDS onerilir
+  Redis             | Cache + Queue           | Evet     | Azure Cache veya AWS ElastiCache
+  Kafka             | Event Stream            | Hayir    | EventEmitter2 fallback yeterli
+  S3 Uyumlu Storage | Dosya/medya depolama    | Evet     | MinIO, AWS S3, Cloudflare R2
+  SMTP Sunucusu     | E-posta (fatura, OTP)   | Evet     | SendGrid, Mailgun, veya kendi SMTP
+  SMS Provider      | OTP, bildirim           | Onerilir | NetGSM (Turkiye) veya Twilio
+  Iyzico            | Odeme islemleri         | Onerilir | Sandbox test modu mevcut
+  GIB               | e-Fatura/e-Arsiv        | Turkiye  | Gelir Idaresi Baskanligi entegrasyonu
+  UETDS             | Tasima belgesi          | Turkiye  | Ulastirma Bakanligi entegrasyonu
+  Google Maps       | Rota hesaplama          | Onerilir | Alternatif: OpenStreetMap/OSRM
+  Firebase          | Push Notification       | Onerilir | Mobil bildirimler icin
+
+================================================================================
+10. OLCEKLENEBILIRLIK VE PERFORMANS
+================================================================================
+
+  API Yanit Suresi    : < 100ms (hedef), < 500ms (p95)
+  Eszamanli Kullanici : 1.000+ (hedef)
+  WebSocket Baglantisi : 5.000+ eszamanli (Socket.IO Redis adapter ile)
+  Veritabani Pool      : 100 baglanti (maksimum)
+  CDN                  : Statik dosyalar, resimler (Cloudflare veya Fastly)
+  Yatay Olcekleme      : Backend stateless — Kubernetes HPA ile otomatik
+
+================================================================================
+11. TAHMINI MALIYET (AYLIK — BULUT)
+================================================================================
+
+  Bilesen               | Minimum     | Onerilen    | Yuksek Trafik
+  ----------------------|-------------|-------------|--------------
+  Compute (API + Web)   | $25-50      | $100-200    | $300-500
+  PostgreSQL (yonetilen)| $15-30      | $50-100     | $200-500
+  Redis (yonetilen)     | $0 (kendi)  | $15-30      | $50-100
+  Object Storage        | $5-10       | $10-25      | $25-50
+  CDN + DNS             | $0-5        | $5-15       | $15-50
+  E-posta (SMTP)        | $0 (12k/ay) | $15-30      | $30-100
+  SMS                   | $10-50      | $50-150     | $150-500
+  SSL                   | Ucretsiz    | Ucretsiz    | Ucretsiz
+  ----------------------|-------------|-------------|--------------
+  TOPLAM                | ~$60-150    | ~$250-550   | ~$750-1800
+
+================================================================================
+12. HOSTING FIRMALARINA SORULACAK SORULAR
+================================================================================
+
+  1. PostgreSQL 16 + PostGIS destegi var mi?
+  2. Redis (managed) hizmeti sunuyor musunuz?
+  3. S3-uyumlu object storage var mi? (MinIO, R2, vb.)
+  4. Docker / Kubernetes destegi var mi?
+  5. Health check endpoint'i ile auto-restart yapilabiliyor mu?
+  6. SSL sertifikasi ucretsiz mi? (Let's Encrypt)
+  7. Yedekleme politikalari nelerdir? (Gunluk, point-in-time recovery)
+  8. Log yonetimi ve monitoring (Grafana, Prometheus) var mi?
+  9. DDoS korumasi ve WAF hizmeti sunuyor musunuz?
+  10. Turkiye lokasyonunda sunucu var mi? (Gecikme suresi onemli)
+  11. CI/CD pipeline entegrasyonu (GitHub Actions, GitLab CI) mumkun mu?
+  12. Bant genisligi limiti nedir?
+  13. Destek SLA'si nedir? (7/24 destek var mi?)
+
+================================================================================
+13. ILETISIM BILGILERI
+================================================================================
+
+  Proje Sahibi    : Ilyas Duran
+  Telefon	  : 0532 674 14 16
+  E-posta         : ilyas_duran@hotmail.com
+  Domain          : www.kap-tan.com
+  GitHub          : (proje reposu)
+
+================================================================================
+  RAPOR SONU
+================================================================================

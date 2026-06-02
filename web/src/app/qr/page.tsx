@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -76,7 +76,7 @@ export default function QrPage() {
           { label: 'Aktif', value: stats.active, icon: Clock, color: 'text-kaptan-warning' },
           { label: 'Süresi Dolmuş', value: stats.expired, icon: XCircle, color: 'text-kaptan-danger' },
         ].map(s => (
-          <div key={s.label} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+          <div key={s.label} className="glass-card p-4">
             <div className="flex items-center justify-between">
               <span className="text-sm text-kaptan-muted">{s.label}</span>
               <s.icon size={20} className={s.color} />
@@ -89,15 +89,15 @@ export default function QrPage() {
       {/* Search */}
       <div className="mb-4 relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-        <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
+        <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
           placeholder="Sevkiyat ID, QR tipi ara..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       {/* QR Table */}
       {loading ? (
-        <div className="space-y-2">{[1,2,3,4].map(i => <div key={i} className="h-14 bg-kaptan-card rounded-xl animate-pulse" />)}</div>
+        <div className="space-y-2">{[1,2,3,4].map(i => <div key={i} className="h-14 skeleton rounded-xl" />)}</div>
       ) : (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+        <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-kaptan-dark/50">
               <tr className="border-b border-kaptan-border text-kaptan-muted">
@@ -146,7 +146,7 @@ export default function QrPage() {
       {/* QR Generate Modal */}
       {showGenerate && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowGenerate(false)}>
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+          <div className="glass-card rounded-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-kaptan-text mb-4">QR Kod Oluştur</h3>
             <form onSubmit={handleGenerate} className="space-y-3">
               <div>

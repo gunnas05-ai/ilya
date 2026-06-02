@@ -28,12 +28,20 @@ export function getDatabaseConfig(): TypeOrmModuleOptions {
       username: process.env.DB_USER,
       password: process.env.DB_PASS,
       database: process.env.DB_NAME,
-      autoLoadEntities: true, // Each module declares its own entities via TypeOrmModule.forFeature()
+      autoLoadEntities: true,
       synchronize: shouldSynchronize,
       migrations: isProduction || !shouldSynchronize ? ['dist/migrations/*.js'] : undefined,
       migrationsRun: isProduction && !shouldSynchronize,
       migrationsTableName: 'kaptan_migrations',
-      logging: !isProduction ? ['error', 'warn'] : ['error'],
+      logging: isProduction ? false : ['error', 'warn'],  // Production'da SQL loglama kapalı (güvenlik)
+      ssl: isProduction ? { rejectUnauthorized: false } : false,
+      extra: {
+        max: +(process.env.DB_POOL_MAX || 20),        // Env'den yapılandırılabilir pool
+        idleTimeoutMillis: 30000,
+        connectionTimeoutMillis: 3000,
+        // PgBouncer uyumlu: statement mode için prepare: false
+        ...(process.env.DB_PGBOUNCER === 'true' ? { statement_timeout: 10000 } : {}),
+      },
     };
   }
 

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -99,16 +99,16 @@ export default function RestaurantsPage() {
 
       <div className="mb-4 relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-        <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
+        <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
           placeholder="Lokanta, şehir ara..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       {loading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-28 bg-kaptan-card rounded-xl animate-pulse" />)}</div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">{[1,2,3,4].map(i => <div key={i} className="h-28 skeleton rounded-xl" />)}</div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {filtered.map((r: any) => (
-            <div key={r.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 hover:border-kaptan-primary/30 transition-colors">
+            <div key={r.id} className="glass-card p-4 hover:border-kaptan-primary/30 transition-colors">
               <div className="flex justify-between items-start">
                 <div>
                   <h3 className="font-semibold text-kaptan-text">{r.name}</h3>
@@ -137,7 +137,7 @@ export default function RestaurantsPage() {
       {/* Menu Management Modal */}
       {showMenu && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-10 z-50">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-xl mx-4 max-h-[80vh] overflow-y-auto">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-xl mx-4 max-h-[80vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-kaptan-text">Menü Yönetimi</h3>
               <button onClick={() => setShowMenu(null)} className="text-kaptan-muted hover:text-kaptan-text"><X size={18} /></button>
@@ -176,7 +176,7 @@ export default function RestaurantsPage() {
       {/* Menu Item Form Modal */}
       {showMenuItemForm && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-16 z-[60]">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-sm mx-4">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-sm mx-4">
             <h3 className="font-semibold text-kaptan-text mb-3">{editingMenuItem ? 'Yemek Düzenle' : 'Yemek Ekle'}</h3>
             <form onSubmit={handleMenuSubmit} className="space-y-3">
               <div>
@@ -217,7 +217,7 @@ export default function RestaurantsPage() {
       {/* Reviews Modal */}
       {showReviews && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-lg max-h-[70vh] overflow-y-auto">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-lg max-h-[70vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-kaptan-text">Yorumlar ({reviews.length})</h3>
               <button onClick={() => setShowReviews(null)} className="text-kaptan-muted hover:text-kaptan-text"><X size={18} /></button>
@@ -242,7 +242,7 @@ export default function RestaurantsPage() {
       {/* Reservations Modal */}
       {showReservations && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-lg max-h-[70vh] overflow-y-auto">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-lg max-h-[70vh] overflow-y-auto">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-kaptan-text">Rezervasyonlar ({reservations.length})</h3>
               <button onClick={() => setShowReservations(null)} className="text-kaptan-muted hover:text-kaptan-text"><X size={18} /></button>
@@ -269,7 +269,7 @@ export default function RestaurantsPage() {
       {/* Restaurant Form Modal */}
       {showForm && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-10 z-50 overflow-y-auto">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-lg mx-4">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-lg mx-4">
             <h3 className="text-lg font-semibold text-kaptan-text mb-4">{editing ? 'Lokanta Düzenle' : 'Yeni Lokanta'}</h3>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div><label className="block text-sm text-kaptan-muted mb-1">İşletme Adı *</label><input className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-kaptan-text" required value={form.name} onChange={e => setForm({...form, name: e.target.value})} /></div>

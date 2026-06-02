@@ -276,7 +276,6 @@ export class VoiceService {
       return s.replace(/[İI]/gi, 'i').replace(/[ĞÜŞÖÇığüşöç]/g, c => ({ 'Ğ':'g','Ü':'u','Ş':'s','Ö':'o','Ç':'c','ı':'i','ğ':'g','ü':'u','ş':'s','ö':'o','ç':'c' }[c] || c)).toLowerCase();
     };
     const foundCities: string[] = [];
-    const msgLower = turkishToAscii(msg);
     for (const city of CITIES) {
       if (msgLower.includes(turkishToAscii(city))) {
         foundCities.push(city);

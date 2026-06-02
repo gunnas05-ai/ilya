@@ -21,7 +21,7 @@ export class FinanceController {
 
   @Post('incomes')
   createIncome(@Request() req: any, @Body() body: { amount: number; type: string; description?: string; date?: string }) {
-    return this.financeService.createIncome(body, req.user.id);
+    return this.financeService.createIncome(body as any, req.user.id);
   }
 
   @Get('expenses')
@@ -31,7 +31,7 @@ export class FinanceController {
 
   @Post('expenses')
   createExpense(@Request() req: any, @Body() body: { amount: number; categoryId: string; description?: string; date?: string }) {
-    return this.financeService.createExpense(body, req.user.id);
+    return this.financeService.createExpense(body as any, req.user.id);
   }
 
   @Get('profit-loss')

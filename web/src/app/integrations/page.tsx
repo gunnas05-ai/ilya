@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -66,9 +66,9 @@ export default function IntegrationsPage() {
         ))}
       </div>
 
-      {loading ? <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-kaptan-card rounded-xl animate-pulse" />)}</div> : (
+      {loading ? <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 skeleton rounded-xl" />)}</div> : (
         tab === 'api-keys' ? (
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+          <div className="glass-card overflow-hidden">
             <table className="w-full text-sm">
               <thead><tr className="border-b border-kaptan-border text-kaptan-muted"><th className="text-left p-3">Ad</th><th className="text-left p-3">Key Prefix</th><th className="text-left p-3">Oluşturulma</th><th className="text-left p-3">Son Kullanım</th><th className="text-left p-3">İşlemler</th></tr></thead>
               <tbody>
@@ -88,7 +88,7 @@ export default function IntegrationsPage() {
         ) : (
           <div className="space-y-3">
             {webhooks.map((w: any) => (
-              <div key={w.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+              <div key={w.id} className="glass-card p-4">
                 <div className="flex justify-between items-start">
                   <div>
                     <div className="flex items-center gap-2">
@@ -111,7 +111,7 @@ export default function IntegrationsPage() {
 
       {showCreate && tab === 'api-keys' && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-20 z-50">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-md mx-4">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold text-kaptan-text mb-4">Yeni API Key</h3>
             {newKey ? (
               <div>

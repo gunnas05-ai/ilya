@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState, useRef } from 'react';
 import { api } from '@/lib/api';
@@ -132,10 +132,10 @@ export default function ChatManagementPage() {
           </div>
           <div className="mb-3 relative">
             <Search size={14} className="absolute left-2.5 top-2.5 text-kaptan-muted" />
-            <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-8 pr-3 py-2 text-sm text-kaptan-text" placeholder="Oda veya katılımcı ara..."
+            <input className="w-full glass-card pl-8 pr-3 py-2 text-sm text-kaptan-text" placeholder="Oda veya katılımcı ara..."
               value={search} onChange={e => setSearch(e.target.value)} />
           </div>
-          {loading ? <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-14 bg-kaptan-card rounded-lg animate-pulse" />)}</div> : (
+          {loading ? <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-14 skeleton rounded-lg" />)}</div> : (
             <div className="space-y-1 max-h-[60vh] overflow-y-auto">
               {filtered.map((r: any) => (
                 <button key={r.id} onClick={() => { setSelectedRoom(r); fetchMessages(r.id); }}
@@ -161,7 +161,7 @@ export default function ChatManagementPage() {
         {/* Chat Area */}
         <div className="lg:col-span-2">
           {selectedRoom ? (
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl flex flex-col h-[65vh]">
+            <div className="glass-card flex flex-col h-[65vh]">
               {/* Header */}
               <div className="flex justify-between items-center p-4 border-b border-kaptan-border">
                 <div>
@@ -215,7 +215,7 @@ export default function ChatManagementPage() {
               </div>
             </div>
           ) : (
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl flex items-center justify-center h-[65vh] text-kaptan-muted">
+            <div className="glass-card flex items-center justify-center h-[65vh] text-kaptan-muted">
               <div className="text-center">
                 <MessageSquare size={48} className="mx-auto mb-3 opacity-20" />
                 <p className="text-sm">Sohbet odası seçin</p>

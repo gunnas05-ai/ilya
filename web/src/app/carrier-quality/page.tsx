@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -36,7 +36,7 @@ export default function CarrierQualityPage() {
       </div>
 
       {/* Search */}
-      <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 mb-6 flex gap-3 items-center">
+      <div className="glass-card p-4 mb-6 flex gap-3 items-center">
         <Search size={18} className="text-kaptan-muted" />
         <input className="flex-1 bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-sm text-kaptan-text"
           placeholder="Taşıyıcı ID'si ile ara..." value={searchId} onChange={e => setSearchId(e.target.value)} />
@@ -45,7 +45,7 @@ export default function CarrierQualityPage() {
 
       {/* Detail Card */}
       {selected && (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-6 mb-6">
+        <div className="glass-card p-6 mb-6">
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
             <div className="text-center"><p className="text-xs text-kaptan-muted">Genel Skor</p>
               <p className={`text-3xl font-bold ${tierColor(selected.scoreTier)}`}>{selected.overallScore}%</p>
@@ -66,7 +66,7 @@ export default function CarrierQualityPage() {
       )}
 
       {/* Leaderboard */}
-      <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+      <div className="glass-card overflow-hidden">
         <div className="p-4 border-b border-kaptan-border"><h3 className="font-semibold text-kaptan-text">🏆 Liderlik Tablosu</h3></div>
         {loading ? <div className="p-4 space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-kaptan-dark rounded-lg animate-pulse" />)}</div> : (
           <table className="w-full text-sm">

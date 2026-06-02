@@ -96,6 +96,12 @@ export class Load {
   @Column('float', { nullable: true })
   deliveryLongitude: number;
 
+  @Column('double precision', { nullable: true })
+  pickupGeom: number;
+
+  @Column('double precision', { nullable: true })
+  deliveryGeom: number;
+
   // Load type specific fields
   @Column({ nullable: true })
   @Index()

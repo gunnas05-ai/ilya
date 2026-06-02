@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -22,7 +22,7 @@ export default function RevenuePage() {
     setData(r.data?.data || r.data);
   };
 
-  if (loading) return <div className="p-8"><div className="h-32 bg-kaptan-card rounded-xl animate-pulse" /></div>;
+  if (loading) return <div className="p-8"><div className="h-32 skeleton rounded-xl" /></div>;
 
   return (
     <div>
@@ -32,7 +32,7 @@ export default function RevenuePage() {
       </div>
 
       {/* Tab bar */}
-      <div className="flex gap-1 mb-6 bg-kaptan-card border border-kaptan-border rounded-lg p-1">
+      <div className="flex gap-1 mb-6 glass-card p-1">
         {[
           { key: 'commissions', label: 'Komisyon Oranları', icon: Percent },
           { key: 'credits', label: 'Kontör Paketleri', icon: Package },
@@ -49,7 +49,7 @@ export default function RevenuePage() {
       {tab === 'commissions' && (
         <div className="space-y-3">
           {(data.commissions || []).map((c: any) => (
-            <div key={c.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-5 flex items-center justify-between">
+            <div key={c.id} className="glass-card p-5 flex items-center justify-between">
               <div>
                 <div className="text-kaptan-text font-semibold">{c.displayName || c.name}</div>
                 <div className="text-xs text-kaptan-muted">{c.description}</div>
@@ -68,7 +68,7 @@ export default function RevenuePage() {
       {tab === 'credits' && (
         <div className="space-y-3">
           {(data.credits || []).map((p: any) => (
-            <div key={p.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-5 flex items-center justify-between">
+            <div key={p.id} className="glass-card p-5 flex items-center justify-between">
               <div>
                 <div className="text-kaptan-text font-semibold">{p.name}</div>
                 <div className="text-xs text-kaptan-muted">{p.credits} kontör {p.bonusCredits > 0 ? `(+${p.bonusCredits} hediye)` : ''}</div>
@@ -87,7 +87,7 @@ export default function RevenuePage() {
       {tab === 'plans' && (
         <div className="space-y-3">
           {(data.plans || []).map((p: any) => (
-            <div key={p.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-5 flex items-center justify-between">
+            <div key={p.id} className="glass-card p-5 flex items-center justify-between">
               <div>
                 <div className="text-kaptan-text font-semibold">{p.displayName} <span className="text-xs text-kaptan-muted">({p.name})</span></div>
                 <div className="text-xs text-kaptan-muted">{p.maxLoads === -1 ? 'Limitsiz yük' : `${p.maxLoads} yük/ay`} • {p.maxUsers} kullanıcı</div>

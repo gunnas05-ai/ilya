@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -43,7 +43,7 @@ export default function PodPage() {
           { label: 'Fotoğraflı', value: stats.photoed, icon: Camera, color: 'text-kaptan-warning' },
           { label: 'Doğrulanmış', value: stats.verified, icon: CheckCircle, color: 'text-kaptan-success' },
         ].map(s => (
-          <div key={s.label} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+          <div key={s.label} className="glass-card p-4">
             <div className="flex items-center justify-between"><span className="text-sm text-kaptan-muted">{s.label}</span><s.icon size={20} className={s.color} /></div>
             <p className={`text-2xl font-bold mt-2 ${s.color}`}>{s.value}</p>
           </div>
@@ -52,13 +52,13 @@ export default function PodPage() {
 
       <div className="mb-4 relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-        <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted" placeholder="Yük, sürücü, imza ara..." value={search} onChange={e => setSearch(e.target.value)} />
+        <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted" placeholder="Yük, sürücü, imza ara..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
-      {loading ? <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 bg-kaptan-card rounded-xl animate-pulse" />)}</div> : (
+      {loading ? <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 skeleton rounded-xl" />)}</div> : (
         <div className="space-y-3">
           {filtered.map((p: any) => (
-            <div key={p.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 hover:border-kaptan-primary/30 transition-colors">
+            <div key={p.id} className="glass-card p-4 hover:border-kaptan-primary/30 transition-colors">
               <div className="flex justify-between items-start">
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
@@ -118,7 +118,7 @@ export default function PodPage() {
       {/* Preview Modal */}
       {showPreview && (
         <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-4" onClick={() => setShowPreview(null)}>
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-4 max-w-2xl w-full max-h-[80vh] overflow-auto" onClick={e => e.stopPropagation()}>
+          <div className="glass-card rounded-2xl p-4 max-w-2xl w-full max-h-[80vh] overflow-auto" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-semibold text-kaptan-text">{showPreview.type === 'signature' ? `İmza: ${showPreview.name}` : 'Teslimat Fotoğrafları'}</h3>
               <button onClick={() => setShowPreview(null)} className="p-1.5 hover:bg-kaptan-dark rounded text-kaptan-muted"><X size={18} /></button>

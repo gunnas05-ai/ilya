@@ -65,6 +65,11 @@ export class TrackingController {
     return { data: await this.trackingService.getActiveShipments() };
   }
 
+  @Get('active-load-id')
+  async getActiveLoadId(@Req() req: any) {
+    return { id: await this.trackingService.getActiveLoadId(req.user.id) };
+  }
+
   @Post(':loadId/verify-delivery')
   async verifyDelivery(
     @Param('loadId') loadId: string,

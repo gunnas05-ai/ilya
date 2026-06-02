@@ -1,15 +1,12 @@
-'use client';
+﻿'use client';
 
-import { useEffect, useState } from 'react';
-import { api } from '@/lib/api';
-import { Search, Ban, Shield, UserPlus, UserX, Edit, Eye, FileCheck, XCircle } from 'lucide-react';
-
-interface User {
-  id: string; email: string; fullName: string; phone: string; role: string;
-  isActive: boolean; isPhoneVerified: boolean; profileStatus: string;
-  companyTitle?: string; plateNumber?: string; createdAt: string;
-  kBelgesi?: string; srcBelgesi?: string; taxNumber?: string;
-}
+import { useState } from 'react';
+import { useMutation, useQueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { getQueryClient } from '@/lib/queryClient';
+import { api, ApiError, showToast } from '@/lib/api';
+import { useUsersQuery } from '@/lib/queries';
+import type { User } from '@/types/api';
+import { Search, Ban, Shield, UserX, Eye, XCircle } from 'lucide-react';
 
 const ALL_ROLES: Record<string, string> = {
   super_admin: 'Süper Admin', admin: 'Admin', yuk_veren: 'Yük Veren',
@@ -20,55 +17,56 @@ const ALL_ROLES: Record<string, string> = {
   marketplace_satici: 'Pazar Satıcı', marketplace_alici: 'Pazar Alıcı',
 };
 
-export default function UsersPage() {
-  const [users, setUsers] = useState<User[]>([]);
-  const [loading, setLoading] = useState(true);
+function UsersContent() {
+  const queryClient = useQueryClient();
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showDetail, setShowDetail] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
 
-  const fetchUsers = () => {
-    setLoading(true);
-    api.get('/users').then((res) => {
-      const list = res.data?.data?.data || res.data?.data || [];
-      setUsers(Array.isArray(list) ? list : []);
-      setLoading(false);
-    }).catch(() => setLoading(false));
-  };
+  // Faz-1: useUsersQuery — mobildeki fetchUsersList ile aynı pattern
+  const { data: users = [], isLoading: loading } = useUsersQuery();
 
-  useEffect(() => { fetchUsers(); }, []);
+  // Faz-1: useMutation
+  const statusMutation = useMutation({
+    mutationFn: ({ id, isActive }: { id: string; isActive: boolean }) => api.patch(`/users/${id}/status`, { isActive }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); showToast('Kullanıcı durumu güncellendi.', 'success'); },
+    onError: (err: any) => showToast(err instanceof ApiError ? err.message : 'Hata', 'error'),
+    onSettled: () => setActionLoading(null),
+  });
 
-  const handleToggleBan = async (user: User) => {
+  const roleMutation = useMutation({
+    mutationFn: ({ id, role }: { id: string; role: string }) => api.patch(`/users/${id}/role`, { role }),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); showToast('Rol güncellendi.', 'success'); },
+    onError: (err: any) => showToast(err instanceof ApiError ? err.message : 'Hata', 'error'),
+    onSettled: () => setActionLoading(null),
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api.delete(`/users/${id}`),
+    onSuccess: () => { queryClient.invalidateQueries({ queryKey: ['users'] }); showToast('Kullanıcı silindi.', 'success'); },
+    onError: (err: any) => showToast(err instanceof ApiError ? err.message : 'Hata', 'error'),
+    onSettled: () => setActionLoading(null),
+  });
+
+  const handleToggleBan = (user: User) => {
     const action = user.isActive ? 'devre dışı bırak' : 'aktifleştir';
     if (!confirm(`${user.fullName} kullanıcısını ${action}mak istediğinize emin misiniz?`)) return;
     setActionLoading(user.id);
-    try {
-      await api.patch(`/users/${user.id}/status`, { isActive: !user.isActive });
-      fetchUsers();
-    } catch (err: any) { alert(err.response?.data?.message || 'Hata'); }
-    setActionLoading(null);
+    statusMutation.mutate({ id: user.id, isActive: !user.isActive });
   };
 
-  const handleRoleChange = async (user: User, newRole: string) => {
+  const handleRoleChange = (user: User, newRole: string) => {
     if (!confirm(`${user.fullName} rolünü "${ALL_ROLES[newRole] || newRole}" olarak değiştirmek istediğinize emin misiniz?`)) return;
     setActionLoading(user.id);
-    try {
-      await api.patch(`/users/${user.id}/role`, { role: newRole });
-      fetchUsers();
-    } catch (err: any) { alert(err.response?.data?.message || 'Hata'); }
-    setActionLoading(null);
+    roleMutation.mutate({ id: user.id, role: newRole });
   };
 
-  const handleDelete = async (user: User) => {
+  const handleDelete = (user: User) => {
     if (!confirm(`${user.fullName} kullanıcısını SİLMEK istediğinize emin misiniz? Bu işlem geri alınamaz!`)) return;
     setActionLoading(user.id);
-    try {
-      await api.delete(`/users/${user.id}`);
-      fetchUsers();
-    } catch (err: any) { alert(err.response?.data?.message || 'Hata'); }
-    setActionLoading(null);
+    deleteMutation.mutate(user.id);
   };
 
   const filtered = users.filter((u) => {
@@ -87,10 +85,10 @@ export default function UsersPage() {
       <div className="flex gap-3 mb-4">
         <div className="flex-1 relative">
           <Search size={16} className="absolute left-3 top-3 text-kaptan-muted" />
-          <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-sm text-kaptan-text placeholder-kaptan-muted"
+          <input className="w-full glass-card pl-10 pr-4 py-2.5 text-sm text-kaptan-text placeholder-kaptan-muted"
             placeholder="İsim, e-posta veya telefon ile ara..." value={search} onChange={(e) => setSearch(e.target.value)} />
         </div>
-        <select className="bg-kaptan-card border border-kaptan-border rounded-lg px-3 py-2 text-sm text-kaptan-text"
+        <select className="glass-card px-3 py-2 text-sm text-kaptan-text"
           value={roleFilter} onChange={(e) => setRoleFilter(e.target.value)}>
           <option value="">Tüm Roller</option>
           {Object.entries(ALL_ROLES).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
@@ -105,7 +103,7 @@ export default function UsersPage() {
           { label: 'Doğrulanmamış', value: users.filter(u => u.profileStatus === 'INCOMPLETE' || u.profileStatus === 'PENDING_REVIEW').length, color: 'text-kaptan-warning' },
           { label: 'Engelli', value: users.filter(u => !u.isActive).length, color: 'text-kaptan-danger' },
         ].map((stat) => (
-          <div key={stat.label} className="bg-kaptan-card border border-kaptan-border rounded-xl p-3 text-center">
+          <div key={stat.label} className="glass-card p-3 text-center">
             <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
             <p className="text-xs text-kaptan-muted">{stat.label}</p>
           </div>
@@ -113,9 +111,9 @@ export default function UsersPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-2">{[1,2,3,4,5].map(i => <div key={i} className="h-14 bg-kaptan-card rounded-lg animate-pulse" />)}</div>
+        <div className="space-y-2">{[1,2,3,4,5].map(i => <div key={i} className="h-14 skeleton rounded-lg" />)}</div>
       ) : (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+        <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-kaptan-dark/50 border-b border-kaptan-border">
               <tr className="text-left text-kaptan-muted">
@@ -202,7 +200,7 @@ export default function UsersPage() {
       {/* User Detail Modal */}
       {showDetail && selectedUser && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-10 z-50 overflow-y-auto">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-lg mx-4">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-lg mx-4">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-kaptan-text">Kullanıcı Detayı</h3>
               <button onClick={() => { setShowDetail(false); setSelectedUser(null); }}
@@ -225,7 +223,7 @@ export default function UsersPage() {
                   </p></div>
                 <div><span className="text-kaptan-muted">Telefon Doğrulama</span>
                   <p className={selectedUser.isPhoneVerified ? 'text-kaptan-success' : 'text-kaptan-danger'}>{selectedUser.isPhoneVerified ? 'Doğrulandı' : 'Doğrulanmadı'}</p></div>
-                <div><span className="text-kaptan-muted">Kayıt Tarihi</span><p className="text-kaptan-text">{new Date(selectedUser.createdAt).toLocaleString('tr-TR')}</p></div>
+                <div><span className="text-kaptan-muted">Kayıt Tarihi</span><p className="text-kaptan-text">{selectedUser.createdAt ? new Date(selectedUser.createdAt).toLocaleString('tr-TR') : '-'}</p></div>
               </div>
             </div>
             <div className="flex gap-2 mt-4">
@@ -244,5 +242,14 @@ export default function UsersPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function UsersPage() {
+  const [queryClient] = useState(() => getQueryClient());
+  return (
+    <QueryClientProvider client={queryClient}>
+      <UsersContent />
+    </QueryClientProvider>
   );
 }

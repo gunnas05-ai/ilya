@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -34,19 +34,19 @@ export default function DocumentsPage() {
 
       {dashboard && (
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 text-center"><FileText size={20} className="mx-auto mb-1 text-kaptan-primary" /><p className="text-2xl font-bold text-kaptan-text">{dashboard.total}</p><p className="text-xs text-kaptan-muted">Toplam Evrak</p></div>
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 text-center"><CheckCircle size={20} className="mx-auto mb-1 text-kaptan-success" /><p className="text-2xl font-bold text-kaptan-success">{dashboard.verified}</p><p className="text-xs text-kaptan-muted">Doğrulanmış</p></div>
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 text-center"><AlertTriangle size={20} className="mx-auto mb-1 text-kaptan-warning" /><p className="text-2xl font-bold text-kaptan-warning">{dashboard.missingCount}</p><p className="text-xs text-kaptan-muted">Eksik Evrak</p></div>
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 text-center"><FileCheck size={20} className="mx-auto mb-1 text-kaptan-primary" /><p className="text-2xl font-bold text-kaptan-text">{Object.keys(dashboard.typeBreakdown || {}).length}</p><p className="text-xs text-kaptan-muted">Evrak Tipi</p></div>
+          <div className="glass-card p-4 text-center"><FileText size={20} className="mx-auto mb-1 text-kaptan-primary" /><p className="text-2xl font-bold text-kaptan-text">{dashboard.total}</p><p className="text-xs text-kaptan-muted">Toplam Evrak</p></div>
+          <div className="glass-card p-4 text-center"><CheckCircle size={20} className="mx-auto mb-1 text-kaptan-success" /><p className="text-2xl font-bold text-kaptan-success">{dashboard.verified}</p><p className="text-xs text-kaptan-muted">Doğrulanmış</p></div>
+          <div className="glass-card p-4 text-center"><AlertTriangle size={20} className="mx-auto mb-1 text-kaptan-warning" /><p className="text-2xl font-bold text-kaptan-warning">{dashboard.missingCount}</p><p className="text-xs text-kaptan-muted">Eksik Evrak</p></div>
+          <div className="glass-card p-4 text-center"><FileCheck size={20} className="mx-auto mb-1 text-kaptan-primary" /><p className="text-2xl font-bold text-kaptan-text">{Object.keys(dashboard.typeBreakdown || {}).length}</p><p className="text-xs text-kaptan-muted">Evrak Tipi</p></div>
         </div>
       )}
 
       <div className="mb-4 relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-        <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted" placeholder="Sevkiyat ID ara..." value={search} onChange={e => setSearch(e.target.value)} />
+        <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted" placeholder="Sevkiyat ID ara..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
-      {loading ? <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-16 bg-kaptan-card rounded-xl animate-pulse" />)}</div> : (
+      {loading ? <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-16 skeleton rounded-xl" />)}</div> : (
         <div className="space-y-3">
           {filtered.map((s: any) => (
             <div key={s.shipmentId} className={`bg-kaptan-card border rounded-xl p-4 ${s.status === 'incomplete' ? 'border-kaptan-warning/40' : 'border-kaptan-border'}`}>

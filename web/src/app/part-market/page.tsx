@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -196,7 +196,7 @@ export default function PartMarketPage() {
 
       <div className="mb-4 relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-        <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
+        <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
           placeholder="Ara..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
@@ -204,7 +204,7 @@ export default function PartMarketPage() {
 
       {showCreateForm && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-10 z-50">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-md mx-4">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-md mx-4">
             <h3 className="text-lg font-semibold text-kaptan-text mb-4">Yeni Parça İlanı</h3>
             <form onSubmit={async (e) => { e.preventDefault(); setSaving(true); try { await api.post('/part-market', createForm); setShowCreateForm(false); setCreateForm({ title: '', category: 'motor', brand: '', model: '', price: '', condition: 'İkinci El', description: '', location: '', contactPhone: '' }); fetchData(); } catch(err: any) { alert(err.response?.data?.message || 'Hata'); } setSaving(false); }} className="space-y-3">
               <div><label className="block text-xs text-kaptan-muted mb-1">Başlık *</label><input className="w-full bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2 text-kaptan-text text-sm" required value={createForm.title} onChange={e => setCreateForm({...createForm, title: e.target.value})} /></div>

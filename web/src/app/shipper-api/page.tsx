@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -28,12 +28,12 @@ export default function ShipperApiPage() {
       </div>
       <div className="mb-4 relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-        <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted" placeholder="Firma ara..." value={search} onChange={e => setSearch(e.target.value)} />
+        <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted" placeholder="Firma ara..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
-      {loading ? <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-kaptan-card rounded-xl animate-pulse" />)}</div> : (
+      {loading ? <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 skeleton rounded-xl" />)}</div> : (
         <div className="space-y-3">
           {filtered.map((s: any) => (
-            <div key={s.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+            <div key={s.id} className="glass-card p-4">
               <div className="flex justify-between items-start">
                 <div className="flex items-center gap-2"><Package size={16} className="text-kaptan-primary" /><h3 className="font-medium text-kaptan-text">{s.companyName || 'Gönderici'}</h3></div>
                 <span className={`text-xs px-2 py-0.5 rounded ${s.status === 'active' ? 'bg-green-500/20 text-green-400' : 'bg-yellow-500/20 text-yellow-400'}`}>{s.status || 'unknown'}</span>

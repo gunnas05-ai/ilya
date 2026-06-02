@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -91,14 +91,14 @@ export default function GibPage() {
 
       <div className="mb-4 relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-        <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
+        <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
           placeholder="Belge no, müşteri ara..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       {loading ? (
-        <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-kaptan-card rounded-xl animate-pulse" />)}</div>
+        <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 skeleton rounded-xl" />)}</div>
       ) : (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+        <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-kaptan-border text-kaptan-muted">
@@ -162,7 +162,7 @@ export default function GibPage() {
 
       {showForm && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-10 z-50 overflow-y-auto">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-lg mx-4">
+          <div className="glass-card rounded-2xl p-6 w-full max-w-lg mx-4">
             <h3 className="text-lg font-semibold text-kaptan-text mb-4">Yeni e-Belge Oluştur</h3>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div>

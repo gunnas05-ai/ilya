@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -40,7 +40,7 @@ export default function WhatsAppPage() {
 
   const update = (field: string, value: any) => setSettings({ ...settings, [field]: value });
 
-  if (loading) return <div className="p-4"><div className="h-64 bg-kaptan-card rounded-xl animate-pulse" /></div>;
+  if (loading) return <div className="p-4"><div className="h-64 skeleton rounded-xl" /></div>;
 
   return (
     <div>
@@ -51,7 +51,7 @@ export default function WhatsAppPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Ayarlar */}
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+        <div className="glass-card p-5">
           <h3 className="font-semibold text-kaptan-text mb-4 flex items-center gap-2"><Settings size={18} /> API Yapılandırması</h3>
 
           <div className="space-y-4">
@@ -119,7 +119,7 @@ export default function WhatsAppPage() {
 
         {/* Test + Durum */}
         <div className="space-y-6">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+          <div className="glass-card p-5">
             <h3 className="font-semibold text-kaptan-text mb-4 flex items-center gap-2"><Send size={18} /> Test Mesajı Gönder</h3>
             <div className="flex gap-3">
               <input className="flex-1 bg-kaptan-dark border border-kaptan-border rounded-lg px-3 py-2.5 text-kaptan-text text-sm"
@@ -137,7 +137,7 @@ export default function WhatsAppPage() {
             )}
           </div>
 
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+          <div className="glass-card p-5">
             <h3 className="font-semibold text-kaptan-text mb-3">📋 Kurulum Adımları</h3>
             <ol className="text-sm text-kaptan-muted space-y-2 list-decimal list-inside">
               <li><a href="https://developers.facebook.com/" target="_blank" className="text-kaptan-primary hover:underline">Meta Developers</a>'da uygulama oluştur</li>
@@ -149,7 +149,7 @@ export default function WhatsAppPage() {
             </ol>
           </div>
 
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+          <div className="glass-card p-5">
             <h3 className="font-semibold text-kaptan-text mb-3">Durum</h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2">

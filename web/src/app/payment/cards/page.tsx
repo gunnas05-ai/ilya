@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -51,7 +51,7 @@ export default function SavedCardsPage() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {loading ? [1,2,3].map(i => <div key={i} className="h-44 bg-kaptan-card rounded-xl animate-pulse" />) : (
+        {loading ? [1,2,3].map(i => <div key={i} className="h-44 skeleton rounded-xl" />) : (
           <>
             {displayCards.map((c: any) => (
               <div key={c.id} className="bg-gradient-to-br from-kaptan-card to-kaptan-dark border border-kaptan-border rounded-xl p-5 relative overflow-hidden group hover:border-kaptan-primary/40 transition-all">
@@ -79,14 +79,14 @@ export default function SavedCardsPage() {
         )}
       </div>
 
-      <div className="mt-6 bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+      <div className="mt-6 glass-card p-4">
         <div className="flex items-center gap-2"><Shield size={16} className="text-kaptan-success" /><span className="text-sm text-kaptan-text font-medium">PCI-DSS Uyumlu</span></div>
         <p className="text-xs text-kaptan-muted mt-1">Kart bilgileri sistemde saklanmaz. Tüm kart verileri TLS 1.3 ile şifrelenir ve İyzico tokenizasyon kullanılır.</p>
       </div>
 
       {showAddForm && (
         <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4" onClick={() => setShowAddForm(false)}>
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
+          <div className="glass-card rounded-2xl p-6 w-full max-w-md" onClick={e => e.stopPropagation()}>
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-semibold text-kaptan-text">Yeni Kart Ekle</h3>
               <button onClick={() => setShowAddForm(false)} className="p-1 hover:bg-kaptan-dark rounded text-kaptan-muted"><X size={18} /></button>

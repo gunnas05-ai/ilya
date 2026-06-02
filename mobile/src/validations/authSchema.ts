@@ -15,8 +15,13 @@ export const step2Schema = z.object({
   fullName: z.string().min(1, 'Lütfen ad soyad girin'),
   phone: z.string().regex(/^05\d{9}$/, 'Telefon 0(5xx) xxx xx xx formatında olmalıdır'),
   email: z.string().min(1, 'Lütfen e-posta adresi girin').email('Geçerli bir e-posta adresi girin'),
-  password: z.string().min(3, 'En az 3 karakterli şifre belirleyin'),
-  kvkkAccepted: z.literal(true, { errorMap: () => ({ message: 'KVKK ve Gizlilik Sözleşmesini onaylamanız gerekmektedir' }) }),
+  password: z.string()
+    .min(8, 'Şifre en az 8 karakter olmalıdır')
+    .regex(/[A-ZÇĞİÖŞÜ]/, 'En az 1 büyük harf içermelidir')
+    .regex(/[0-9]/, 'En az 1 rakam içermelidir')
+    .regex(/[^A-Za-zÇĞİÖŞÜçğıöşü0-9]/, 'En az 1 özel karakter içermelidir'),
+  kvkkAccepted: z.literal(true, { errorMap: () => ({ message: 'KVKK Aydınlatma Metni\'ni onaylamanız gerekmektedir' }) }),
+  termsAccepted: z.literal(true, { errorMap: () => ({ message: 'Kullanıcı Sözleşmesi\'ni onaylamanız gerekmektedir' }) }),
 });
 
 export const step3FirmaSchema = z.object({

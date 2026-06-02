@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -15,6 +15,8 @@ export default function BidsPage() {
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<any>(null);
 
+  const [page, setPage] = useState(1);
+  const PAGE = 20;
   const fetchBids = async () => {
     setLoading(true);
     try {
@@ -50,18 +52,18 @@ export default function BidsPage() {
 
       <div className="mb-4 relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-        <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
+        <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted"
           placeholder="Yük, taşıyıcı veya durum ara..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           {loading ? (
-            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 bg-kaptan-card rounded-xl animate-pulse" />)}</div>
+            <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-20 skeleton rounded-xl" />)}</div>
           ) : (
             <div className="space-y-3">
-              {filtered.map((bid: any) => (
-                <div key={bid.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 hover:border-kaptan-primary/30 transition-colors">
+              {filtered.slice(0, page * PAGE).map((bid: any) => (
+                <div key={bid.id} className="glass-card p-4 hover:border-kaptan-primary/30 transition-colors">
                   <div className="flex justify-between items-start">
                     <div>
                       <div className="flex items-center gap-2">
@@ -105,12 +107,17 @@ export default function BidsPage() {
               {filtered.length === 0 && (
                 <div className="text-center py-12 text-kaptan-muted">Henüz teklif bulunmuyor</div>
               )}
+              {filtered.length > page * PAGE && (
+                <button onClick={() => setPage(p => p + 1)} className="w-full py-2 glass-card text-kaptan-primary text-sm font-semibold hover:bg-kaptan-primary/10">
+                  Daha Fazla Göster ({filtered.length - page * PAGE} kaldı)
+                </button>
+              )}
             </div>
           )}
         </div>
 
         <div>
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+          <div className="glass-card p-4">
             <h3 className="font-semibold text-kaptan-text mb-3">Özet</h3>
             <div className="space-y-3">
               <div className="flex justify-between text-sm"><span className="text-kaptan-muted">Toplam Teklif</span><span className="text-kaptan-text font-medium">{bids.length}</span></div>
@@ -124,7 +131,7 @@ export default function BidsPage() {
           </div>
 
           {selected && (
-            <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 mt-4">
+            <div className="glass-card p-4 mt-4">
               <h3 className="font-semibold text-kaptan-text mb-3">Teklif Detayı</h3>
               <div className="space-y-2 text-sm">
                 <div><span className="text-kaptan-muted">Yük:</span> <span className="text-kaptan-text">{selected.loadTitle}</span></div>

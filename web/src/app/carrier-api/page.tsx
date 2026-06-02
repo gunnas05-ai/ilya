@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -28,12 +28,12 @@ export default function CarrierApiPage() {
       </div>
       <div className="mb-4 relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-        <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted" placeholder="Firma ara..." value={search} onChange={e => setSearch(e.target.value)} />
+        <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted" placeholder="Firma ara..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
-      {loading ? <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 bg-kaptan-card rounded-xl animate-pulse" />)}</div> : (
+      {loading ? <div className="space-y-3">{[1,2,3].map(i => <div key={i} className="h-16 skeleton rounded-xl" />)}</div> : (
         <div className="space-y-3">
           {filtered.map((c: any) => (
-            <div key={c.id} className="bg-kaptan-card border border-kaptan-border rounded-xl p-4">
+            <div key={c.id} className="glass-card p-4">
               <div className="flex justify-between items-start">
                 <div>
                   <div className="flex items-center gap-2"><Truck size={16} className="text-kaptan-primary" /><h3 className="font-medium text-kaptan-text">{c.companyName || 'Taşıyıcı'}</h3></div>

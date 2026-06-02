@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -45,18 +45,18 @@ export default function UetdsPage() {
       </div>
 
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 text-center"><FileBadge size={20} className="mx-auto mb-1 text-kaptan-primary" /><p className="text-xl font-bold text-kaptan-text">{stats.total}</p><p className="text-xs text-kaptan-muted">Toplam Beyan</p></div>
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 text-center"><CheckCircle size={20} className="mx-auto mb-1 text-kaptan-success" /><p className="text-xl font-bold text-kaptan-success">{stats.success}</p><p className="text-xs text-kaptan-muted">Başarılı</p></div>
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-4 text-center"><XCircle size={20} className="mx-auto mb-1 text-kaptan-danger" /><p className="text-xl font-bold text-kaptan-danger">{stats.failed}</p><p className="text-xs text-kaptan-muted">Başarısız</p></div>
+        <div className="glass-card p-4 text-center"><FileBadge size={20} className="mx-auto mb-1 text-kaptan-primary" /><p className="text-xl font-bold text-kaptan-text">{stats.total}</p><p className="text-xs text-kaptan-muted">Toplam Beyan</p></div>
+        <div className="glass-card p-4 text-center"><CheckCircle size={20} className="mx-auto mb-1 text-kaptan-success" /><p className="text-xl font-bold text-kaptan-success">{stats.success}</p><p className="text-xs text-kaptan-muted">Başarılı</p></div>
+        <div className="glass-card p-4 text-center"><XCircle size={20} className="mx-auto mb-1 text-kaptan-danger" /><p className="text-xl font-bold text-kaptan-danger">{stats.failed}</p><p className="text-xs text-kaptan-muted">Başarısız</p></div>
       </div>
 
       <div className="mb-4 relative">
         <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-kaptan-muted" />
-        <input className="w-full bg-kaptan-card border border-kaptan-border rounded-lg pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted" placeholder="Plaka, sürücü, işlem türü ara..." value={search} onChange={e => setSearch(e.target.value)} />
+        <input className="w-full glass-card pl-10 pr-4 py-2.5 text-kaptan-text placeholder-kaptan-muted" placeholder="Plaka, sürücü, işlem türü ara..." value={search} onChange={e => setSearch(e.target.value)} />
       </div>
 
-      {loading ? <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-14 bg-kaptan-card rounded-xl animate-pulse" />)}</div> : (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+      {loading ? <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-14 skeleton rounded-xl" />)}</div> : (
+        <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-kaptan-dark/50"><tr className="border-b border-kaptan-border text-kaptan-muted"><th className="text-left p-3">Plaka</th><th className="text-left p-3">Sürücü</th><th className="text-left p-3">Rota</th><th className="text-left p-3">Yük</th><th className="text-left p-3">Tarih</th><th className="text-left p-3">İşlem</th><th className="text-left p-3">Durum</th></tr></thead>
             <tbody>
@@ -79,7 +79,7 @@ export default function UetdsPage() {
 
       {showForm && (
         <div className="fixed inset-0 bg-black/60 flex items-start justify-center pt-10 z-50" onClick={() => setShowForm(false)}>
-          <div className="bg-kaptan-card border border-kaptan-border rounded-2xl p-6 w-full max-w-lg mx-4" onClick={e => e.stopPropagation()}>
+          <div className="glass-card rounded-2xl p-6 w-full max-w-lg mx-4" onClick={e => e.stopPropagation()}>
             <h3 className="text-lg font-semibold text-kaptan-text mb-4">Yeni U-ETDS Beyanı</h3>
             <form onSubmit={handleSubmit} className="space-y-3">
               <div className="grid grid-cols-2 gap-3">

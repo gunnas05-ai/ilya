@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useEffect } from 'react';
 import { api } from '@/lib/api';
@@ -55,7 +55,7 @@ export default function SettingsPage() {
   const handleSaveKvkk = async () => {
     setSaving(true);
     try {
-      await api.put('/admin/system-settings', { kvkkText, termsText });
+      await api.put('/admin/settings', { kvkkText, termsText });
       setSaved(true); setTimeout(() => setSaved(false), 2000);
     } catch (err: any) { alert(err.response?.data?.message || 'Hata'); }
     setSaving(false);
@@ -86,7 +86,7 @@ export default function SettingsPage() {
       </div>
 
       {tab === 'general' && (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-6 space-y-4">
+        <div className="glass-card p-6 space-y-4">
           <div className="flex items-center justify-between py-3 border-b border-kaptan-border/50">
             <div><span className="text-kaptan-text font-medium">QuickPay</span><p className="text-xs text-kaptan-muted mt-1">Teslimat onayında anında ödeme özelliği</p></div>
             <span className="px-3 py-1 text-xs rounded-full bg-green-500/10 text-green-400 font-medium">Aktif</span>
@@ -112,7 +112,7 @@ export default function SettingsPage() {
 
       {tab === 'commission' && (
         <div className="space-y-6">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+          <div className="glass-card p-5">
             <h3 className="font-semibold text-kaptan-text mb-4">Komisyon Oranı Ekle</h3>
             <div className="flex gap-3 items-end">
               <div className="flex-1">
@@ -140,7 +140,7 @@ export default function SettingsPage() {
               </button>
             </div>
           </div>
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+          <div className="glass-card overflow-hidden">
             <table className="w-full text-sm">
               <thead className="bg-kaptan-dark/50 border-b border-kaptan-border">
                 <tr className="text-left text-kaptan-muted"><th className="px-4 py-3">Kategori</th><th className="px-4 py-3">Oran</th><th className="px-4 py-3">İşlem</th></tr>
@@ -156,7 +156,7 @@ export default function SettingsPage() {
 
       {tab === 'promo' && (
         <div className="space-y-6">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+          <div className="glass-card p-5">
             <h3 className="font-semibold text-kaptan-text mb-4">Promosyon Kodu Oluştur</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 items-end">
               <div>
@@ -189,7 +189,7 @@ export default function SettingsPage() {
 
       {tab === 'kvkk' && (
         <div className="space-y-6">
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+          <div className="glass-card p-5">
             <div className="flex justify-between items-center mb-4">
               <h3 className="font-semibold text-kaptan-text">KVKK Gizlilik Politikası</h3>
               <div className="flex gap-2">

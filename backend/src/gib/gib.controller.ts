@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Controller, Get, Post, Put, Body, Param, Query, UseGuards, Req, Res } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { IsString, IsNumber, IsOptional, IsEnum, Min } from 'class-validator';

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -35,9 +35,9 @@ export default function AdminsPage() {
       </div>
 
       {loading ? (
-        <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 bg-kaptan-card rounded-lg animate-pulse" />)}</div>
+        <div className="space-y-2">{[1,2,3].map(i => <div key={i} className="h-12 skeleton rounded-lg" />)}</div>
       ) : (
-        <div className="bg-kaptan-card border border-kaptan-border rounded-xl overflow-hidden">
+        <div className="glass-card overflow-hidden">
           <table className="w-full text-sm">
             <thead className="bg-kaptan-dark/50 border-b border-kaptan-border">
               <tr className="text-left text-kaptan-muted">

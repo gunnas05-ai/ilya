@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api';
@@ -43,11 +43,11 @@ export default function CommissionPage() {
       <h2 className="text-2xl font-bold text-kaptan-text mb-6">Komisyon Yönetimi</h2>
 
       {loading ? (
-        <div className="space-y-4">{[1,2].map(i => <div key={i} className="h-32 bg-kaptan-card rounded-xl animate-pulse" />)}</div>
+        <div className="space-y-4">{[1,2].map(i => <div key={i} className="h-32 skeleton rounded-xl" />)}</div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Komisyon Oranları */}
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+          <div className="glass-card p-5">
             <h3 className="text-lg font-semibold text-kaptan-text mb-4">Komisyon Oranları</h3>
             <div className="space-y-3">
               {Object.entries(configLabels).map(([key, label]) => {
@@ -67,7 +67,7 @@ export default function CommissionPage() {
           </div>
 
           {/* Komisyon Raporu */}
-          <div className="bg-kaptan-card border border-kaptan-border rounded-xl p-5">
+          <div className="glass-card p-5">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-kaptan-text">Komisyon Raporu</h3>
               <select

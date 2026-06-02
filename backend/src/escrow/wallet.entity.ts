@@ -1,6 +1,15 @@
 import { Entity, PrimaryGeneratedColumn, Column, CreateDateColumn, UpdateDateColumn, OneToOne, JoinColumn, Index } from 'typeorm';
 import { User } from '../users/user.entity';
 
+export class ColumnNumericTransformer {
+  to(data: number): number {
+    return data;
+  }
+  from(data: string): number {
+    return parseFloat(data);
+  }
+}
+
 @Entity('wallets')
 export class Wallet {
   @PrimaryGeneratedColumn('uuid')
@@ -13,13 +22,13 @@ export class Wallet {
   @JoinColumn({ name: 'userId' })
   user: User;
 
-  @Column('float', { default: 0 })
+  @Column('decimal', { precision: 20, scale: 2, default: 0, transformer: new ColumnNumericTransformer() })
   availableBalance: number;
 
-  @Column('float', { default: 0 })
+  @Column('decimal', { precision: 20, scale: 2, default: 0, transformer: new ColumnNumericTransformer() })
   escrowBalance: number;
 
-  @Column('float', { default: 0 })
+  @Column('decimal', { precision: 20, scale: 2, default: 0, transformer: new ColumnNumericTransformer() })
   pendingRelease: number;
 
   @Column({ nullable: true })
@@ -31,25 +40,25 @@ export class Wallet {
   @Column({ nullable: true })
   accountHolderName: string;
 
-  @Column('float', { default: 0 })
+  @Column('decimal', { precision: 20, scale: 2, default: 0, transformer: new ColumnNumericTransformer() })
   cashbackBalance: number;
 
   @Column('int', { default: 0 })
   creditBalance: number; // Kontör bakiyesi (birleşik cüzdan)
 
-  @Column('float', { default: 0 })
+  @Column('decimal', { precision: 20, scale: 2, default: 0, transformer: new ColumnNumericTransformer() })
   totalEarned: number;  // Toplam kazanç
 
-  @Column('float', { default: 0 })
+  @Column('decimal', { precision: 20, scale: 2, default: 0, transformer: new ColumnNumericTransformer() })
   totalSpent: number;   // Toplam harcama
 
-  @Column('float', { default: 50000 })
+  @Column('decimal', { precision: 20, scale: 2, default: 50000, transformer: new ColumnNumericTransformer() })
   dailyWithdrawalLimit: number;
 
-  @Column('float', { default: 500000 })
+  @Column('decimal', { precision: 20, scale: 2, default: 500000, transformer: new ColumnNumericTransformer() })
   monthlyWithdrawalLimit: number;
 
-  @Column('float', { default: 0 })
+  @Column('decimal', { precision: 20, scale: 2, default: 0, transformer: new ColumnNumericTransformer() })
   dailyWithdrawnToday: number;
 
   @Column({ type: 'timestamp', nullable: true })
@@ -87,13 +96,13 @@ export class WalletTransaction {
   @Column({ type: 'simple-enum', enum: TransactionType })
   type: TransactionType;
 
-  @Column('float')
+  @Column('decimal', { precision: 20, scale: 2, transformer: new ColumnNumericTransformer() })
   amount: number;
 
-  @Column('float', { default: 0 })
+  @Column('decimal', { precision: 20, scale: 2, default: 0, transformer: new ColumnNumericTransformer() })
   balanceBefore: number;
 
-  @Column('float', { default: 0 })
+  @Column('decimal', { precision: 20, scale: 2, default: 0, transformer: new ColumnNumericTransformer() })
   balanceAfter: number;
 
   @Column({ nullable: true })
